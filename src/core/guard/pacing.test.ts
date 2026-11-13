@@ -3,7 +3,7 @@ import { openMemoryDatabase } from '../db/client';
 import { insertLead } from '../db/queries/leads';
 import { insertPosts } from '../db/queries/posts';
 import { insertProduct } from '../db/queries/products';
-import { loadSampleProduct } from '../testing/sample-products';
+import { loadSampleProduct } from '../demo/sample-products';
 import { pacingWarnings, recentReplies, type PastReply } from './pacing';
 
 const NOW = 1_800_000_000;

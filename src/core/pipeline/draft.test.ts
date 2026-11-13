@@ -4,7 +4,7 @@ import { seededRandom } from '../clock';
 import { CONFIG } from '../config';
 import type { ReplyMode } from '../db/schema';
 import { fakeAiClient } from '../testing/fake-ai';
-import { loadSampleProduct } from '../testing/sample-products';
+import { loadSampleProduct } from '../demo/sample-products';
 import {
   checkDraft,
   chooseMode,

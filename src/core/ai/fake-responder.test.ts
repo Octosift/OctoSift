@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadGoldenSet } from '../eval/golden';
 import { checkDraft } from '../pipeline/draft';
-import { loadSampleProducts } from '../testing/sample-products';
+import { loadSampleProducts } from '../demo/sample-products';
 import { createFixtureResponder } from './fake-responder';
 import { draftWire, normalizeDraft, profileWire, qualifyWire, triageWire } from './schemas';
 import type { GenerateRequest } from './types';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fakeAiClient } from '../testing/fake-ai';
-import { loadSampleProduct } from '../testing/sample-products';
+import { loadSampleProduct } from '../demo/sample-products';
 import { qualifyPost, quoteAppearsIn, type QualifyCandidate, type QualifyContext } from './qualify';
 
 const NOW = 1_800_000_000;

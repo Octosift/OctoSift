@@ -3,7 +3,7 @@ import type { GenerateRequest } from '../ai/types';
 import type { FakeReply } from '../ai/fake';
 import { seededRandom } from '../clock';
 import { fakeAiClient } from '../testing/fake-ai';
-import { loadSampleProduct } from '../testing/sample-products';
+import { loadSampleProduct } from '../demo/sample-products';
 import type { DraftRequest } from './draft';
 import { writeReviewedReply } from './review';
 

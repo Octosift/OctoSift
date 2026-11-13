@@ -3,7 +3,7 @@ import { createAiClient } from '../ai/client';
 import { createFakeGenerator } from '../ai/fake';
 import { silentLogger } from '../log';
 import type { FetchResult, RedditPost, RedditSource } from '../reddit/types';
-import { loadSampleProduct } from '../testing/sample-products';
+import { loadSampleProduct } from '../demo/sample-products';
 import {
   estimatePostsPerDay,
   suggestSubreddits,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createRedactor } from '../../secrets/redact';
-import { loadSampleProducts, type SampleProductSlug } from '../../testing/sample-products';
+import { loadSampleProducts, type SampleProductSlug } from '../../demo/sample-products';
 import { buildDraftPrompt, type DraftInput } from './draft';
 import { buildProfileExtractPrompt } from './profile';
 import { buildQualifyPrompt } from './qualify';

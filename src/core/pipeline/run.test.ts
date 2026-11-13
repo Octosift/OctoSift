@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { evaluations, leads, posts, runs, subreddits, usage, drafts } from '../db/schema';
 import type { GoldenOutcome } from '../eval/golden';
 import { createScanHarness } from '../testing/scan-harness';
-import { SAMPLE_PRODUCT_SLUGS, type SampleProductSlug } from '../testing/sample-products';
+import { SAMPLE_PRODUCT_SLUGS, type SampleProductSlug } from '../demo/sample-products';
 import { emptyCounts } from './funnel';
 import { runScan } from './run';
 

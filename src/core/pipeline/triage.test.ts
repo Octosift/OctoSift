@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { GenerateRequest } from '../ai/types';
 import { fakeAiClient } from '../testing/fake-ai';
-import { loadSampleProduct } from '../testing/sample-products';
+import { loadSampleProduct } from '../demo/sample-products';
 import { triagePosts, type TriageCandidate } from './triage';
 
 const profile = loadSampleProduct('acme-invoices');

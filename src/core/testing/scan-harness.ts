@@ -18,7 +18,7 @@ import type { RedditSource } from '../reddit/types';
 import type { ScanDeps } from '../pipeline/run';
 import { createSettingsStore, type SettingsStore } from '../settings/store';
 import { createFakeClock, type FakeClock } from './fake-clock';
-import { loadSampleProducts, type SampleProductSlug } from './sample-products';
+import { loadSampleProducts, type SampleProductSlug } from '../demo/sample-products';
 
 export interface ScanHarness {
   db: Db;
