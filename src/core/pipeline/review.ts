@@ -4,7 +4,8 @@
  * APPROVE keeps the draft. REVISE or REJECT triggers one regeneration with
  * the reviewer's fixes, followed by a second review. A draft rejected twice
  * is not stored; the lead stays, with the reasons. When the reviewer itself
- * fails, the draft is kept and labelled as not reviewed.
+ * fails, the draft is kept and labelled as not reviewed. A call refused by the
+ * budget is reported, so a scan can stop its AI work.
  */
 import type { AiClient } from '../ai/client';
 import { buildReviewPrompt } from '../ai/prompts/review';
@@ -58,20 +59,47 @@ export type ReplyOutcome =
   | { status: 'rejected'; reasons: string[]; attempts: number }
   | { status: 'failed'; kind: AiFailureKind; message: string };
 
+export type ReviewedReply = ReplyOutcome & {
+  /** Set when a draft or review call was refused because the budget is spent. */
+  budgetStop: string | null;
+};
+
+type CallResult = { ok: true } | { ok: false; kind: AiFailureKind; message: string };
+
 export async function writeReviewedReply(
   ai: AiClient,
   request: DraftRequest & { rulesSummary: string | null },
+): Promise<ReviewedReply> {
+  const budget: { stop: string | null } = { stop: null };
+  const outcome = await reviewedReply(ai, request, (result) => {
+    if (!result.ok && result.kind === 'budget') budget.stop ??= result.message;
+  });
+  return { ...outcome, budgetStop: budget.stop };
+}
+
+async function reviewedReply(
+  ai: AiClient,
+  request: DraftRequest & { rulesSummary: string | null },
+  watch: (result: CallResult) => void,
 ): Promise<ReplyOutcome> {
-  const review = (draft: DraftOutput) =>
-    reviewDraft(ai, {
+  const draft = async (fixes?: string[]) => {
+    const result = await writeDraft(ai, fixes ? { ...request, fixes } : request);
+    watch(result);
+    return result;
+  };
+  const review = async (output: DraftOutput) => {
+    const result = await reviewDraft(ai, {
       profile: request.profile,
       subreddit: request.subreddit,
       rulesSummary: request.rulesSummary,
       post: request.post,
-      draft: draft.reply,
+      draft: output.reply,
     });
+    watch(result);
+    return result;
+  };
 
-  const first = await writeDraft(ai, request);
+  const first = await draft();
   if (!first.ok) return { status: 'failed', kind: first.kind, message: first.message };
   const firstReview = await review(first.output);
   if (!firstReview.ok) {
@@ -96,7 +124,7 @@ export async function writeReviewedReply(
   }
 
   const fixes = [...firstReview.review.fixes, ...firstReview.review.reasons];
-  const second = await writeDraft(ai, { ...request, fixes });
+  const second = await draft(fixes);
   if (!second.ok) {
     return firstReview.review.decision === 'REVISE'
       ? {

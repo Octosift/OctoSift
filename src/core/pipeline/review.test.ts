@@ -72,6 +72,7 @@ describe('writeReviewedReply', () => {
       status: 'rejected',
       reasons: ['Still an ad'],
       attempts: 2,
+      budgetStop: null,
     });
   });
 
@@ -104,6 +105,16 @@ describe('writeReviewedReply', () => {
       status: 'failed',
       kind: 'provider_error',
       message: 'writer down',
+      budgetStop: null,
+    });
+  });
+
+  it('reports a review the budget refused, so a scan can stop', async () => {
+    const { ai } = fakeAiClient(scripted([]), { budgetCalls: 1 });
+    expect(await writeReviewedReply(ai, request)).toMatchObject({
+      status: 'drafted',
+      decision: 'NOT_REVIEWED',
+      budgetStop: 'Budget reached',
     });
   });
 });

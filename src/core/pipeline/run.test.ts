@@ -166,6 +166,19 @@ describe('runScan', () => {
     expect(first.counts.leads + second.counts.leads).toBe(16);
   });
 
+  it('stops AI work as soon as a draft or review call hits the budget', async () => {
+    const harness = createScanHarness('acme-invoices');
+    harness.settings.set('ai.prices', {
+      'fake-draft': { inputPerMillionUsd: 100_000, outputPerMillionUsd: 100_000 },
+    });
+    harness.settings.set('budget.perRunUsd', 0.5);
+    const report = await runScan(harness.deps, { trigger: 'cli' });
+    expect(report.status).toBe('budget_stopped');
+    // The review after the first draft is refused; no later post is even qualified.
+    expect(harness.generator.calls.filter((call) => call.task === 'draft')).toHaveLength(1);
+    expect(report.counts.qualify.error).toBe(0);
+  });
+
   it('reports a missing model setup and leaves posts retryable', async () => {
     const harness = createScanHarness('acme-plants', {
       resolveModel: () => ({

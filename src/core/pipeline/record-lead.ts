@@ -105,6 +105,7 @@ export async function recordLead(
       replyPreferences: ctx.settings.getForProduct(product.id, 'replyPreferences'),
     },
   );
+  if (drafted.budgetStop !== null) ctx.state.budgetStop ??= drafted.budgetStop;
   summary.drafted = drafted.reply === 'drafted';
   countDraft(ctx.counts, drafted.reply, 'reply');
   countDraft(ctx.counts, drafted.dm, 'dm');

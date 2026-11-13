@@ -47,6 +47,8 @@ export interface LeadDraftResult {
   dm: DraftStatus;
   /** Why the reply could not be written, for the lead's detail panel. */
   message: string | null;
+  /** Set when the budget refused a call; a scan then stops its AI work. */
+  budgetStop: string | null;
 }
 
 export function formatRules(rules: RulesSummary | null): string | null {
@@ -80,7 +82,12 @@ export async function draftForLead(
     mode !== 'helpful_only' &&
     dmDraftsEnabled(input.profile, input.replyPreferences.dmDrafts);
   const kinds = input.kinds ?? (wantsDm ? ['reply', 'dm'] : ['reply']);
-  const result: LeadDraftResult = { reply: 'skipped', dm: 'skipped', message: null };
+  const result: LeadDraftResult = {
+    reply: 'skipped',
+    dm: 'skipped',
+    message: null,
+    budgetStop: null,
+  };
 
   for (const kind of kinds) {
     const outcome = await writeReviewedReply(deps.ai, {
@@ -126,7 +133,10 @@ export async function draftForLead(
     }
     if (outcome.status === 'failed') {
       deps.log.warn('Drafting failed', { leadId: input.leadId, kind, reason: outcome.message });
-      if (outcome.kind === 'budget') break;
+    }
+    if (outcome.budgetStop !== null) {
+      result.budgetStop = outcome.budgetStop;
+      break;
     }
   }
 
