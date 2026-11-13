@@ -1,0 +1,34 @@
+{
+  "name": "octosift",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Find Reddit posts from people who need your product and prepare replies you post by hand.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "eslint . && prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "format": "prettier --write .",
+    "check": "pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^5.1.0",
+    "eslint": "^9.39.5",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
+  }
+}

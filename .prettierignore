@@ -1,0 +1,5 @@
+pnpm-lock.yaml
+coverage/
+.next/
+data/
+src/core/db/migrations/

@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# build output
+.next/
+out/
+dist/
+next-env.d.ts
+*.tsbuildinfo
+
+# local data and secrets
+data/
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+
+# test output
+coverage/
+test-results/
+playwright-report/
+
+# OS files
+.DS_Store
