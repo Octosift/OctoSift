@@ -1,5 +1,6 @@
 // @ts-check
 import js from '@eslint/js';
+import nextVitals from 'eslint-config-next/core-web-vitals';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -10,6 +11,8 @@ import tseslint from 'typescript-eslint';
  *   an injected function, which keeps the core testable without a network.
  * - Logging goes through `src/core/log.ts`, the one place allowed to use `console`.
  */
+const appFiles = ['src/app/**/*.{ts,tsx}', 'src/proxy.ts'];
+
 const networkModules = [
   'src/core/reddit/client.ts',
   'src/core/ai/provider.ts',
@@ -31,6 +34,8 @@ export default tseslint.config(
       'src/core/db/migrations/',
     ],
   },
+  // Next.js and React rules only apply where React is used.
+  ...nextVitals.map((config) => ({ ...config, files: appFiles })),
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
@@ -89,7 +94,7 @@ export default tseslint.config(
     rules: { 'no-console': 'off' },
   },
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
   },
 );

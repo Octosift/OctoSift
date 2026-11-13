@@ -68,7 +68,8 @@ export function createRuntime(options: RuntimeOptions): Runtime {
   const { env } = options;
   const clock = options.clock ?? systemClock;
   const random = options.random ?? (() => Math.random());
-  const databasePath = resolve(process.cwd(), env.DATABASE_PATH);
+  // The database location is chosen at runtime, so the bundler must not trace it.
+  const databasePath = resolve(/* turbopackIgnore: true */ process.cwd(), env.DATABASE_PATH);
   const db = openDatabase({ path: databasePath });
   const redactor = createRedactor();
   const log = createLogger({
