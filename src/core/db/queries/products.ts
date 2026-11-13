@@ -117,3 +117,14 @@ export function watchedSubreddits(
     .orderBy(asc(productSubreddits.subreddit))
     .all();
 }
+
+/** Every subreddit at least one product reads, without duplicates. */
+export function enabledSubredditNames(db: Db): string[] {
+  return db
+    .selectDistinct({ subreddit: productSubreddits.subreddit })
+    .from(productSubreddits)
+    .where(eq(productSubreddits.enabled, true))
+    .orderBy(asc(productSubreddits.subreddit))
+    .all()
+    .map((row) => row.subreddit);
+}
