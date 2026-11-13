@@ -2,61 +2,24 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
-import { AUDIENCES, PRODUCT_TYPES, type ExtractedProfile } from '@/core/ai/schemas';
+import type { ExtractedProfile } from '@/core/ai/schemas';
+import { ProfileFields } from '../components/profile-fields';
 import { Button } from '../components/ui/button';
 import { Banner, Card, CardHeader } from '../components/ui/display';
-import { Checkbox, Field, Input, Select, Textarea } from '../components/ui/fields';
+import { Checkbox, Field, Input, Textarea } from '../components/ui/fields';
 import { buildProfile, crawlSite, createProduct } from '../lib/actions/onboarding';
 
 type Phase = 'url' | 'working' | 'review';
-type ListKey =
-  | 'what_it_does'
-  | 'who_it_is_for'
-  | 'problems_solved'
-  | 'not_for'
-  | 'buyer_phrases'
-  | 'alternatives';
-
-const LISTS: { key: ListKey; label: string; hint: string; wide?: boolean }[] = [
-  { key: 'what_it_does', label: 'What it does', hint: 'One per line.' },
-  { key: 'who_it_is_for', label: 'Who it is for', hint: 'One audience per line.' },
-  {
-    key: 'problems_solved',
-    label: 'Problems it solves',
-    hint: 'In the words a customer would use.',
-  },
-  {
-    key: 'buyer_phrases',
-    label: 'Phrases people with the problem write',
-    hint: 'For example "client is late paying".',
-  },
-  {
-    key: 'not_for',
-    label: 'What it does not do',
-    hint: 'The most useful field for precision: things people might expect but the product does not do, and audiences it does not serve.',
-    wide: true,
-  },
-  {
-    key: 'alternatives',
-    label: 'What people use instead',
-    hint: 'Kinds of tools or approaches, one per line.',
-    wide: true,
-  },
-];
-
-const toLines = (items: string[]) => items.join('\n');
-const fromLines = (text: string) =>
-  text
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
 
 export function StepProduct({
   existing,
   demo,
+  afterCreate = 'onboarding',
 }: {
   existing: { id: string; name: string; url: string } | null;
   demo: boolean;
+  /** Where to go once the product is saved: the next onboarding step, or its subreddits. */
+  afterCreate?: 'onboarding' | 'subreddits';
 }) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>('url');
@@ -149,7 +112,11 @@ export function StepProduct({
         },
       });
       if (result.ok) {
-        router.push('/onboarding?step=3');
+        router.push(
+          afterCreate === 'onboarding'
+            ? '/onboarding?step=3'
+            : `/subreddits?product=${encodeURIComponent(result.productId)}`,
+        );
         router.refresh();
       } else {
         setFieldErrors(result.errors);
@@ -245,88 +212,14 @@ export function StepProduct({
         </p>
       </div>
       <Card>
-        <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
-          <Field label="Name" htmlFor="profile-name" error={fieldErrors['profile.name']}>
-            <Input
-              id="profile-name"
-              value={profile.name}
-              onChange={(event) => {
-                update({ name: event.target.value });
-              }}
-            />
-          </Field>
-          <Field label="Pricing" htmlFor="profile-pricing">
-            <Input
-              id="profile-pricing"
-              value={profile.pricing}
-              onChange={(event) => {
-                update({ pricing: event.target.value });
-              }}
-            />
-          </Field>
-          <Field
-            label="In one line"
-            htmlFor="profile-one-liner"
-            className="sm:col-span-2"
-            error={fieldErrors['profile.one_liner']}
-          >
-            <Input
-              id="profile-one-liner"
-              value={profile.one_liner}
-              onChange={(event) => {
-                update({ one_liner: event.target.value });
-              }}
-            />
-          </Field>
-          <Field label="Type" htmlFor="profile-type">
-            <Select
-              id="profile-type"
-              value={profile.product_type}
-              onChange={(event) => {
-                update({ product_type: event.target.value as ExtractedProfile['product_type'] });
-              }}
-            >
-              {PRODUCT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type.replace(/_/g, ' ')}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Audience" htmlFor="profile-audience">
-            <Select
-              id="profile-audience"
-              value={profile.audience}
-              onChange={(event) => {
-                update({ audience: event.target.value as ExtractedProfile['audience'] });
-              }}
-            >
-              {AUDIENCES.map((audience) => (
-                <option key={audience} value={audience}>
-                  {audience}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          {LISTS.map(({ key, label, hint, wide }) => (
-            <Field
-              key={key}
-              label={label}
-              htmlFor={`profile-${key}`}
-              hint={hint}
-              className={wide ? 'sm:col-span-2' : undefined}
-            >
-              <Textarea
-                id={`profile-${key}`}
-                rows={4}
-                value={toLines(profile[key])}
-                onChange={(event) => {
-                  update({ [key]: fromLines(event.target.value) });
-                }}
-              />
-            </Field>
-          ))}
-        </div>
+        <ProfileFields
+          profile={profile}
+          onChange={update}
+          errors={{
+            name: fieldErrors['profile.name'],
+            one_liner: fieldErrors['profile.one_liner'],
+          }}
+        />
       </Card>
 
       <Card>
