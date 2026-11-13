@@ -74,7 +74,7 @@ export const CONFIG = deepFreeze({
     maxExternalLinks: 1,
     defaultLanguages: ['en'],
     /** Below this many characters language detection is unreliable, so it is skipped. */
-    minCharsForLanguageCheck: 40,
+    minCharsForLanguageCheck: 80,
     knownBots: ['automoderator'],
     linkAllowlist: [
       'reddit.com',

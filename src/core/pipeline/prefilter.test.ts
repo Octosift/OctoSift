@@ -141,11 +141,15 @@ describe('prefilter', () => {
 
 describe('detectLanguage', () => {
   it('recognises English and Spanish text', () => {
-    expect(detectLanguage('How do you get clients to pay on time? I tried emails and calls.')).toBe(
-      'en',
-    );
     expect(
-      detectLanguage('¿Cómo consigo que mis clientes paguen a tiempo? Probé correos y llamadas.'),
+      detectLanguage(
+        'How do you get clients to pay on time? I tried polite emails and phone calls but nothing works.',
+      ),
+    ).toBe('en');
+    expect(
+      detectLanguage(
+        '¿Cómo consigo que mis clientes paguen a tiempo? Probé correos amables y llamadas, pero nada funciona.',
+      ),
     ).toBe('es');
   });
 
