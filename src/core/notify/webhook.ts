@@ -26,6 +26,11 @@ function escapeSlack(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/** A URL inside Slack's <url|label> syntax: a "|" would end the address early. */
+function slackLink(url: string, label: string): string {
+  return `<${escapeSlack(url).replace(/\|/g, '%7C')}|${label}>`;
+}
+
 export function leadLink(dashboardUrl: string, leadId: string): string {
   return `${dashboardUrl.replace(/\/+$/, '')}/inbox?lead=${encodeURIComponent(leadId)}`;
 }
@@ -43,7 +48,7 @@ export function webhookPayload(
         `*${escapeSlack(heading)}*`,
         escapeSlack(lead.title),
         `_${escapeSlack(lead.reason)}_`,
-        `<${link}|Open in dashboard> · <${lead.url}|View on Reddit>`,
+        `${slackLink(link, 'Open in dashboard')} · ${slackLink(lead.url, 'View on Reddit')}`,
       ].join('\n'),
     };
   }

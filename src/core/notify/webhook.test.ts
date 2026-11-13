@@ -23,6 +23,14 @@ describe('webhookPayload', () => {
     expect(text).toContain('<http://127.0.0.1:3000/inbox?lead=lead-1|Open in dashboard>');
   });
 
+  it('keeps link text intact when a URL contains Slack control characters', () => {
+    const odd = { ...lead, url: 'https://www.reddit.com/r/x/comments/a|Click here>/<b>' };
+    const text = String(webhookPayload('slack', odd, DASHBOARD).text);
+    expect(text).toContain(
+      '<https://www.reddit.com/r/x/comments/a%7CClick here&gt;/&lt;b&gt;|View on Reddit>',
+    );
+  });
+
   it('builds a Discord message that cannot mention anyone', () => {
     const payload = webhookPayload('discord', lead, DASHBOARD);
     expect(payload.allowed_mentions).toEqual({ parse: [] });
