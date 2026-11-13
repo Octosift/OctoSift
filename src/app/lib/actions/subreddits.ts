@@ -8,7 +8,8 @@ import {
   unwatchSubreddit,
   watchSubreddit,
 } from '@/core/db/queries/products';
-import { setPromotionPolicy, setSubredditStatus } from '@/core/db/queries/subreddits';
+import { getSubreddit, setPromotionPolicy, setSubredditStatus } from '@/core/db/queries/subreddits';
+import { RULES_TEXT_LIMITS, storeRules, summariseRules } from '@/core/profile/rules';
 import { requestValidation } from '@/core/validation-queue';
 import { getRuntime, nowSeconds } from '../runtime';
 
@@ -89,4 +90,40 @@ export async function retrySubreddit(input: { name: string }): Promise<Subreddit
   setSubredditStatus(db, parsed.data.name, 'active');
   requestValidation(db, [parsed.data.name], nowSeconds());
   return Promise.resolve(done());
+}
+
+/** Summarises rules the user pasted from the subreddit's sidebar and stores them. */
+export async function saveSubredditRules(input: {
+  name: string;
+  text: string;
+}): Promise<SubredditActionResult> {
+  const parsed = z
+    .object({
+      name,
+      text: z
+        .string()
+        .trim()
+        .min(RULES_TEXT_LIMITS.min, 'Paste the full rules, not just a line.')
+        .max(RULES_TEXT_LIMITS.max, 'That is longer than any rules page; paste only the rules.'),
+    })
+    .safeParse(input);
+  if (!parsed.success)
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid request' };
+  const runtime = getRuntime();
+  if (!getSubreddit(runtime.db, parsed.data.name))
+    return { ok: false, error: 'That subreddit is no longer watched.' };
+  const result = await summariseRules(runtime.ai(), {
+    subreddit: parsed.data.name,
+    text: parsed.data.text,
+  });
+  if (!result.ok) return { ok: false, error: `Could not summarise the rules: ${result.message}` };
+  storeRules(runtime.db, {
+    subreddit: parsed.data.name,
+    text: parsed.data.text,
+    summary: result.summary,
+    now: nowSeconds(),
+  });
+  revalidatePath('/subreddits');
+  revalidatePath('/inbox');
+  return { ok: true };
 }

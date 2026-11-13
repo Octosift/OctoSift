@@ -17,6 +17,7 @@ import {
   type SubredditActionResult,
 } from '../../lib/actions/subreddits';
 import { formatAgo, formatClock } from '../../lib/format';
+import { RulesDialog, RulesSummaryLine } from './rules-dialog';
 
 type Row = Omit<SubredditStats, 'rulesSummary'> & { rulesSummary: RulesSummary | null };
 
@@ -160,10 +161,15 @@ export function SubredditTable({
                     <ExternalLink className="size-3 text-muted-foreground" aria-hidden />
                   </a>
                   {row.rulesSummary ? (
-                    <p className="mt-0.5 max-w-xs text-xs text-muted-foreground">
-                      Rules: promotion {row.rulesSummary.promotion}, links {row.rulesSummary.links}.
-                    </p>
+                    <RulesSummaryLine
+                      summary={row.rulesSummary}
+                      updatedAt={row.rulesUpdatedAt}
+                      now={now}
+                    />
                   ) : null}
+                  <div>
+                    <RulesDialog name={row.name} text={row.rulesText} summary={row.rulesSummary} />
+                  </div>
                 </td>
                 <td className="px-2 py-2.5">
                   <StatusCell row={row} now={now} check={check} />

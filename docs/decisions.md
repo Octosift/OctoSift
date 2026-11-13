@@ -40,6 +40,11 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
   the remaining budget drops below one. See `reddit-reads.md`.
 - **Reddit is read by one process at a time.** The worker and the CLI scan (which
   takes the same scan lock) are the only readers, so one in-process limiter is enough.
+- **No Reddit app credentials.** Reddit closed self-service API access in November 2025 and
+  stopped accepting new access requests at the end of October 2026, so new users cannot get
+  credentials for an app-only source. Subreddit rules are pasted by the user instead and
+  summarised once; the summary sets the promotion policy only while the user has not chosen
+  one.
 - **Busy subreddits calm down again.** A subreddit polled more often because it was
   busy has its interval doubled back towards the default once a poll brings in fewer
   than a quarter of a full feed.

@@ -138,8 +138,9 @@ $3 per 24 hours) and leave the remaining posts for the next scan.
 
 ## Responsible use
 
-- **Follow each subreddit's rules.** Mark subreddits that do not allow promotion; drafts for
-  them never mention your product.
+- **Follow each subreddit's rules.** Paste a subreddit's rules on the Subreddits screen and
+  they are summarised into what replies may do there. Mark subreddits that do not allow
+  promotion; drafts for them never mention your product.
 - **Say who you are.** Every draft that mentions the product says plainly that you built it.
   Keep it that way when you edit.
 - **Help first.** A good reply is useful even if the sentence about your product is removed.
@@ -197,8 +198,6 @@ AI stages are quick.
 
 ## Roadmap
 
-- Paste a subreddit's rules (or use your own Reddit app credentials) to summarise them
-  automatically.
 - Threads that rank on Google for your buyers' searches, worth answering even when old.
 - Checks that your posted replies are visible to logged-out readers.
 - A browser extension for one-click copy on Reddit itself.

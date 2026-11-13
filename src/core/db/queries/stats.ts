@@ -13,6 +13,8 @@ export interface SubredditStats {
   postsPerDay: number | null;
   promotionPolicy: string;
   rulesSummary: unknown;
+  rulesText: string | null;
+  rulesUpdatedAt: number | null;
   postsSeen: number;
   leads: number;
 }
@@ -29,6 +31,8 @@ export function subredditStats(db: Db, productId: string): SubredditStats[] {
       postsPerDay: subreddits.postsPerDay,
       promotionPolicy: subreddits.promotionPolicy,
       rulesSummary: subreddits.rulesSummaryJson,
+      rulesText: subreddits.rulesText,
+      rulesUpdatedAt: subreddits.rulesUpdatedAt,
     })
     .from(productSubreddits)
     .innerJoin(subreddits, eq(subreddits.name, productSubreddits.subreddit))
