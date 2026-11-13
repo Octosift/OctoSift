@@ -117,56 +117,55 @@ export function ModelsSection({ data }: { data: SettingsData }) {
           const value = form.values[stage];
           const result = tests[stage];
           return (
-            <div
-              key={stage}
-              className="grid gap-2 px-4 py-3 sm:grid-cols-[8rem_10rem_1fr_auto] sm:items-end"
-            >
+            <div key={stage} className="flex flex-col gap-2 px-4 py-3">
               <div>
                 <p className="text-[13px] font-medium">{label}</p>
                 <p className="text-xs text-muted-foreground">{hint}</p>
               </div>
-              <Select
-                aria-label={`${label} provider`}
-                value={value.provider}
-                onChange={(event) => {
-                  form.set(stage, { ...value, provider: event.target.value as ProviderId });
-                }}
-              >
-                {PROVIDERS.map((provider) => (
-                  <option key={provider.id} value={provider.id}>
-                    {provider.label}
-                  </option>
-                ))}
-              </Select>
-              <div className="flex gap-2">
-                <Input
-                  aria-label={`${label} model`}
-                  list={`models-${value.provider}`}
-                  placeholder="Model id"
-                  value={value.model}
+              <div className="grid gap-2 sm:grid-cols-[13rem_minmax(0,1fr)_auto] sm:items-center">
+                <Select
+                  aria-label={`${label} provider`}
+                  value={value.provider}
                   onChange={(event) => {
-                    form.set(stage, { ...value, model: event.target.value });
+                    form.set(stage, { ...value, provider: event.target.value as ProviderId });
                   }}
-                  onFocus={() => {
-                    if (!suggestions[value.provider]) loadSuggestions(value.provider);
-                  }}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    test(stage);
-                  }}
-                  disabled={result === 'running'}
                 >
-                  {result === 'running' ? 'Testing…' : 'Test connection'}
-                </Button>
+                  {PROVIDERS.map((provider) => (
+                    <option key={provider.id} value={provider.id}>
+                      {provider.label}
+                    </option>
+                  ))}
+                </Select>
+                <div className="flex gap-2">
+                  <Input
+                    aria-label={`${label} model`}
+                    list={`models-${value.provider}`}
+                    placeholder="Model id"
+                    value={value.model}
+                    onChange={(event) => {
+                      form.set(stage, { ...value, model: event.target.value });
+                    }}
+                    onFocus={() => {
+                      if (!suggestions[value.provider]) loadSuggestions(value.provider);
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      test(stage);
+                    }}
+                    disabled={result === 'running'}
+                  >
+                    {result === 'running' ? 'Testing…' : 'Test connection'}
+                  </Button>
+                </div>
               </div>
               {result && result !== 'running' ? (
                 <p
                   role="status"
-                  className={`text-xs sm:col-span-4 ${result.ok ? 'text-brand-subtle-foreground' : 'text-danger-foreground'}`}
+                  className={`text-xs ${result.ok ? 'text-brand-subtle-foreground' : 'text-danger-foreground'}`}
                 >
                   {result.ok
                     ? `Connected to ${result.model} in ${result.latencyMs} ms.`
