@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { evaluationsForRun } from '@/core/db/queries/evaluations';
 import { getRun } from '@/core/db/queries/runs';
 import { emptyCounts, type FunnelCounts } from '@/core/pipeline/funnel';
-import { Funnel } from '../../../components/funnel';
+import { Funnel, type FunnelStepKey } from '../../../components/funnel';
 import {
   Badge,
   Banner,
@@ -30,12 +30,13 @@ const STAGES = {
 } as const;
 type Stage = keyof typeof STAGES;
 
-const FUNNEL_STAGE: Record<string, Stage | null> = {
+const FUNNEL_STAGE: Record<FunnelStepKey, Stage | null> = {
   fetched: null,
-  prefilter: 'prefilter',
+  filtered: 'prefilter',
   triage: 'triage',
   qualify: 'qualify',
   leads: 'veto',
+  drafts: null,
 };
 
 const VERDICT_TONE = { pass: 'brand', skip: 'neutral', error: 'danger' } as const;
@@ -106,7 +107,7 @@ export default async function RunPage({
                 }}
               />
             </div>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 border-t border-border px-4 py-3 text-xs">
+            <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 border-t border-border px-4 py-3 text-xs">
               <dt className="text-muted-foreground">New posts</dt>
               <dd className="text-right tabular">{counts.new}</dd>
               <dt className="text-muted-foreground">Brand mentions</dt>
