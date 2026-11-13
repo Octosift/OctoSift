@@ -43,6 +43,8 @@ export const CONFIG = deepFreeze({
     maxSubredditsPerRequest: 5,
     /** A new subreddit only contributes posts this recent on its first poll. */
     firstPollWindowS: 48 * HOUR_S,
+    /** Reddit allows 40,000 characters in a post; anything longer is cut. */
+    maxBodyChars: 40_000,
     /** Reddit archives posts after roughly six months; they take no replies. */
     archiveAfterS: 182 * DAY_S,
     defaultUserAgent:

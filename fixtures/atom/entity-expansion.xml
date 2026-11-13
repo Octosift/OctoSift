@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE feed [
+  <!ENTITY a "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">
+  <!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">
+  <!ENTITY c "&b;&b;&b;&b;&b;&b;&b;&b;&b;&b;">
+]>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>&c;</title><entry><id>t3_1ee0001</id><title>&c;</title><link href="https://www.reddit.com/r/freelance_demo/comments/1ee0001/x/" /><category term="freelance_demo" label="r/freelance_demo"/><published>2026-11-13T11:00:00+00:00</published><content type="html">&c;</content></entry></feed>
