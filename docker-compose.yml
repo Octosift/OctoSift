@@ -1,0 +1,37 @@
+# The dashboard and the worker share one image and one database volume.
+# The dashboard is only published on 127.0.0.1; set APP_PASSWORD in .env
+# before exposing it any further.
+x-app: &app
+  build: .
+  image: local/reddit-leads:latest
+  env_file:
+    - path: .env
+      required: false
+  volumes:
+    - app-data:/app/data
+
+services:
+  migrate:
+    <<: *app
+    command: ['pnpm', 'db:migrate']
+
+  web:
+    <<: *app
+    command: ['pnpm', 'start:web']
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    <<: *app
+    command: ['pnpm', 'start:worker']
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  app-data:
