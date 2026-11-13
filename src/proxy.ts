@@ -11,7 +11,8 @@ export function proxy(request: NextRequest) {
   if (!password) return NextResponse.next();
   const { pathname, search } = request.nextUrl;
   if (pathname === '/login') return NextResponse.next();
-  if (isValidSession(password, request.cookies.get(SESSION_COOKIE)?.value)) {
+  const nowS = Math.floor(Date.now() / 1000);
+  if (isValidSession(password, request.cookies.get(SESSION_COOKIE)?.value, nowS)) {
     return NextResponse.next();
   }
   if (pathname.startsWith('/api/')) {

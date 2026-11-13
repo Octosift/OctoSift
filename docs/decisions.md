@@ -86,5 +86,9 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
   Radix primitives and Tailwind tokens, written the shadcn way, with one accent colour.
 - **Onboarding connects the AI provider first.** The product profile is built from the
   website with a model, so the provider has to be set up before the product step.
+- **Sessions expire and wrong passwords are throttled.** The session cookie holds its issue
+  time and an HMAC keyed by an scrypt hash of `APP_PASSWORD`, and lasts 30 days. After ten
+  wrong passwords in a minute, sign-ins pause for everyone until the minute has passed, so a
+  long random password is still the main defence.
 - **Next.js is pinned to the project folder** (Turbopack root) and does not write its agent
   instruction file into the repository.
