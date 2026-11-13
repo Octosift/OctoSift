@@ -48,6 +48,7 @@ export default tseslint.config(
       '@typescript-eslint/no-non-null-assertion': 'error',
       '@typescript-eslint/ban-ts-comment': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
       '@typescript-eslint/restrict-template-expressions': [
         'error',
         { allowNumber: true, allowBoolean: true },
