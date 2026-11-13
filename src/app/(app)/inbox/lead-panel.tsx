@@ -23,6 +23,8 @@ import { LeadFeedback } from './lead-feedback';
 import { PostBody, StatusNote } from './lead-parts';
 import { ScoreBadge } from './lead-list';
 
+const NO_DRAFT_HINT = 'Write a draft first.';
+
 export interface PanelHandlers {
   copyAndOpen: () => void;
   editDraft: () => void;
@@ -59,6 +61,8 @@ export function LeadPanel({
   const editorHandle = useRef<DraftEditorHandle | null>(null);
   const isBrand = lead.kind === 'brand_mention';
   const open = lead.status !== 'replied' && lead.status !== 'dismissed';
+  // Brand mentions only open the thread; opportunities need a reply to copy.
+  const canCopy = isBrand || text.trim().length > 0;
 
   function run(action: () => Promise<ActionResult>, after?: () => void) {
     startTransition(async () => {
@@ -73,8 +77,9 @@ export function LeadPanel({
   }
 
   function copyAndOpen() {
-    if (!isBrand && text.trim().length === 0) {
-      setMessage({ tone: 'danger', text: 'There is no draft to copy yet. Write one first.' });
+    if (!canCopy) {
+      // Reached from the keyboard shortcut; the button itself is disabled.
+      setMessage({ tone: 'info', text: NO_DRAFT_HINT });
       return;
     }
     // Both start inside the click, so the browser treats them as user actions.
@@ -204,11 +209,21 @@ export function LeadPanel({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="brand" onClick={copyAndOpen} disabled={pending}>
+        <Button
+          variant="brand"
+          onClick={copyAndOpen}
+          disabled={pending || !canCopy}
+          aria-describedby={canCopy ? undefined : 'copy-hint'}
+        >
           <Copy aria-hidden />
           {isBrand ? 'Open thread' : 'Copy and open thread'}
           <Kbd className="ml-1 border-transparent bg-black/10 text-current dark:bg-black/20">c</Kbd>
         </Button>
+        {canCopy ? null : (
+          <span id="copy-hint" className="text-xs text-muted-foreground">
+            {NO_DRAFT_HINT}
+          </span>
+        )}
         {detail.dm ? (
           <Button
             variant="outline"

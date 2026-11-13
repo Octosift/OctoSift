@@ -90,6 +90,18 @@ test('copy and open copies the draft, opens the thread and marks the lead replie
   );
 });
 
+test('copy and open stays disabled until a lead has a draft', async () => {
+  await page.goto('/inbox');
+  await page
+    .getByRole('list', { name: 'Leads' })
+    .getByRole('link')
+    .filter({ hasNotText: 'Draft ready' })
+    .first()
+    .click();
+  await expect(page.getByRole('button', { name: /Copy and open thread/ })).toBeDisabled();
+  await expect(page.getByText('Write a draft first.')).toBeVisible();
+});
+
 test('a saved API key is only ever shown as a mask', async () => {
   // Assembled at runtime so the source contains nothing key-shaped.
   const key = ['sk', 'proj', 'e2eOnlyNotARealKey000000wxyz'].join('-');
