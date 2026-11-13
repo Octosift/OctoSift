@@ -81,17 +81,36 @@ export function createScheduler(deps: SchedulerDeps) {
   const startHeartbeat = deps.startHeartbeat ?? intervalHeartbeat;
   const sleep = deps.sleep ?? abortableSleep;
 
-  /** Subreddit checks requested by the dashboard read Reddit too, so they share the lock. */
-  async function validate(): Promise<TickOutcome> {
+  /**
+   * Holds the scan lock while `work` runs and keeps its heartbeat going. The
+   * signal is aborted if another process takes the lock over.
+   */
+  async function withLock(
+    work: (signal: AbortSignal) => Promise<TickOutcome>,
+  ): Promise<TickOutcome> {
     if (!acquireScanLock(db, owner, clock.nowMs(), CONFIG.schedule.lockStaleAfterMs)) {
       return { kind: 'locked' };
     }
+    const lost = new AbortController();
+    const stopHeartbeat = startHeartbeat(() => {
+      if (lost.signal.aborted || heartbeatScanLock(db, owner, clock.nowMs())) return;
+      log.warn('Scan lock lost to another process; stopping');
+      lost.abort(new Error('Stopped early: another process took over the scan lock.'));
+    });
     try {
-      await runValidationRequest(db, deps.scanDeps().source, nowSeconds(clock));
-      return { kind: 'validated' };
+      return await work(lost.signal);
     } finally {
+      stopHeartbeat();
       releaseScanLock(db, owner);
     }
+  }
+
+  /** Subreddit checks requested by the dashboard read Reddit too, so they share the lock. */
+  function validate(): Promise<TickOutcome> {
+    return withLock(async () => {
+      await runValidationRequest(db, deps.scanDeps().source, nowSeconds(clock));
+      return { kind: 'validated' };
+    });
   }
 
   async function tick(options: { checkSchedule: boolean }): Promise<TickOutcome> {
@@ -99,25 +118,16 @@ export function createScheduler(deps: SchedulerDeps) {
     const requested = pendingScanRequest(db) !== null;
     const due = requested || (options.checkSchedule && hasDueWork(db, settings, nowSeconds(clock)));
     if (!due) return { kind: 'idle' };
-    if (!acquireScanLock(db, owner, clock.nowMs(), CONFIG.schedule.lockStaleAfterMs)) {
-      return { kind: 'locked' };
-    }
-    const request = takeScanRequest(db);
-    const stopHeartbeat = startHeartbeat(() => {
-      if (!heartbeatScanLock(db, owner, clock.nowMs()))
-        log.warn('Scan lock lost to another process');
-    });
-    try {
+    return withLock(async (signal) => {
+      const request = takeScanRequest(db);
       const report = await runScan(deps.scanDeps(), {
         trigger: request ? 'manual' : 'schedule',
         ignoreSchedule: request !== null,
+        signal,
         ...(request?.productId ? { productId: request.productId } : {}),
       });
       return { kind: 'scanned', report };
-    } finally {
-      stopHeartbeat();
-      releaseScanLock(db, owner);
-    }
+    });
   }
 
   async function run(signal: AbortSignal): Promise<void> {

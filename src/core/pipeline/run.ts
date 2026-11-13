@@ -52,6 +52,11 @@ export interface ScanOptions {
   productId?: string;
   /** Read every watched subreddit now, not only the ones that are due. */
   ignoreSchedule?: boolean;
+  /**
+   * Stops Reddit reads and AI work early; the run ends as partial with the
+   * abort reason as its error. Used when the scan lock is lost.
+   */
+  signal?: AbortSignal;
 }
 
 export interface ScanReport {
@@ -65,6 +70,11 @@ export interface ScanReport {
 }
 
 const NO_FEEDBACK: FeedbackContext = { rules: [], good: [], bad: [] };
+
+function abortReason(signal: AbortSignal): string {
+  const reason: unknown = signal.reason;
+  return reason instanceof Error ? reason.message : 'The scan was stopped.';
+}
 
 type ReadyProduct = Product & { profile: ProductProfile };
 
@@ -83,10 +93,11 @@ function productsFor(deps: ScanDeps, productId: string | undefined): ReadyProduc
 
 function statusOf(
   counts: FunnelCounts,
-  stops: { guard: string | null; budget: string | null },
+  stops: { guard: string | null; budget: string | null; aborted: string | null },
 ): RunStatus {
   if (stops.guard !== null) return 'failed';
   if (stops.budget !== null) return 'budget_stopped';
+  if (stops.aborted !== null) return 'partial';
   const errors =
     counts.triage.error + counts.qualify.error + counts.redditErrors + counts.drafts.failed;
   return counts.blocked || errors > 0 ? 'partial' : 'ok';
@@ -146,6 +157,7 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
         log,
         now,
         defaultIntervalMinutes: settings.get('schedule.intervalMinutes'),
+        ...(options.signal ? { signal: options.signal } : {}),
       },
       allNames,
       { ignoreSchedule: options.ignoreSchedule ?? false },
@@ -156,6 +168,7 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
     progress();
     const since = now - settings.get('prefilter.maxPostAgeHours') * 3600;
     for (const product of products) {
+      if (options.signal?.aborted) break;
       const names = watched.get(product.id) ?? [];
       const retryable = recentPosts(db, names, since).map((post) => post.id);
       await evaluateProduct(
@@ -177,6 +190,7 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
           newLeads,
           onProgress: progress,
           state,
+          ...(options.signal ? { signal: options.signal } : {}),
         },
         product,
         [...new Set([...collected.newPostIds, ...retryable])],
@@ -189,10 +203,11 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
   }
 
   const usage = ledger.summary();
+  const aborted = options.signal?.aborted ? abortReason(options.signal) : null;
   const status = unexpected
     ? 'failed'
-    : statusOf(counts, { guard: guard.tripped(), budget: state.budgetStop });
-  const error = unexpected ?? guard.tripped() ?? state.budgetStop;
+    : statusOf(counts, { guard: guard.tripped(), budget: state.budgetStop, aborted });
+  const error = unexpected ?? guard.tripped() ?? state.budgetStop ?? aborted;
   finishRun(db, runId, {
     now: nowSeconds(clock),
     status,

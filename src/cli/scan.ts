@@ -82,8 +82,10 @@ export async function runScanCommand(
   if (!acquireScanLock(deps.db, owner, deps.clock.nowMs(), CONFIG.schedule.lockStaleAfterMs)) {
     return { code: 1, output: SCAN_RUNNING_MESSAGE, report: null };
   }
+  const lost = new AbortController();
   const heartbeat = setInterval(() => {
-    heartbeatScanLock(deps.db, owner, deps.clock.nowMs());
+    if (lost.signal.aborted || heartbeatScanLock(deps.db, owner, deps.clock.nowMs())) return;
+    lost.abort(new Error('Stopped early: another process took over the scan lock.'));
   }, CONFIG.schedule.lockHeartbeatMs);
   heartbeat.unref();
   try {
@@ -91,6 +93,7 @@ export async function runScanCommand(
       trigger: 'cli',
       dryRun: options.dryRun,
       ignoreSchedule: true,
+      signal: lost.signal,
       ...(options.productId ? { productId: options.productId } : {}),
     });
     return {

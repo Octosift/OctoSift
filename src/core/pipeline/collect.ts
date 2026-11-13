@@ -33,6 +33,8 @@ export interface CollectContext {
   /** Epoch seconds. */
   now: number;
   defaultIntervalMinutes: number;
+  /** Aborted when the scan must stop reading, for example after losing the scan lock. */
+  signal?: AbortSignal;
 }
 
 export interface CollectResult {
@@ -112,6 +114,7 @@ export async function collectPosts(
   const newPostIds: string[] = [];
 
   for (let index = 0; index < queue.length; index += 1) {
+    if (ctx.signal?.aborted) break;
     const request = queue[index] ?? [];
     const result = await ctx.source.fetchNewPosts(request, { limit: CONFIG.reddit.feedLimit });
     if (!result.ok) {

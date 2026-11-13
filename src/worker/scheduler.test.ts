@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { acquireScanLock, requestScan } from '../core/scan-lock';
 import { requestValidation, validationProgress } from '../core/validation-queue';
-import { createScanHarness } from '../core/testing/scan-harness';
+import { createScanHarness, type ScanHarness } from '../core/testing/scan-harness';
 import { runs } from '../core/db/schema';
 import { silentLogger } from '../core/log';
 import { createScheduler } from './scheduler';
 
-function setup() {
+function setup(options: { beforeBeat?: (harness: ScanHarness) => void } = {}) {
   const harness = createScanHarness('acme-invoices');
   const beats: number[] = [];
   const scheduler = createScheduler({
@@ -17,6 +17,7 @@ function setup() {
     scanDeps: () => harness.deps,
     owner: 'worker-test',
     startHeartbeat: (beat) => {
+      options.beforeBeat?.(harness);
       beat();
       beats.push(harness.clock.nowMs());
       return () => undefined;
@@ -62,10 +63,26 @@ describe('scheduler', () => {
     expect((await scheduler.tick({ checkSchedule: false })).kind).toBe('scanned');
   });
 
+  it('stops reading when another process takes the scan lock over', async () => {
+    const { scheduler } = setup({
+      beforeBeat: (harness) => {
+        // Another process finds the lock stale and takes it.
+        acquireScanLock(harness.db, 'cli-other', harness.clock.nowMs() + 10 * 60_000, 60_000);
+      },
+    });
+    const outcome = await scheduler.tick({ checkSchedule: true });
+    expect(outcome.kind === 'scanned' && outcome.report).toMatchObject({
+      status: 'partial',
+      error: 'Stopped early: another process took over the scan lock.',
+      counts: { fetched: 0, leads: 0 },
+    });
+  });
+
   it('checks subreddits the dashboard asked about before scanning', async () => {
-    const { scheduler, harness } = setup();
+    const { scheduler, harness, beats } = setup();
     requestValidation(harness.db, ['freelance_demo', 'no_such_demo'], 0);
     expect(await scheduler.tick({ checkSchedule: true })).toEqual({ kind: 'validated' });
+    expect(beats).toHaveLength(1);
     expect(validationProgress(harness.db)?.results.map((result) => result.status)).toEqual([
       'ok',
       'gone',

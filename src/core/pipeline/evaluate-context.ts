@@ -55,11 +55,15 @@ export interface EvaluateContext {
   onProgress: () => void;
   /** Set once the budget is exhausted; shared across products. */
   state: { budgetStop: string | null };
+  /** Aborted when the scan must stop, for example after losing the scan lock. */
+  signal?: AbortSignal;
 }
 
-/** AI work stops for the rest of the scan once the budget or the AI guard says so. */
+/** AI work stops for the rest of the scan once the budget, the AI guard or a stop says so. */
 export function aiAvailable(ctx: EvaluateContext): boolean {
-  return ctx.state.budgetStop === null && ctx.guard.tripped() === null;
+  return (
+    ctx.state.budgetStop === null && ctx.guard.tripped() === null && !(ctx.signal?.aborted ?? false)
+  );
 }
 
 export function saveVerdict(

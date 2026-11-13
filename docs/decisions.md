@@ -68,6 +68,9 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
 
 - **The dashboard never reads Reddit.** Subreddit checks and "scan now" are requests the
   worker carries out, so every Reddit read shares one rate limiter.
+- **A scan that loses its lock stops.** If another process takes the lock over, the scan
+  stops reading Reddit and calling models, and the run ends as partial with the reason.
+  Subreddit checks keep the lock alive with the same heartbeat as scans.
 - **Migrations run once before the processes start**, so the dashboard and the worker never
   race to apply them.
 - **tsx and concurrently are runtime dependencies**, because the worker runs from TypeScript
