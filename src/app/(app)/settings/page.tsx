@@ -2,15 +2,9 @@ import type { Metadata } from 'next';
 import { Banner, PageHeader } from '../../components/ui/display';
 import { loadSettings } from '../../lib/data/settings';
 import { ModelsSection } from './models-section';
-import {
-  BudgetSection,
-  DataSection,
-  FiltersSection,
-  KeysSection,
-  NotificationsSection,
-  PricesSection,
-  RedditSection,
-} from './sections';
+import { NotificationsSection, RedditSection } from './connection-sections';
+import { DataSection } from './data-section';
+import { BudgetSection, FiltersSection, KeysSection, PricesSection } from './sections';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Settings' };

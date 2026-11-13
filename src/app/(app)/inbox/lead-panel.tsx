@@ -1,25 +1,26 @@
 'use client';
 
-import { ArrowLeft, Copy, ExternalLink, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useImperativeHandle, useRef, useState, useTransition, type RefObject } from 'react';
 import type { LeadDetail } from '@/core/db/queries/inbox';
 import type { PacingWarning } from '@/core/guard/pacing';
 import { Button } from '../../components/ui/button';
 import { Badge, Banner, Kbd } from '../../components/ui/display';
-import { Dialog } from '../../components/ui/dialog';
-import { Checkbox, Field, Input, Select } from '../../components/ui/fields';
+import { Select } from '../../components/ui/fields';
 import {
   dismissLead,
-  giveFeedback,
   markReplied,
   restoreLead,
   snoozeLead,
   type ActionResult,
 } from '../../lib/actions/leads';
 import { formatAgo, formatClock } from '../../lib/format';
-import { highlightQuote, intentLabel, RISK_LABELS } from '../../lib/text';
+import { intentLabel, RISK_LABELS } from '../../lib/text';
 import { DraftEditor, type DraftEditorHandle } from './draft-editor';
+import { DismissDialog, ReplyConfirmDialog } from './lead-dialogs';
+import { LeadFeedback } from './lead-feedback';
+import { PostBody, StatusNote } from './lead-parts';
 import { ScoreBadge } from './lead-list';
 
 export interface PanelHandlers {
@@ -31,57 +32,6 @@ export interface PanelHandlers {
 }
 
 type Message = { tone: 'info' | 'danger'; text: string } | null;
-
-function PostBody({ text, quote }: { text: string; quote: string }) {
-  if (text.trim().length === 0) {
-    return <p className="text-[13px] text-muted-foreground italic">This post has no text.</p>;
-  }
-  return (
-    <p className="text-[13px] leading-6 whitespace-pre-wrap">
-      {highlightQuote(text, quote).map((segment, index) =>
-        segment.highlight ? (
-          <mark
-            key={index}
-            className="rounded-sm bg-brand-subtle px-0.5 text-brand-subtle-foreground"
-          >
-            {segment.text}
-          </mark>
-        ) : (
-          <span key={index}>{segment.text}</span>
-        ),
-      )}
-    </p>
-  );
-}
-
-function StatusNote({ detail, now }: { detail: LeadDetail; now: number }) {
-  const { lead } = detail;
-  if (lead.status === 'replied' && lead.repliedAt !== null) {
-    return (
-      <Banner>
-        Replied {formatAgo(lead.repliedAt, now)}
-        {lead.repliedWithMention ? ', mentioning the product' : ', without mentioning the product'}.
-        {lead.commentUrl ? (
-          <a
-            className="ml-1 underline underline-offset-2"
-            href={lead.commentUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Your comment
-          </a>
-        ) : null}
-      </Banner>
-    );
-  }
-  if (lead.status === 'snoozed' && lead.snoozedUntil !== null) {
-    return <Banner>Snoozed until {new Date(lead.snoozedUntil * 1000).toLocaleString()}.</Banner>;
-  }
-  if (lead.status === 'dismissed') {
-    return <Banner>Dismissed{lead.dismissReason ? `: ${lead.dismissReason}` : '.'}</Banner>;
-  }
-  return null;
-}
 
 export function LeadPanel({
   detail,
@@ -104,7 +54,6 @@ export function LeadPanel({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [dismissOpen, setDismissOpen] = useState(false);
   const [snoozeDays, setSnoozeDays] = useState('1');
-  const [feedbackNote, setFeedbackNote] = useState('');
   const [pending, startTransition] = useTransition();
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const editorHandle = useRef<DraftEditorHandle | null>(null);
@@ -321,51 +270,7 @@ export function LeadPanel({
         ) : null}
       </div>
 
-      <section aria-labelledby="feedback-heading" className="flex flex-col gap-2">
-        <h3 id="feedback-heading" className="text-xs font-medium text-muted-foreground">
-          Was this a good lead?{' '}
-          {detail.feedback
-            ? `You said ${detail.feedback.signal}${detail.feedback.note ? `: ${detail.feedback.note}` : ''}.`
-            : null}
-        </h3>
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            aria-label="Note for future scans"
-            className="h-8 max-w-sm flex-1"
-            placeholder="Optional note, e.g. we don't serve students"
-            value={feedbackNote}
-            onChange={(event) => {
-              setFeedbackNote(event.target.value);
-            }}
-          />
-          <Button
-            onClick={() => {
-              run(
-                () => giveFeedback({ leadId: lead.id, signal: 'good', note: feedbackNote }),
-                () => {
-                  setFeedbackNote('');
-                },
-              );
-            }}
-            disabled={pending}
-          >
-            <ThumbsUp aria-hidden /> Good
-          </Button>
-          <Button
-            onClick={() => {
-              run(
-                () => giveFeedback({ leadId: lead.id, signal: 'bad', note: feedbackNote }),
-                () => {
-                  setFeedbackNote('');
-                },
-              );
-            }}
-            disabled={pending}
-          >
-            <ThumbsDown aria-hidden /> Bad
-          </Button>
-        </div>
-      </section>
+      <LeadFeedback leadId={lead.id} feedback={detail.feedback} onError={setMessage} />
 
       <ReplyConfirmDialog
         open={confirmOpen}
@@ -403,151 +308,5 @@ export function LeadPanel({
         </p>
       ) : null}
     </article>
-  );
-}
-
-function ReplyConfirmDialog({
-  open,
-  onOpenChange,
-  mentionsProduct,
-  productName,
-  onConfirm,
-  pending,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  mentionsProduct: boolean;
-  productName: string;
-  onConfirm: (commentUrl: string, mentioned: boolean) => void;
-  pending: boolean;
-}) {
-  const [commentUrl, setCommentUrl] = useState('');
-  const [mentioned, setMentioned] = useState(mentionsProduct);
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Did you post your reply?"
-      description="The draft is on your clipboard and the thread is open in a new tab."
-    >
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          onConfirm(commentUrl, mentioned);
-        }}
-      >
-        <Field
-          label="Link to your comment (optional)"
-          htmlFor="comment-url"
-          hint="Used later to check that your comment is visible."
-        >
-          <Input
-            id="comment-url"
-            type="url"
-            placeholder="https://www.reddit.com/r/…/comments/…"
-            value={commentUrl}
-            onChange={(event) => {
-              setCommentUrl(event.target.value);
-            }}
-          />
-        </Field>
-        <label className="flex items-center gap-2 text-[13px]">
-          <Checkbox
-            checked={mentioned}
-            onChange={(event) => {
-              setMentioned(event.target.checked);
-            }}
-          />
-          My reply mentions {productName}
-        </label>
-        <div className="mt-1 flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => {
-              onOpenChange(false);
-            }}
-          >
-            Not yet
-          </Button>
-          <Button type="submit" variant="primary" disabled={pending}>
-            Mark as replied
-          </Button>
-        </div>
-      </form>
-    </Dialog>
-  );
-}
-
-const DISMISS_REASONS = ['Not a fit', 'Already answered', 'Not worth replying to'];
-
-function DismissDialog({
-  open,
-  onOpenChange,
-  onConfirm,
-  pending,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: (reason: string) => void;
-  pending: boolean;
-}) {
-  const [reason, setReason] = useState('');
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Dismiss this lead"
-      description="A short reason helps you review dismissed leads later."
-    >
-      <form
-        className="flex flex-col gap-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          onConfirm(reason);
-        }}
-      >
-        <div className="flex flex-wrap gap-1.5">
-          {DISMISS_REASONS.map((preset) => (
-            <Button
-              key={preset}
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setReason(preset);
-              }}
-            >
-              {preset}
-            </Button>
-          ))}
-        </div>
-        <Field label="Reason (optional)" htmlFor="dismiss-reason">
-          <Input
-            id="dismiss-reason"
-            autoFocus
-            value={reason}
-            onChange={(event) => {
-              setReason(event.target.value);
-            }}
-          />
-        </Field>
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => {
-              onOpenChange(false);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" variant="primary" disabled={pending}>
-            Dismiss
-          </Button>
-        </div>
-      </form>
-    </Dialog>
   );
 }

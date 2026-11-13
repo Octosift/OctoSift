@@ -7,7 +7,8 @@ import { ProductPicker } from '../../components/product-picker';
 import { Button } from '../../components/ui/button';
 import { Banner, PageHeader } from '../../components/ui/display';
 import { getRuntime } from '../../lib/runtime';
-import { DeleteProductForm, ProfileForm, RepliesForm, RulesForm } from './product-forms';
+import { ProfileForm, RepliesForm } from './product-forms';
+import { DeleteProductForm, RulesForm } from './product-rules';
 import { RulesEditor } from './rules-editor';
 
 export const dynamic = 'force-dynamic';
