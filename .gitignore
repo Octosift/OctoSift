@@ -25,3 +25,6 @@ playwright-report/
 
 # OS files
 .DS_Store
+
+# scratch space for tests
+.tmp/
