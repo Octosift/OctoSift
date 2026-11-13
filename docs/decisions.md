@@ -51,3 +51,33 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
 - **The daily budget is a rolling 24 hours**, which needs no time zone.
 - **No default price table.** Prices change and differ by provider, so the table
   starts empty and cost shows as unknown until the user enters prices in Settings.
+
+## Pipeline
+
+- **The unverified-quote penalty is applied once**, in the score stage, rather than both
+  when the quote is checked and again in the score.
+- **Language is only judged for posts of 80 characters or more.** Detection on short text
+  misread English as other languages in testing, which would silently drop leads.
+- **Private-message drafts are automatic by default**: off for consumer products, on for
+  others. The founder can switch them on or off per product.
+- **The crawler and the webhook may call `fetch`** besides the Reddit client and the AI
+  provider: reading the product's own site and posting to the founder's webhook are network
+  calls by design.
+
+## Processes
+
+- **The dashboard never reads Reddit.** Subreddit checks and "scan now" are requests the
+  worker carries out, so every Reddit read shares one rate limiter.
+- **Migrations run once before the processes start**, so the dashboard and the worker never
+  race to apply them.
+- **tsx and concurrently are runtime dependencies**, because the worker runs from TypeScript
+  source and `pnpm start` runs both processes.
+
+## Dashboard
+
+- **shadcn/ui as an approach, not a generator.** The components are small local files on
+  Radix primitives and Tailwind tokens, written the shadcn way, with one accent colour.
+- **Onboarding connects the AI provider first.** The product profile is built from the
+  website with a model, so the provider has to be set up before the product step.
+- **Next.js is pinned to the project folder** (Turbopack root) and does not write its agent
+  instruction file into the repository.
