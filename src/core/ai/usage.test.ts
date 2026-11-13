@@ -74,6 +74,21 @@ describe('usage ledger', () => {
     expect(result.ok ? '' : result.message).toMatch(/daily/i);
   });
 
+  it('keeps totals without writing anything when persistence is off', () => {
+    const db = openMemoryDatabase();
+    const ledger = createUsageLedger({
+      db,
+      clock: createFakeClock(),
+      runId: null,
+      prices: () => PRICES,
+      caps: () => ({ perRunUsd: 1, perDayUsd: 1 }),
+      persist: false,
+    });
+    ledger.record('triage', small, { inputTokens: 1_000_000, outputTokens: 0 });
+    expect(ledger.summary().costUsd).toBe(1);
+    expect(db.select().from(usage).all()).toEqual([]);
+  });
+
   it('ignores spending older than 24 hours for the daily cap', () => {
     const { make, clock } = setup({ perRunUsd: 100, perDayUsd: 3 });
     make(null).record('qualify', small, { inputTokens: 3_000_000, outputTokens: 0 });

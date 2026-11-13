@@ -40,6 +40,8 @@ export interface UsageLedgerOptions {
   runId: string | null;
   prices: () => PriceTable;
   caps: () => BudgetCaps;
+  /** False for dry runs: totals are kept but nothing is written. */
+  persist?: boolean;
 }
 
 const DAY_S = 24 * 3600;
@@ -61,7 +63,7 @@ function usd(amount: number): string {
 }
 
 export function createUsageLedger(options: UsageLedgerOptions): UsageLedger {
-  const { db, clock, runId, prices, caps } = options;
+  const { db, clock, runId, prices, caps, persist = true } = options;
   const totals: UsageSummary = { costUsd: 0, incomplete: false, calls: 0 };
 
   return {
@@ -86,17 +88,19 @@ export function createUsageLedger(options: UsageLedgerOptions): UsageLedger {
     record(task: AiTask, model: ModelRef, used: AiUsage) {
       const price = priceFor(prices(), model);
       const cost = price ? costOf(price, used) : null;
-      insertUsage(db, {
-        id: newId(),
-        runId,
-        stage: task,
-        provider: model.provider,
-        model: model.model,
-        inputTokens: used.inputTokens,
-        outputTokens: used.outputTokens,
-        costUsd: cost,
-        createdAt: nowSeconds(clock),
-      });
+      if (persist) {
+        insertUsage(db, {
+          id: newId(),
+          runId,
+          stage: task,
+          provider: model.provider,
+          model: model.model,
+          inputTokens: used.inputTokens,
+          outputTokens: used.outputTokens,
+          costUsd: cost,
+          createdAt: nowSeconds(clock),
+        });
+      }
       totals.calls += 1;
       if (cost === null) totals.incomplete = true;
       else totals.costUsd += cost;
