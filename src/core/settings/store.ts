@@ -26,6 +26,8 @@ export interface SettingsStore {
     value: SettingInput<K>,
   ): SetResult;
   clearForProduct(productId: string, key: ProductSettingKey): void;
+  /** Whether the product has its own value rather than the global one. */
+  isOverridden(productId: string, key: ProductSettingKey): boolean;
 }
 
 export function formatIssues(error: z.ZodError): string[] {
@@ -73,5 +75,6 @@ export function createSettingsStore(db: Db): SettingsStore {
     clearForProduct: (productId, key) => {
       deleteSetting(db, productKey(productId, key));
     },
+    isOverridden: (productId, key) => readSetting(db, productKey(productId, key)).found,
   };
 }

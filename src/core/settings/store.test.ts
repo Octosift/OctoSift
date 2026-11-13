@@ -53,6 +53,13 @@ describe('settings store', () => {
     expect(settings.getForProduct('p2', 'thresholds')).toEqual({ show: 55, draft: 70, notify: 90 });
   });
 
+  it('says whether a product has its own value', () => {
+    const { settings } = setup();
+    expect(settings.isOverridden('p1', 'thresholds')).toBe(false);
+    settings.setForProduct('p1', 'thresholds', { show: 65, draft: 80, notify: 95 });
+    expect(settings.isOverridden('p1', 'thresholds')).toBe(true);
+  });
+
   it('removes a product override', () => {
     const { settings } = setup();
     settings.setForProduct('p1', 'vetoPhrases', ['homework help']);
