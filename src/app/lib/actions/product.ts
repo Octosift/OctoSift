@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { profileWire } from '@/core/ai/schemas';
+import { updateFeedbackNote } from '@/core/db/queries/feedback';
 import { deleteProduct, getProduct, listProducts, updateProduct } from '@/core/db/queries/products';
 import { buildShortProfile } from '@/core/profile/extract';
 import { SETTINGS } from '@/core/settings/registry';
@@ -114,4 +115,15 @@ export async function removeProduct(input: {
   deleteProduct(db, product.id);
   revalidatePath('/', 'layout');
   redirect(listProducts(db).length === 0 ? '/onboarding' : '/product');
+}
+
+const ruleInput = z.object({ id: z.string().min(1).max(100), note: z.string().trim().max(200) });
+
+/** Edits a rule learned from feedback; an empty note removes it from the rules. */
+export async function saveRule(input: { id: string; note: string }): Promise<ProductResult> {
+  const parsed = ruleInput.safeParse(input);
+  if (!parsed.success) return { ok: false, errors: issuesToErrors(parsed.error) };
+  updateFeedbackNote(getRuntime().db, parsed.data.id, parsed.data.note);
+  revalidatePath('/product');
+  return Promise.resolve({ ok: true });
 }

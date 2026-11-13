@@ -1,12 +1,14 @@
 import { Plus } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { feedbackRules } from '@/core/db/queries/feedback';
 import { listProducts } from '@/core/db/queries/products';
 import { ProductPicker } from '../../components/product-picker';
 import { Button } from '../../components/ui/button';
 import { Banner, PageHeader } from '../../components/ui/display';
 import { getRuntime } from '../../lib/runtime';
 import { DeleteProductForm, ProfileForm, RepliesForm, RulesForm } from './product-forms';
+import { RulesEditor } from './rules-editor';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Product' };
@@ -70,6 +72,7 @@ export default async function ProductPage({
           overridden={settings.isOverridden(product.id, 'thresholds')}
           vetoPhrases={settings.getForProduct(product.id, 'vetoPhrases')}
         />
+        <RulesEditor rules={feedbackRules(db, product.id)} />
         <DeleteProductForm
           key={`delete-${product.id}`}
           productId={product.id}
