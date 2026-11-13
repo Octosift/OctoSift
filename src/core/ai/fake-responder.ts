@@ -75,7 +75,7 @@ function extracted(profile: ProductProfile): ExtractedProfile {
     pricing: profile.pricing,
     alternatives: profile.alternatives,
     buyer_phrases: profile.buyer_phrases,
-    open_questions: ['Who is your best customer?'],
+    open_questions: ['Do you offer a free trial?'],
   };
 }
 

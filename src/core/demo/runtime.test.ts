@@ -5,7 +5,7 @@ import { silentLogger } from '../log';
 import { runScan } from '../pipeline/run';
 import { createSettingsStore } from '../settings/store';
 import { createFakeClock } from '../testing/fake-clock';
-import { DEMO_MISSING_SUBREDDIT, demoRuntimeOverrides } from './runtime';
+import { DEMO_MISSING_SUBREDDIT, DEMO_QUIET_SUBREDDITS, demoRuntimeOverrides } from './runtime';
 import { loadSampleProduct } from './sample-products';
 
 describe('demo mode overrides', () => {
@@ -38,9 +38,13 @@ describe('demo mode overrides', () => {
     expect(report.counts.leads).toBe(16);
   });
 
-  it('suggests real demo subreddits plus one that does not exist', async () => {
+  it('knows a quiet subreddit with no posts and rejects one that does not exist', async () => {
     const overrides = demoRuntimeOverrides(createFakeClock());
-    const result = await overrides.source?.fetchNewPosts([DEMO_MISSING_SUBREDDIT], { limit: 10 });
-    expect(result).toEqual({ ok: false, kind: 'gone' });
+    const quiet = await overrides.source?.fetchNewPosts([DEMO_QUIET_SUBREDDITS['acme-invoices']], {
+      limit: 10,
+    });
+    expect(quiet).toMatchObject({ ok: true, posts: [] });
+    const missing = await overrides.source?.fetchNewPosts([DEMO_MISSING_SUBREDDIT], { limit: 10 });
+    expect(missing).toEqual({ ok: false, kind: 'gone' });
   });
 });

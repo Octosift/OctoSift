@@ -20,6 +20,13 @@ export const DEMO_PRODUCT_SLUG = 'acme-invoices';
 /** A suggested subreddit that does not exist, so validation has something to reject. */
 export const DEMO_MISSING_SUBREDDIT = 'not_a_real_demo';
 
+/** One quiet subreddit per sample product that exists but has no posts yet. */
+export const DEMO_QUIET_SUBREDDITS: Record<(typeof SAMPLE_PRODUCT_SLUGS)[number], string> = {
+  'acme-invoices': 'sidehustle_demo',
+  'acme-plants': 'indoorgarden_demo',
+  'acme-logs': 'sysadmin_demo',
+};
+
 export function demoRuntimeOverrides(
   clock: Clock = systemClock,
 ): NonNullable<RuntimeOptions['overrides']> {
@@ -35,10 +42,18 @@ export function demoRuntimeOverrides(
       posts.push(goldenToRedditPost(post, startS));
       labels.set(post.id, post.label);
     }
-    suggestions[profiles[slug].name] = [...golden.subreddits, DEMO_MISSING_SUBREDDIT];
+    suggestions[profiles[slug].name] = [
+      ...golden.subreddits,
+      DEMO_QUIET_SUBREDDITS[slug],
+      DEMO_MISSING_SUBREDDIT,
+    ];
   }
 
-  const client = createFixtureClient({ posts: () => posts, clock });
+  const client = createFixtureClient({
+    posts: () => posts,
+    clock,
+    subreddits: () => Object.values(DEMO_QUIET_SUBREDDITS),
+  });
   const resolveModel = (stage: string): ModelResolution => ({
     ok: true,
     model: { provider: 'openai_compatible', model: `demo-${stage}` },
