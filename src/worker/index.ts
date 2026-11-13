@@ -3,6 +3,7 @@
  * stopped with SIGINT or SIGTERM.
  */
 import { hostname } from 'node:os';
+import { demoRuntimeOverrides } from '../core/demo/runtime';
 import { parseEnv } from '../core/env';
 import { createRuntime } from '../core/runtime';
 import { createScheduler } from './scheduler';
@@ -13,7 +14,11 @@ if (!parsedEnv.ok) {
   process.exit(2);
 }
 
-const runtime = createRuntime({ env: parsedEnv.env, rawEnv: process.env });
+const runtime = createRuntime({
+  env: parsedEnv.env,
+  rawEnv: process.env,
+  ...(parsedEnv.env.DEMO_MODE ? { overrides: demoRuntimeOverrides() } : {}),
+});
 const controller = new AbortController();
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {

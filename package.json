@@ -16,6 +16,7 @@
     "start": "pnpm db:migrate && concurrently -k -n web,worker -c cyan,magenta \"pnpm:start:web\" \"pnpm:start:worker\"",
     "start:web": "NEXT_TELEMETRY_DISABLED=1 next start -H ${HOST:-127.0.0.1} -p ${PORT:-3000}",
     "start:worker": "tsx src/worker/index.ts",
+    "demo": "DATABASE_PATH=data/demo.sqlite tsx scripts/seed-demo.ts && DATABASE_PATH=data/demo.sqlite DEMO_MODE=1 concurrently -k -n web,worker -c cyan,magenta \"pnpm:dev:web\" \"pnpm:dev:worker\"",
     "worker": "tsx src/worker/index.ts",
     "scan": "tsx src/cli/index.ts scan",
     "cli": "tsx src/cli/index.ts",

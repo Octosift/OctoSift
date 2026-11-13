@@ -3,6 +3,7 @@
  * Output goes to stdout; logs go to stderr so `--json` output stays clean.
  */
 import { BRAND } from '../core/brand';
+import { demoRuntimeOverrides } from '../core/demo/runtime';
 import { parseEnv } from '../core/env';
 import { createRedactor } from '../core/secrets/redact';
 import { createRuntime } from '../core/runtime';
@@ -29,7 +30,12 @@ async function main(argv: string[]): Promise<number> {
     process.stderr.write(`Invalid environment:\n${parsedEnv.errors.join('\n')}\n`);
     return 2;
   }
-  const runtime = createRuntime({ env: parsedEnv.env, rawEnv: process.env, logSink: stderrSink });
+  const runtime = createRuntime({
+    env: parsedEnv.env,
+    rawEnv: process.env,
+    logSink: stderrSink,
+    ...(parsedEnv.env.DEMO_MODE ? { overrides: demoRuntimeOverrides() } : {}),
+  });
   try {
     const result = await runScanCommand(runtime.scanDeps(), parsedArgs.options);
     process.stdout.write(result.output);

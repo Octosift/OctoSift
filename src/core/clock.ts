@@ -17,6 +17,11 @@ export const systemClock: Clock = {
   },
 };
 
+/** A clock stopped at one moment, whose sleeps return at once; used to replay past scans. */
+export function frozenClock(ms: number): Clock {
+  return { nowMs: () => ms, sleep: () => Promise.resolve() };
+}
+
 export function nowSeconds(clock: Clock): number {
   return Math.floor(clock.nowMs() / 1000);
 }
