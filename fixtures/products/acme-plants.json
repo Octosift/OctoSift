@@ -1,0 +1,47 @@
+{
+  "name": "Acme Plants",
+  "url": "https://acme-plants.example",
+  "product_type": "mobile_app",
+  "audience": "consumers",
+  "one_liner": "A phone app that identifies houseplants from a photo and reminds you when to water each one.",
+  "what_it_does": [
+    "Identifies a houseplant from a photo",
+    "Builds a watering schedule for each plant",
+    "Sends watering reminders",
+    "Explains light and humidity needs for the identified plant"
+  ],
+  "who_it_is_for": ["People who keep houseplants indoors", "New plant owners who forget to water"],
+  "problems_solved": [
+    "Not knowing what a houseplant is called",
+    "Forgetting to water plants",
+    "Overwatering or underwatering",
+    "Not knowing how much light a plant needs"
+  ],
+  "not_for": [
+    "Outdoor gardening and vegetables",
+    "Plant shops and nurseries",
+    "Diagnosing pests or diseases",
+    "Lawn care"
+  ],
+  "pricing": "Free with a paid tier for unlimited plants.",
+  "alternatives": [
+    "calendar reminders",
+    "plant identification websites",
+    "sticky notes on the pot"
+  ],
+  "buyer_phrases": [
+    "what plant is this",
+    "I keep forgetting to water",
+    "how often should I water",
+    "my plant is drooping",
+    "watering reminder app",
+    "identify this houseplant"
+  ],
+  "open_questions": [],
+  "best_customer": "Someone with ten or more houseplants in an apartment who has lost a few to irregular watering.",
+  "misconceptions": "People expect it to diagnose bugs and leaf diseases. It only identifies the plant and handles watering.",
+  "never_reply_to": "Posts about pests, plant diseases or outdoor gardens.",
+  "include_links": false,
+  "reddit_username": null,
+  "short": "Acme Plants: A phone app that identifies houseplants from a photo and reminds you when to water each one. For: People who keep houseplants indoors; New plant owners who forget to water. Solves: Not knowing what a houseplant is called; Forgetting to water plants; Overwatering or underwatering; Not knowing how much light a plant needs."
+}

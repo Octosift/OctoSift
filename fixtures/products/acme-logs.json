@@ -1,0 +1,48 @@
+{
+  "name": "Acme Logs",
+  "url": "https://acme-logs.example",
+  "product_type": "developer_tool",
+  "audience": "developers",
+  "one_liner": "A command-line tool that searches and tails logs from several servers at once in one terminal.",
+  "what_it_does": [
+    "Tails log files from many servers over SSH in one stream",
+    "Searches logs across servers with one command",
+    "Highlights and filters lines by pattern",
+    "Works without installing an agent on the servers"
+  ],
+  "who_it_is_for": [
+    "Developers and operators who run a handful of servers",
+    "Small teams without a central logging system"
+  ],
+  "problems_solved": [
+    "Opening many SSH sessions to read logs",
+    "Searching the same error across several machines",
+    "Following a request through logs on multiple servers"
+  ],
+  "not_for": [
+    "Metrics and dashboards",
+    "Distributed tracing",
+    "Hosted log storage or retention",
+    "Alerting"
+  ],
+  "pricing": "Open source, with a paid support plan.",
+  "alternatives": [
+    "multiple SSH sessions with tail",
+    "terminal multiplexer panes",
+    "hosted log platforms"
+  ],
+  "buyer_phrases": [
+    "tail logs on multiple servers",
+    "search logs across servers",
+    "grep logs on many machines",
+    "lightweight alternative to a logging stack",
+    "without setting up a log server"
+  ],
+  "open_questions": [],
+  "best_customer": "A developer running three to ten servers who does not want to operate a full logging stack.",
+  "misconceptions": "People expect it to store logs and draw charts. It reads logs where they already are.",
+  "never_reply_to": "Questions about metrics dashboards or tracing.",
+  "include_links": true,
+  "reddit_username": null,
+  "short": "Acme Logs: A command-line tool that searches and tails logs from several servers at once in one terminal. For: Developers and operators who run a handful of servers; Small teams without a central logging system. Solves: Opening many SSH sessions to read logs; Searching the same error across several machines; Following a request through logs on multiple servers."
+}

@@ -1,0 +1,51 @@
+{
+  "name": "Acme Invoices",
+  "url": "https://acme-invoices.example",
+  "product_type": "saas",
+  "audience": "businesses",
+  "one_liner": "Invoicing for freelancers: create and send invoices, see who has paid, and send payment reminders automatically.",
+  "what_it_does": [
+    "Creates and sends professional invoices",
+    "Tracks which invoices are paid, due or overdue",
+    "Sends polite payment reminders on a schedule you choose",
+    "Accepts card and bank payments through a payment link on the invoice"
+  ],
+  "who_it_is_for": [
+    "Freelancers and independent consultants",
+    "Very small studios of up to five people"
+  ],
+  "problems_solved": [
+    "Clients paying late",
+    "Losing track of which invoices are unpaid",
+    "Awkward manual follow-up emails about money",
+    "Spending too long making invoices by hand"
+  ],
+  "not_for": [
+    "Payroll",
+    "Tax filing",
+    "Inventory management",
+    "Teams larger than five people",
+    "Full bookkeeping or accounting"
+  ],
+  "pricing": "Free for up to three clients, then a flat monthly fee.",
+  "alternatives": [
+    "spreadsheet templates",
+    "general accounting software",
+    "word processor invoices"
+  ],
+  "buyer_phrases": [
+    "client is late paying",
+    "how do I chase an unpaid invoice",
+    "best way to send invoices as a freelancer",
+    "invoice template",
+    "payment reminder email",
+    "client ghosted after delivery"
+  ],
+  "open_questions": [],
+  "best_customer": "A solo designer with eight to fifteen clients who spends an evening a month chasing payments.",
+  "misconceptions": "People expect it to do their taxes. It does not.",
+  "never_reply_to": "Questions about employee payroll or tax returns.",
+  "include_links": true,
+  "reddit_username": null,
+  "short": "Acme Invoices: Invoicing for freelancers: create and send invoices, see who has paid, and send payment reminders automatically. For: Freelancers and independent consultants; Very small studios of up to five people. Solves: Clients paying late; Losing track of which invoices are unpaid; Awkward manual follow-up emails about money; Spending too long making invoices by hand."
+}
