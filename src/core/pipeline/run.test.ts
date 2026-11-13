@@ -232,10 +232,16 @@ describe('runScan', () => {
     const notices: number[] = [];
     harness.deps.notify = (notice) => {
       notices.push(notice.score);
-      return Promise.resolve();
+      return Promise.resolve(true);
     };
     await runScan(harness.deps, { trigger: 'cli' });
     expect(notices.length).toBe(6);
     expect(notices.every((score) => score >= 85)).toBe(true);
+    const notified = harness.db
+      .select()
+      .from(leads)
+      .all()
+      .filter((lead) => lead.notifiedAt !== null);
+    expect(notified).toHaveLength(6);
   });
 });

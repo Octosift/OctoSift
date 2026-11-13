@@ -5,7 +5,12 @@ describe('parseEnv', () => {
   it('fills in defaults', () => {
     expect(parseEnv({})).toEqual({
       ok: true,
-      env: { DATABASE_PATH: 'data/app.sqlite', LOG_LEVEL: 'info', DEMO_MODE: false },
+      env: {
+        DATABASE_PATH: 'data/app.sqlite',
+        LOG_LEVEL: 'info',
+        PUBLIC_URL: 'http://127.0.0.1:3000',
+        DEMO_MODE: false,
+      },
     });
   });
 

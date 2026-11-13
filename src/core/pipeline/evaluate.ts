@@ -66,7 +66,8 @@ export interface EvaluateContext {
   now: number;
   detectLanguage: (text: string) => string | null;
   feedbackFor: (productId: string) => FeedbackContext;
-  notify: ((notice: LeadNotice) => Promise<void>) | null;
+  /** Resolves to true when the notification was delivered. */
+  notify: ((notice: LeadNotice) => Promise<boolean>) | null;
   newLeads: LeadSummary[];
   /** Set once the budget is exhausted; shared across products. */
   state: { budgetStop: string | null };
@@ -337,7 +338,7 @@ function countDraft(counts: FunnelCounts, status: string, kind: 'reply' | 'dm'):
 async function notifyLead(ctx: EvaluateContext, lead: LeadSummary): Promise<void> {
   if (!ctx.notify) return;
   try {
-    await ctx.notify({
+    const delivered = await ctx.notify({
       leadId: lead.id,
       productName: lead.productName,
       title: lead.title,
@@ -346,7 +347,7 @@ async function notifyLead(ctx: EvaluateContext, lead: LeadSummary): Promise<void
       reason: lead.reason,
       url: lead.url,
     });
-    ctx.store.updateLead(lead.id, { notifiedAt: ctx.now }, ctx.now);
+    if (delivered) ctx.store.updateLead(lead.id, { notifiedAt: ctx.now }, ctx.now);
   } catch (error) {
     ctx.log.warn('Lead notification failed', { leadId: lead.id, error });
   }

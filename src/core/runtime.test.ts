@@ -25,6 +25,7 @@ afterEach(() => {
 const env = (path: string) => ({
   DATABASE_PATH: path,
   LOG_LEVEL: 'info' as const,
+  PUBLIC_URL: 'http://127.0.0.1:3000',
   DEMO_MODE: false,
 });
 

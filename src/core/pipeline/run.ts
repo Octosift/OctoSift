@@ -40,7 +40,7 @@ export interface ScanDeps {
   log: Logger;
   redact: (text: string) => string;
   feedbackFor?: (productId: string) => FeedbackContext;
-  notify?: (notice: LeadNotice) => Promise<void>;
+  notify?: (notice: LeadNotice) => Promise<boolean>;
   detectLanguage?: (text: string) => string | null;
 }
 

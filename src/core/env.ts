@@ -18,6 +18,8 @@ const envSchema = z.object({
   APP_SECRET: z.string().optional(),
   APP_PASSWORD: z.string().optional(),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  /** Where the dashboard is reached, used for links in notifications. */
+  PUBLIC_URL: z.url().default('http://127.0.0.1:3000'),
   DEMO_MODE: flag,
 });
 

@@ -18,6 +18,7 @@ import { CONFIG } from './config';
 import { openDatabase, type Db } from './db/client';
 import type { AppEnv } from './env';
 import { createLogger, type Logger, type LogRecord } from './log';
+import { sendWebhook } from './notify/webhook';
 import type { ScanDeps } from './pipeline/run';
 import { createRedditClient } from './reddit/client';
 import { createRateLimiter } from './reddit/ratelimit';
@@ -156,6 +157,18 @@ export function createRuntime(options: RuntimeOptions): Runtime {
         random,
         log,
         redact: redactor.redact,
+        notify: async (notice) => {
+          const hook = secrets.use('webhook_url');
+          if (!hook.ok) return false;
+          const result = await sendWebhook({
+            url: hook.value,
+            format: settings.get('notify.format'),
+            lead: notice,
+            dashboardUrl: env.PUBLIC_URL,
+          });
+          if (!result.ok) log.warn('Lead notification failed', { reason: result.message });
+          return result.ok;
+        },
       };
       return options.overrides?.extendScanDeps?.(deps) ?? deps;
     },
