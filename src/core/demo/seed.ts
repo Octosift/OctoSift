@@ -19,6 +19,7 @@ import { createFixtureClient } from '../reddit/fixture';
 import { createAtomSource } from '../reddit/source';
 import type { RedditSource } from '../reddit/types';
 import { createSettingsStore } from '../settings/store';
+import { loadScriptedLeads } from './lead-content';
 import { loadSampleProducts } from './sample-products';
 
 export const DEMO_PRODUCT_ID = 'demo-acme-invoices';
@@ -64,7 +65,11 @@ export async function seedDemo(db: Db, nowMs: number): Promise<SeedSummary> {
 
   const labels = new Map([...golden.posts, ...history.posts].map((post) => [post.id, post.label]));
   const generator = createFakeGenerator(
-    createFixtureResponder({ labels, profiles: Object.values(profiles) }),
+    createFixtureResponder({
+      labels,
+      profiles: Object.values(profiles),
+      scripted: loadScriptedLeads(),
+    }),
   );
   const resolveModel = (stage: string): ModelResolution => ({
     ok: true,

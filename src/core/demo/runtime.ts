@@ -13,6 +13,7 @@ import { createFixtureClient } from '../reddit/fixture';
 import { createAtomSource } from '../reddit/source';
 import type { RedditPost } from '../reddit/types';
 import type { RuntimeOptions } from '../runtime';
+import { loadScriptedLeads } from './lead-content';
 import { loadSampleProducts, SAMPLE_PRODUCT_SLUGS } from './sample-products';
 
 export const DEMO_PRODUCT_SLUG = 'acme-invoices';
@@ -62,7 +63,12 @@ export function demoRuntimeOverrides(
   return {
     source: createAtomSource({ client, clock }),
     generator: createFakeGenerator(
-      createFixtureResponder({ labels, profiles: Object.values(profiles), suggestions }),
+      createFixtureResponder({
+        labels,
+        profiles: Object.values(profiles),
+        suggestions,
+        scripted: loadScriptedLeads(),
+      }),
     ),
     resolveModel,
   };

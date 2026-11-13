@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { openMemoryDatabase } from '../db/client';
 import { countByTab } from '../db/queries/inbox';
 import { recentRuns } from '../db/queries/runs';
-import { feedback, usage } from '../db/schema';
+import { drafts, feedback, leads, usage } from '../db/schema';
 import { seedDemo } from './seed';
 
 describe('seedDemo', () => {
@@ -15,6 +15,21 @@ describe('seedDemo', () => {
     expect(tabs.todo).toBeGreaterThan(0);
     expect(recentRuns(db, 10).map((run) => run.status)).toEqual(['ok', 'ok', 'partial', 'ok']);
     expect(db.select().from(feedback).all()).toHaveLength(4);
+    // Hand-written content: no two drafts alike, and scores spread out.
+    const replies = db
+      .select()
+      .from(drafts)
+      .all()
+      .filter((draft) => draft.kind === 'reply');
+    expect(replies.length).toBeGreaterThanOrEqual(20);
+    expect(new Set(replies.map((draft) => draft.text)).size).toBe(replies.length);
+    const scores = db
+      .select()
+      .from(leads)
+      .all()
+      .filter((lead) => lead.kind === 'opportunity')
+      .map((lead) => lead.score);
+    expect(new Set(scores).size).toBeGreaterThanOrEqual(20);
     expect(
       db
         .select()

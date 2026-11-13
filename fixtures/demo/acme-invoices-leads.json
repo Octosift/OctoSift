@@ -1,0 +1,275 @@
+{
+  "product": "acme-invoices",
+  "note": "Hand-written, synthetic answers for demo mode: what a good model would say about each Acme Invoices lead. Replies are composed from the advice and the pitch according to the reply mode.",
+  "leads": {
+    "t3_inv01": {
+      "score": 96,
+      "reason": "Solo designer with ten clients asks outright for a tool that sends invoices and chases late payers, and invites makers to reply.",
+      "angle": "Name the two things they asked for, sending and reminders, and offer the free plan for their slowest payers.",
+      "pitch": "It sends the invoice, marks it paid or overdue, and emails a polite reminder on the schedule you set. It is free for three clients, so you could try it on your slowest payers first.",
+      "advice": "Whatever you pick, decide the reminder schedule once instead of every month: a friendly nudge three days before the due date, one on the day, and one a week after. With ten clients that alone recovers most late invoices. Also put the amount and due date in the first line of the email, not only in the attachment.",
+      "dm": "Hi, you said DMs were open, so a quick note. I'm the maker of Acme Invoices, which sends invoices and polite reminders for freelancers with around ten clients. It is free for three clients, so you could try it on the two who pay latest. Happy to answer anything, and no worries if your current setup suits you better."
+    },
+    "t3_inv02": {
+      "score": 93,
+      "reason": "Spends an evening a month chasing invoices by email and wants reminders on a schedule, free or cheap. That is the core of the product.",
+      "angle": "Lead with the schedule they asked for and the free plan, since price matters to them.",
+      "pitch": "It does exactly this: you pick the schedule once, it emails the reminders for every overdue invoice and stops when the client pays. Free for up to three clients, then a flat monthly fee.",
+      "advice": "Whichever app you try, check two things first. Reminders should stop by themselves the moment a payment is recorded, otherwise you end up apologising to clients who already paid. And you should be able to edit the wording, because the default text in many tools sounds like a debt collector. A short, friendly tone gets paid faster than a stern one."
+    },
+    "t3_inv03": {
+      "score": 88,
+      "reason": "Two-person web studio outgrowing spreadsheet invoicing and wants one view of paid and overdue. Well inside the up to five people audience.",
+      "angle": "Focus on the at a glance status view and on both partners seeing the same list.",
+      "pitch": "It keeps one list of every invoice marked paid, due or overdue with the days late, and it is built for studios of up to five people.",
+      "advice": "Before you switch, agree on one rule between the two of you: whoever sends an invoice records the payment when it lands. Studio invoicing usually falls apart because two people half own it. Number invoices per year so nothing collides, and keep the old spreadsheet read only for past records instead of migrating everything."
+    },
+    "t3_inv04": {
+      "score": 86,
+      "reason": "Lost track of two invoices for months and asks how freelancers track paid and unpaid. Tracking invoice status is a listed feature.",
+      "angle": "Acknowledge the lost invoices and show how an overdue list would have caught them in the first week.",
+      "pitch": "It keeps every invoice in one list as paid, due or overdue, and overdue ones get a reminder on their own, so a forgotten invoice shows up within days.",
+      "advice": "The habit matters more than the tool. Pick a fixed slot, say Friday afternoon, and look at every invoice past its due date. If you stay with a spreadsheet for now, add a due date column and formatting that turns a row red once the date passes. That alone would have caught both of yours."
+    },
+    "t3_inv05": {
+      "score": 91,
+      "reason": "Clients keep asking to pay by card and the author wants a payment link on the invoice instead of bank details. Card links are a core feature.",
+      "angle": "Answer the card question directly and keep bank transfer as a second option.",
+      "pitch": "It puts a pay button on every invoice that takes card or bank payment, and the invoice marks itself paid when the money arrives.",
+      "advice": "Keep bank transfer on the invoice as a second option, because some business clients cannot pay by card. Card fees are usually around three percent, so decide up front whether you absorb them or raise your rate slightly. Avoid adding a surcharge line to the invoice itself; it is not allowed everywhere and clients dislike it."
+    },
+    "t3_inv06": {
+      "score": 89,
+      "reason": "Copywriter with twelve clients invoicing by hand wants something quick to set up that handles reminders. Close to the ideal customer.",
+      "angle": "Speak to setup time: how soon they can send the first invoice with reminders on.",
+      "pitch": "Setup is adding your clients, sending the first invoice and switching reminders on. Free for three clients, flat monthly fee after that.",
+      "advice": "Start with your three slowest payers rather than moving all twelve at once, so you see how the reminders feel to clients before everyone gets them. Carry on your invoice numbering from where you are now, and save a template for each recurring kind of job, so a new invoice takes two clicks instead of twenty minutes."
+    },
+    "t3_inv07": {
+      "score": 79,
+      "reason": "Invoice 45 days overdue after three ignored emails; asks how to escalate without souring the relationship. Reminders and payment links address the pattern.",
+      "angle": "Give an escalation path first; the product only as the thing that keeps the polite part automatic next time.",
+      "pitch": "It sends polite reminders on a schedule, so the next client never reaches day 45 without hearing from you.",
+      "advice": "At 45 days, stop emailing the person you worked with and find who actually pays the bills: ask for the accounts contact or call them. Resend the invoice with the original due date, the days overdue and a payment link, and ask one direct question: when will this be paid? If that gets nothing, a short final notice with a firm date usually works. Stay factual and the relationship survives."
+    },
+    "t3_inv08": {
+      "score": 83,
+      "reason": "Small business owner means to follow up a week after the due date and forgets for a month. Scheduled reminders solve exactly this.",
+      "angle": "Share a simple routine, then mention that the follow-up can run without remembering.",
+      "pitch": "It sends that follow-up on the date you choose and stops once the client pays.",
+      "advice": "Put the follow-up in your calendar at the moment you send the invoice, not later: one event a week after the due date, with the client and the amount in the title. When it fires, send a two line email with the invoice attached. It sounds basic, but fixing the date at sending time is what stops the month long gap.",
+      "review": {
+        "decision": "REVISE",
+        "reasons": ["The routine is useful, but the product sentence feels tacked on."],
+        "fixes": ["Connect the product sentence to the calendar idea."]
+      }
+    },
+    "t3_inv09": {
+      "score": 77,
+      "reason": "Invoicing takes half a day a month between copying details, totals and PDF exports. Making invoices quickly is a listed benefit.",
+      "angle": "Reassure them it is common, then show where the hours go.",
+      "pitch": "It stores clients and line items so a new invoice is a few clicks, and the totals are worked out for you.",
+      "advice": "It is common, and the hours almost always go into retyping. Save each client's details once, keep a list of your usual line items with prices, and make one template per type of job. Then invoicing is picking a client and a few lines. For monthly clients, copy last month's invoice and change the dates instead of starting fresh."
+    },
+    "t3_inv10": {
+      "score": 81,
+      "reason": "Clients pay 30 to 60 days late and the author is weighing late fees against more reminders. Reminders and card links are the product's answer.",
+      "angle": "Compare late fees and reminders honestly: reminders first, fees as a backstop.",
+      "pitch": "It handles the reminder side on a schedule and adds a card payment link, which tends to shorten the wait.",
+      "advice": "Reminders first, late fees second. Most late payers are disorganised rather than hostile, so a note before the due date and another the day after fixes a lot. Shorten terms to 14 days for new work, ask for a deposit on bigger projects, and put a late fee clause in the contract even if you rarely use it. Having it there changes behaviour."
+    },
+    "t3_inv11": {
+      "score": 66,
+      "reason": "Asks whether to take a 50 percent deposit and how to invoice for it. Related to late payment, but mostly a contract question.",
+      "angle": "Explain deposit invoicing; mention tooling only if they ask.",
+      "pitch": "It can send the deposit and the final invoice and chase either one if it slips.",
+      "advice": "Yes to deposits for new clients and bigger projects. Send a separate invoice for the deposit and label it as one, then a final invoice that shows the full amount, the deposit already paid and the balance due. Start the work once the deposit has cleared, and say so in the proposal so it never feels like a surprise."
+    },
+    "t3_inv12": {
+      "score": 71,
+      "reason": "A new client asked for a proper invoice with a number and terms; the author asks what one should include. Professional invoices are a listed feature.",
+      "angle": "List the required details plainly; the product as a way to get them right every time.",
+      "pitch": "It fills in the number, dates and terms for you, so every invoice comes out complete and consistent.",
+      "advice": "A proper invoice has your name and address, the client's name and address, a unique invoice number, the issue and due dates, a short description of the work with amounts, the total, and how to pay. Add payment terms such as due in 14 days, and your tax number if you are registered. Send it as a PDF, not only as an email."
+    },
+    "t3_inv13": {
+      "score": 62,
+      "reason": "Planning a 15 percent rate rise and asking how to tell clients. Only loosely related: invoices come up, but the question is about pricing.",
+      "angle": "Answer the rate question; leave the product out unless invoicing comes up.",
+      "pitch": "Once the new rate is set, it updates your saved line items so the next invoice uses it.",
+      "advice": "Tell clients at least a month ahead, in writing, with the new rate and the date it starts. Keep it short and do not apologise; most clients expect a yearly rise. If someone pushes back, offer to keep the old rate for work that is already scoped. Then the first invoice at the new rate is no surprise to anyone."
+    },
+    "t3_inv15": {
+      "score": 64,
+      "reason": "Venting about chasing money and explicitly asked for no tool suggestions. Only a sympathetic, helpful reply fits.",
+      "angle": "Empathise and share one small thing that helped, with no product mention.",
+      "advice": "Three in one month is exhausting, and you are right that it should not be on you. One thing that took the sting out for me was writing the follow-up email once, saving it, and sending it without rereading. It stopped feeling like begging and became admin, like sending the invoice itself. Hope the next batch pays on time."
+    },
+    "t3_inv16": {
+      "score": 61,
+      "reason": "Rant about large companies paying small suppliers in 90 days. Not asking for advice, so a reply should only commiserate.",
+      "angle": "Agree, keep it short, no product.",
+      "advice": "Completely agree. Ninety day terms from companies with more cash than all their suppliers combined is backwards. If it helps at all, some countries now cap payment terms for small suppliers, so it can be worth checking whether any rule like that covers your contracts. Either way, you are not wrong to be furious about it."
+    },
+    "t3_inv17": {
+      "score": 76,
+      "reason": "Venting about a client who ghosted, but asks for a follow-up routine that works. A concrete routine helps; no product mention.",
+      "angle": "Give a concrete three step routine they can reuse.",
+      "advice": "Sorry, that is maddening. The routine that works for me: a friendly note the day after the due date, a firmer one a week later asking for a payment date, then a call or a message to whoever handles their accounts at two weeks. Each step is short and factual. Writing all three in advance means you never compose one while annoyed."
+    },
+    "t3_dem01": {
+      "score": 78,
+      "reason": "Bills in three currencies and wants an app that gets the totals right. Sending and tracking fit, but currency handling is not a listed feature.",
+      "angle": "Be upfront about the currency question before suggesting a switch.",
+      "pitch": "It sends and tracks invoices and chases late ones, but check its currency settings against your three currencies before moving anything over.",
+      "advice": "Whatever you use, keep each client in one currency and invoice them in it every time rather than converting. Totals go wrong when one sheet mixes currencies. When a payment lands, record what you actually received in your own currency, so your income matches the bank statement. Your accountant will thank you at the end of the year."
+    },
+    "t3_dem02": {
+      "score": 84,
+      "reason": "Hates writing the second and third reminder and asks for wording that stays polite but firm. Automatic reminders cover this directly.",
+      "angle": "Give actual wording they can copy.",
+      "pitch": "It sends wording like that on a schedule, so you never have to write the third one yourself.",
+      "advice": "Keep each one to two sentences and never apologise. Second reminder: 'Hi Sam, invoice 041 was due on the 3rd. Could you let me know when it will be paid?' Third: 'Hi Sam, invoice 041 is now three weeks overdue. Please arrange payment by Friday, or tell me if something is holding it up.' Facts and a date, nothing else."
+    },
+    "t3_dem03": {
+      "score": 92,
+      "reason": "Digs through email every Friday to see who owes money and wants one screen of unpaid invoices with how late each is. That screen is the product.",
+      "angle": "Describe the overdue view in their own words: one screen, how late.",
+      "pitch": "It is that one screen: every unpaid invoice with the days late, and reminders go out for the overdue ones automatically.",
+      "advice": "Until you switch, a quick fix is a saved search in your sent mail for the word invoice, plus a simple list with client, amount, due date and paid date. Sort it by due date every Friday. It is clunky, but it stops the digging, and it shows you which clients are always the late ones."
+    },
+    "t3_dem04": {
+      "score": 87,
+      "reason": "Two retainer clients and wants the same invoice sent every month without doing it by hand. Templates and scheduled reminders fit.",
+      "angle": "Confirm the retainer use case and offer help setting it up.",
+      "pitch": "It saves each retainer as a template, so the monthly invoice is one click and late ones get a reminder automatically.",
+      "advice": "For retainers, invoice on the same date every month, ideally in advance for the coming month, and put the period covered in the description. Clients pay retainers faster when the amount and date never change. If either retainer caps the hours, add a line showing the hours used so there are no questions later.",
+      "dm": "Hi, saw your post about retainer invoices. I'm the maker of Acme Invoices; it saves each retainer as a template, so sending it monthly is one click and late ones get reminded automatically. Happy to help you set up both retainers on the free plan if you want to try it."
+    },
+    "t3_dem05": {
+      "score": 80,
+      "reason": "Clients keep claiming the invoice never arrived; asks how to prove it was sent. A record of sent invoices and reminders helps.",
+      "angle": "Practical proof tactics first, then the record of sending.",
+      "pitch": "It keeps a record of when each invoice and reminder went out, so you can reply with dates instead of arguing.",
+      "advice": "Send invoices from your own address rather than a no reply one, put the invoice number and amount in the subject line, and ask for a quick confirmation on the first invoice to a new client. For the repeat offender, copy their accounts address too. If it still never arrives, resend it while you are on a call so they see it land."
+    },
+    "t3_dem06": {
+      "score": 68,
+      "reason": "Weighing a late fee clause and asking whether it works. Related to late payment, but they are comparing contract terms, not tools.",
+      "angle": "Share experience with late fees; the product only lightly.",
+      "pitch": "It shows the due date and your terms on every invoice and reminds clients before a fee would apply.",
+      "advice": "In my experience the clause matters more than the fee. Having it in the contract makes clients take the due date seriously, even if you waive it the first time. Keep it modest, a small flat fee or a monthly percentage, and repeat it on the invoice next to the due date. It rarely annoys good clients, because good clients rarely trigger it."
+    },
+    "t3_dem07": {
+      "score": 90,
+      "reason": "Has outgrown an invoice spreadsheet and asks what others switched to and why. Spreadsheets are the main thing the product replaces.",
+      "angle": "Explain the switch from the spreadsheet's point of view: which jobs stop being yours.",
+      "pitch": "It does the three jobs a spreadsheet leaves to you: sending the invoice, tracking whether it is paid and chasing it when it is late. Free for three clients, so you can move a few over first.",
+      "advice": "Whatever you choose, judge it on whether it removes a job, not on the feature list. The jobs a spreadsheet leaves you are sending, noticing late payments and chasing them. Move your active clients first and keep old invoices in the spreadsheet as an archive; migrating history is rarely worth the time."
+    },
+    "t3_dem08": {
+      "score": 88,
+      "reason": "Some clients want to pay by card and the author wants a pay button on the invoice. Card payment links are a listed feature.",
+      "angle": "Answer the pay button question, then the fees and payout timing.",
+      "pitch": "It adds a pay button to every invoice that takes card or bank payment and marks the invoice paid automatically.",
+      "advice": "The simplest route is an invoicing tool with the payment link built in, rather than a separate payment page you have to keep in sync. Expect card fees of roughly three percent and decide whether to price that in. Check payout timing too: card money often takes a couple of days to reach your bank, which matters when cash is tight."
+    },
+    "t3_dem09": {
+      "score": 85,
+      "reason": "Spends most Monday mornings sending payment reminders by hand and asks for a smarter way. Automated reminders are the core feature.",
+      "angle": "Show how to batch the Monday routine, then how to hand it off.",
+      "pitch": "It sends those three reminders on a schedule, so Monday mornings stay free.",
+      "advice": "Two things cut my Mondays down. Write three reminder templates once, gentle, firm and final, and send them in one batch rather than one by one. And move every client to the same due day, so the chasing happens on one day instead of all week. Even by hand that takes it from a morning to about twenty minutes."
+    },
+    "t3_dem10": {
+      "score": 63,
+      "reason": "New freelancer asks when to send the invoice. A general how-to about invoicing basics rather than a need for a tool.",
+      "angle": "Explain the usual options by project size.",
+      "pitch": "It handles deposits, milestones and final invoices, and reminds clients when any of them slips.",
+      "advice": "It depends on the size of the job. Small jobs: invoice on delivery with 14 day terms. Bigger projects: a deposit before starting, invoices at milestones, then the balance on delivery. Ongoing work: invoice monthly in advance. Whatever you choose, put it in writing before you start, so the first invoice is expected."
+    },
+    "t3_dem11": {
+      "score": 65,
+      "reason": "Venting after a client vanished with an unpaid invoice, and asked for no advice. Only a short, kind reply fits.",
+      "angle": "Keep it human and short.",
+      "advice": "That is a rotten feeling, especially after finishing the whole site. Sorry you are dealing with it. Not advice, just solidarity: most of us have one of these stories, and it says nothing about the quality of your work. Hope you get some proper rest this week."
+    },
+    "t3_dem12": {
+      "score": 70,
+      "reason": "Three-person agency wants professional invoices and asks what clients expect to see. Fits the small studio audience; the need is mostly informational.",
+      "angle": "List the details clients expect, then mention one layout for the whole team.",
+      "pitch": "It keeps one invoice layout for the whole team, with numbering and due dates filled in automatically.",
+      "advice": "Clients expect your business name and address, theirs, an invoice number, issue and due dates, a clear line for each piece of work, totals with any tax shown separately, and payment instructions. As an agency, add a purchase order field, since bigger clients often cannot pay without one. Use one template for all three of you."
+    },
+    "t3_dem13": {
+      "score": 89,
+      "reason": "Wedding and portrait photographer sends PDF invoices from a template and asks what others use to bill and track payments.",
+      "angle": "Speak to booking fees and balances, which photographers deal with constantly.",
+      "pitch": "It sends the booking and balance invoices with a card payment link, shows which are paid, and reminds clients before the balance is due.",
+      "advice": "For weddings, most photographers take a booking fee when the date is reserved and the balance a few weeks before the day, so you are never chasing money after the photos are delivered. Put both dates in the contract. Portrait sessions are simpler: payment at booking or on the day of the shoot."
+    },
+    "t3_dem14": {
+      "score": 91,
+      "reason": "Cleaning business with forty regular customers wants follow-ups to go out automatically after a week. Automated reminders fit exactly.",
+      "angle": "Confirm that one rule can cover every customer.",
+      "pitch": "You set one rule, such as a reminder seven days after the due date, and it applies to every customer and invoice.",
+      "advice": "With forty regulars, consistency matters more than wording. Invoice everyone on the same day each month, use the same terms, and send reminders on the same schedule, so nobody feels singled out. Offer card payment too: customers who can pay from a link tend to pay on time far more often than those who have to set up a bank transfer."
+    },
+    "t3_dem15": {
+      "score": 69,
+      "reason": "Agency clients pay at the end of the month after next, and the author asks how to plan around it. Mostly cash flow, partly late payment.",
+      "angle": "Planning advice first; the product as the tracking piece.",
+      "pitch": "It shows when each invoice is actually due, so you can see the next two months of money coming in.",
+      "advice": "Treat the agency terms as the real terms and plan from them: keep a buffer of about two months of expenses and count money as income only once it lands. Invoice the day the work is done, because agencies run fixed payment cycles and missing one cut off costs you a month. Ask each agency for its cut off date."
+    },
+    "t3_dem16": {
+      "score": 67,
+      "reason": "Planning to change invoicing tools in July and asking about numbering and old records. Relevant, but they have already picked a new tool.",
+      "angle": "Practical migration tips; little room for a pitch.",
+      "pitch": "It lets you set the starting invoice number, so your sequence carries on unbroken.",
+      "advice": "Continue your numbering in the new tool rather than restarting at 1, so you never have two invoices with the same number in a year. Export everything from the old tool as PDFs and a spreadsheet before you cancel, and leave any invoice that is open at the switch in the old tool until it is paid."
+    },
+    "t3_dem18": {
+      "score": 82,
+      "reason": "Sells handmade furniture on the side, about five invoices a month, and wants a free tool. The free plan for three clients may cover it.",
+      "angle": "Be clear about the free plan limit.",
+      "pitch": "It is free for up to three clients, which may cover a side business, with a flat monthly fee beyond that.",
+      "advice": "At five invoices a month almost any free option works, so pick the one where sending and seeing what is paid take the fewest steps. Honestly, a good template and a paid column in a spreadsheet is enough at your volume. Upgrade only once chasing payments starts to take real time out of your week."
+    },
+    "t3_dem19": {
+      "score": 74,
+      "reason": "Struggles to match bank transfers with random references to invoices. Payment links help, but bank matching is not a listed feature.",
+      "angle": "Practical matching tips; the product only for its payment link.",
+      "pitch": "When a client pays through its payment link, the invoice is marked paid, so there is nothing left to match.",
+      "advice": "Ask clients to use the invoice number as the payment reference, and put that request in bold next to your bank details. For clients who ignore it, match on amount and date, and note how each client's payments usually appear on your statement. Most banks let you add a note to a transaction, which also helps at tax time."
+    },
+    "t3_dem20": {
+      "score": 66,
+      "reason": "Signing the first two business clients and asking which payment terms are normal and how to enforce them.",
+      "angle": "Give normal terms, then the steps that make them stick.",
+      "pitch": "It prints your terms on each invoice and sends that early reminder for you.",
+      "advice": "Fourteen or thirty days are both normal for business clients, and shorter is fine if you agree it up front. Put the terms in the contract and on every invoice, ask who handles payments on their side before the first invoice, and send a reminder a few days before the due date. That first reminder sets the tone for the whole relationship."
+    },
+    "t3_dem21": {
+      "score": 72,
+      "reason": "Wants clients to see all their invoices and pay in one place. Payment links fit, but a client portal is not a listed feature.",
+      "angle": "Be honest that it offers payment links rather than a full portal.",
+      "pitch": "It has no client portal, but every invoice and reminder carries a payment link, so clients can pay without logging in anywhere.",
+      "advice": "If the portal is mainly so clients can pay, a payment link on each invoice often does the job with less friction, since nobody has to remember a login. If it is so clients can download past invoices, a short monthly statement of everything open covers most of what they would use a portal for."
+    },
+    "t3_dem22": {
+      "score": 79,
+      "reason": "Invoice was due last Friday and the author asks whether a Monday reminder is rude. Reminder timing is exactly what the product automates.",
+      "angle": "Answer plainly that Monday is fine, with wording they can use.",
+      "pitch": "It sends a gentle note like that a couple of days after the due date without you having to remember.",
+      "advice": "Monday is not rude at all. A due date is a due date, and a short, friendly note a business day or two later is normal. Something like: 'Hi, just checking invoice 112 reached the right person, it was due on Friday.' Most late payments are oversights, and an early note catches them before they become a habit."
+    },
+    "t3_dem23": {
+      "score": 73,
+      "reason": "Gave up sending an invoice from a phone at a client site and asks what works on mobile. Mobile use is not described in the product profile.",
+      "angle": "Mobile tips first; mention the product only for its saved clients and items.",
+      "pitch": "It keeps clients and line items saved, so sending an invoice from a phone is mostly picking and confirming.",
+      "advice": "On a phone, the trick is to do the setup on a computer first: save the client, your usual line items and a template, so on site you only pick the client and confirm. Anything that makes you type an address or build a line item on a small screen will let you down at the worst moment."
+    }
+  }
+}

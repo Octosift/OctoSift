@@ -2,7 +2,8 @@
  * Answers for the fake generator, derived from fixture labels.
  *
  * Triage and qualify answer as the label says a good model would. Drafts
- * come from product-neutral templates that pass the deterministic checks.
+ * come from product-neutral templates that pass the deterministic checks,
+ * unless a scripted answer was written for the post, as demo mode does.
  * Used by integration tests and demo mode; real models never see this.
  */
 import type { GoldenLabel } from '../eval/golden';
@@ -12,8 +13,56 @@ import type { FakeReply } from './fake';
 import type { ExtractedProfile } from './schemas';
 import type { GenerateRequest } from './types';
 
+/** A hand-written answer for one post: what a good model would say about it. */
+export interface ScriptedLead {
+  score: number;
+  reason: string;
+  angle: string;
+  /** Advice that answers the post; the whole reply in helpful-only mode. */
+  advice: string;
+  /** One or two sentences on how the product helps; absent where it must not be mentioned. */
+  pitch?: string | undefined;
+  /** A private message, for posts that invite them. */
+  dm?: string | undefined;
+  review?:
+    { decision: 'APPROVE' | 'REVISE' | 'REJECT'; reasons: string[]; fixes: string[] } | undefined;
+}
+
+/** Builds a reply from a scripted answer, the way the draft prompt asks for each mode. */
+export function scriptedReply(
+  lead: ScriptedLead,
+  input: { kind: 'reply' | 'dm'; mode: string; productName: string; link: string | null },
+): { text: string; mentions: boolean; link: boolean } {
+  const maker = `I'm the maker of ${input.productName}`;
+  const link = input.link ? ` ${input.link}` : '';
+  if (input.kind === 'dm') {
+    return {
+      text: lead.dm ?? `Hi, you mentioned messages were welcome. ${maker}. ${lead.pitch ?? ''}`,
+      mentions: true,
+      link: false,
+    };
+  }
+  if (input.mode === 'helpful_only' || !lead.pitch) {
+    return { text: lead.advice, mentions: false, link: false };
+  }
+  if (input.mode === 'direct') {
+    return {
+      text: `${maker}, so I'm biased. ${lead.pitch}${link}\n\n${lead.advice}`,
+      mentions: true,
+      link: link !== '',
+    };
+  }
+  return {
+    text: `${lead.advice}\n\nFull disclosure: ${maker}. ${lead.pitch}${link}`,
+    mentions: true,
+    link: link !== '',
+  };
+}
+
 export interface FixtureResponderOptions {
   labels: ReadonlyMap<string, GoldenLabel>;
+  /** Hand-written answers by post id; they replace the label-derived ones. */
+  scripted?: ReadonlyMap<string, ScriptedLead>;
   profiles: readonly ProductProfile[];
   /** Subreddit suggestions by product name. */
   suggestions?: Readonly<Record<string, readonly string[]>>;
@@ -80,7 +129,12 @@ function extracted(profile: ProductProfile): ExtractedProfile {
 }
 
 export function createFixtureResponder(options: FixtureResponderOptions) {
-  const { labels, profiles, suggestions = {} } = options;
+  const {
+    labels,
+    profiles,
+    suggestions = {},
+    scripted = new Map<string, ScriptedLead>(),
+  } = options;
 
   return (request: GenerateRequest): FakeReply => {
     const ids = request.subject.postIds ?? [];
@@ -119,23 +173,36 @@ export function createFixtureResponder(options: FixtureResponderOptions) {
             },
           };
         }
+        const script = scripted.get(ids[0] ?? '');
         return {
           output: {
             fit: label.fit,
             intent: label.intent,
-            score: labelScore(label),
-            reason: reason(label),
+            score: script?.score ?? labelScore(label),
+            reason: script?.reason ?? reason(label),
             evidence_quote: label.evidence,
             mention_ok: label.mentionOk,
             dm_ok: label.dmOk,
-            suggested_angle: 'Answer the question first, then share what worked for others.',
+            suggested_angle:
+              script?.angle ?? 'Answer the question first, then share what worked for others.',
             risk_flags: label.riskFlags,
             alternatives_mentioned: [],
           },
         };
       }
       case 'draft': {
-        const draft = draftText(request);
+        const script = scripted.get(ids[0] ?? '');
+        const draft = script
+          ? scriptedReply(script, {
+              kind: request.system.includes('private message') ? 'dm' : 'reply',
+              mode: request.subject.mode ?? 'helpful_only',
+              productName: request.subject.productName ?? 'the product',
+              link:
+                request.subject.linksAllowed === true && request.subject.productUrl
+                  ? request.subject.productUrl
+                  : null,
+            })
+          : draftText(request);
         return {
           output: {
             reply: draft.text,
@@ -146,6 +213,8 @@ export function createFixtureResponder(options: FixtureResponderOptions) {
         };
       }
       case 'review': {
+        const scriptedReview = scripted.get(ids[0] ?? '')?.review;
+        if (scriptedReview) return { output: scriptedReview };
         const decision = labels.get(ids[0] ?? '')?.review ?? 'APPROVE';
         return {
           output: {
