@@ -9,7 +9,7 @@ next-env.d.ts
 *.tsbuildinfo
 
 # local data and secrets
-data/
+/data/
 .env
 .env.*
 !.env.example
