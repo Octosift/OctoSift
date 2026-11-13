@@ -271,4 +271,16 @@ describe('runScan', () => {
       .filter((lead) => lead.notifiedAt !== null);
     expect(notified).toHaveLength(6);
   });
+
+  it('sends no notifications in a dry run', async () => {
+    const harness = createScanHarness('acme-invoices');
+    let sent = 0;
+    harness.deps.notify = () => {
+      sent += 1;
+      return Promise.resolve(true);
+    };
+    const report = await runScan(harness.deps, { trigger: 'cli', dryRun: true });
+    expect(report.counts.leads).toBe(16);
+    expect(sent).toBe(0);
+  });
 });

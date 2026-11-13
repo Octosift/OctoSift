@@ -172,7 +172,8 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
           now,
           detectLanguage: deps.detectLanguage ?? defaultDetectLanguage,
           feedbackFor: deps.feedbackFor ?? (() => NO_FEEDBACK),
-          notify: deps.notify ?? null,
+          // A dry run must not reach the founder's webhook with leads that are never saved.
+          notify: dryRun ? null : (deps.notify ?? null),
           newLeads,
           onProgress: progress,
           state,
