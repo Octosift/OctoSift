@@ -63,6 +63,10 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
 - **The crawler and the webhook may call `fetch`** besides the Reddit client and the AI
   provider: reading the product's own site and posting to the founder's webhook are network
   calls by design.
+- **The crawler only reads public addresses.** Every request, redirects included, is
+  checked against loopback, private and link-local ranges, and no page is read past 2 MB.
+  The host is resolved just before each request, so this does not defend against DNS
+  rebinding; it stops the dashboard from being pointed at its own machine or network.
 
 ## Processes
 

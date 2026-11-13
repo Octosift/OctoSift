@@ -6,6 +6,7 @@ interface FakePage {
   body: string;
   contentType?: string;
   fail?: 'timeout' | 'network';
+  location?: string;
 }
 
 const ORIGIN = 'https://acme-invoices.example';
@@ -30,6 +31,12 @@ function setup(site: Record<string, FakePage>, overrides: Partial<CrawlOptions> 
       return Promise.reject(new DOMException('The operation timed out.', 'TimeoutError'));
     }
     if (entry.fail === 'network') return Promise.reject(new TypeError('fetch failed'));
+    expect(init?.redirect).toBe('manual');
+    if (entry.location) {
+      return Promise.resolve(
+        new Response(null, { status: entry.status ?? 302, headers: { location: entry.location } }),
+      );
+    }
     return Promise.resolve(
       new Response(entry.body, {
         status: entry.status ?? 200,
@@ -39,6 +46,7 @@ function setup(site: Record<string, FakePage>, overrides: Partial<CrawlOptions> 
   };
   const options: CrawlOptions = {
     fetchImpl,
+    resolveHost: () => Promise.resolve(['203.0.113.10']),
     maxExtraPages: 5,
     maxCharsPerPage: 6_000,
     timeoutMs: 10_000,
@@ -176,5 +184,53 @@ describe('crawlProduct', () => {
     });
     const result = await run();
     expect(result.ok && result.pages).toHaveLength(1);
+  });
+
+  it('follows redirects and reports the address it ended on', async () => {
+    const { run } = setup({
+      [`${ORIGIN}/`]: { body: '', status: 301, location: '/home' },
+      [`${ORIGIN}/home`]: { body: page('Home', MAIN) },
+    });
+    const result = await run();
+    expect(result.ok && result.pages.map((p) => p.url)).toEqual([`${ORIGIN}/home`]);
+  });
+
+  it('refuses a site that points to this machine or a private network', async () => {
+    const { run, requested } = setup(
+      { 'http://intranet.example/': { body: page('Admin', MAIN) } },
+      { resolveHost: () => Promise.resolve(['10.0.0.8']) },
+    );
+    const result = await run('http://intranet.example/');
+    expect(result).toMatchObject({ ok: false, kind: 'unreachable' });
+    expect(result.ok ? '' : result.message).toMatch(/private network/);
+    expect(requested).toEqual([]);
+  });
+
+  it('refuses a redirect to a private address', async () => {
+    const { run, requested } = setup({
+      [`${ORIGIN}/`]: { body: '', location: 'http://169.254.169.254/latest/meta-data/' },
+    });
+    const result = await run();
+    expect(result).toMatchObject({ ok: false, kind: 'unreachable' });
+    expect(requested.some((url) => url.includes('169.254'))).toBe(false);
+  });
+
+  it('gives up after too many redirects', async () => {
+    const { run } = setup({
+      [`${ORIGIN}/`]: { body: '', location: '/a' },
+      [`${ORIGIN}/a`]: { body: '', location: '/' },
+    });
+    const result = await run();
+    expect(result.ok ? '' : result.message).toMatch(/redirected too many times/);
+  });
+
+  it('stops downloading a page at the byte limit', async () => {
+    const huge = `${page('Home', MAIN)}${'<p>never read</p>'.repeat(10_000)}`;
+    const { run } = setup({ [`${ORIGIN}/`]: { body: huge } }, { maxBytesPerPage: 2_000 });
+    const result = await run();
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.pages[0]?.text).toContain('freelancers');
+    expect(result.pages[0]?.text).not.toContain('never read');
   });
 });

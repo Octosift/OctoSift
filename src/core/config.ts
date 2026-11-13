@@ -208,6 +208,9 @@ export const CONFIG = deepFreeze({
   crawl: {
     maxExtraPages: 5,
     maxCharsPerPage: 6_000,
+    /** Bytes read from any one response; the rest is never downloaded. */
+    maxBytesPerPage: 2_000_000,
+    maxRedirects: 5,
     timeoutMs: 10_000,
     pageHints: ['pricing', 'price', 'plans', 'features', 'about', 'docs', 'faq', 'how-it-works'],
   },

@@ -4,6 +4,8 @@
  * Fetches the given page and up to a few same-site pages whose path or link
  * text suggests pricing, features, about, docs or FAQ. Honours robots.txt,
  * gives each page a timeout, keeps only readable text and caps its length.
+ * Only public addresses are fetched, redirects included, and no response is
+ * read past a fixed size.
  * Never throws: when the site cannot be read, the caller asks the user to
  * paste a description instead.
  */
@@ -12,6 +14,7 @@ import { parseHTML } from 'linkedom';
 import robotsParser from 'robots-parser';
 import { BRAND } from '../brand';
 import { CONFIG } from '../config';
+import { privateHostReason, resolveWithDns, type ResolveHost } from './address';
 
 export interface CrawledPage {
   url: string;
@@ -25,8 +28,10 @@ export type CrawlResult =
 
 export interface CrawlOptions {
   fetchImpl?: typeof fetch;
+  resolveHost?: ResolveHost;
   maxExtraPages?: number;
   maxCharsPerPage?: number;
+  maxBytesPerPage?: number;
   timeoutMs?: number;
 }
 
@@ -35,14 +40,38 @@ const ROBOTS_AGENT = BRAND.name;
 
 type Fetched = { ok: true; url: string; html: string } | { ok: false; message: string };
 
-function parseStartUrl(raw: string): URL | null {
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+
+function parseHttpUrl(raw: string, base?: URL): URL | null {
   try {
-    const url = new URL(raw.trim());
+    const url = new URL(raw.trim(), base);
     return url.protocol === 'http:' || url.protocol === 'https:' ? url : null;
   } catch {
     // Not parseable as a URL at all.
     return null;
   }
+}
+
+/** Reads at most `maxBytes` of a response body and stops the download there. */
+async function readCapped(response: Response, maxBytes: number): Promise<string> {
+  if (!response.body) return '';
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  const parts: string[] = [];
+  let received = 0;
+  let chunk = await reader.read();
+  while (!chunk.done) {
+    const bytes = chunk.value.subarray(0, maxBytes - received);
+    parts.push(decoder.decode(bytes, { stream: true }));
+    received += bytes.byteLength;
+    if (received >= maxBytes) {
+      await reader.cancel();
+      break;
+    }
+    chunk = await reader.read();
+  }
+  parts.push(decoder.decode());
+  return parts.join('');
 }
 
 function describe(error: unknown): string {
@@ -100,12 +129,14 @@ export async function crawlProduct(
 ): Promise<CrawlResult> {
   const {
     fetchImpl = fetch,
+    resolveHost = resolveWithDns,
     maxExtraPages = CONFIG.crawl.maxExtraPages,
     maxCharsPerPage = CONFIG.crawl.maxCharsPerPage,
+    maxBytesPerPage = CONFIG.crawl.maxBytesPerPage,
     timeoutMs = CONFIG.crawl.timeoutMs,
   } = options;
 
-  const start = parseStartUrl(rawUrl);
+  const start = parseHttpUrl(rawUrl);
   if (!start) {
     return {
       ok: false,
@@ -115,16 +146,39 @@ export async function crawlProduct(
   }
 
   async function get(url: URL): Promise<Fetched> {
+    // One deadline covers every redirect and the body.
+    const signal = AbortSignal.timeout(timeoutMs);
     try {
-      const response = await fetchImpl(url.href, {
-        headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,text/plain;q=0.8' },
-        signal: AbortSignal.timeout(timeoutMs),
-        redirect: 'follow',
-      });
-      if (!response.ok) return { ok: false, message: `the site answered HTTP ${response.status}` };
-      const type = response.headers.get('content-type') ?? '';
-      if (!/text\/(html|plain)/i.test(type)) return { ok: false, message: 'not a web page' };
-      return { ok: true, url: response.url || url.href, html: await response.text() };
+      let current = url;
+      for (let hop = 0; hop <= CONFIG.crawl.maxRedirects; hop += 1) {
+        const refused = await privateHostReason(current, resolveHost);
+        if (refused) return { ok: false, message: refused };
+        // Redirects are followed by hand so that every hop is checked above.
+        const response = await fetchImpl(current.href, {
+          headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,text/plain;q=0.8' },
+          signal,
+          redirect: 'manual',
+        });
+        const location = response.headers.get('location');
+        if (REDIRECT_STATUSES.has(response.status) && location) {
+          await response.body?.cancel();
+          const next = parseHttpUrl(location, current);
+          if (!next) return { ok: false, message: 'the site redirected to an unusable address' };
+          current = next;
+          continue;
+        }
+        if (!response.ok) {
+          await response.body?.cancel();
+          return { ok: false, message: `the site answered HTTP ${response.status}` };
+        }
+        const type = response.headers.get('content-type') ?? '';
+        if (!/text\/(html|plain)/i.test(type)) {
+          await response.body?.cancel();
+          return { ok: false, message: 'not a web page' };
+        }
+        return { ok: true, url: current.href, html: await readCapped(response, maxBytesPerPage) };
+      }
+      return { ok: false, message: 'the site redirected too many times' };
     } catch (error) {
       return { ok: false, message: describe(error) };
     }
