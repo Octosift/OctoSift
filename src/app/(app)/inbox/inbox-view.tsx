@@ -15,13 +15,9 @@ import { LeadPanel, type PanelHandlers } from './lead-panel';
 import { inboxHref } from './url';
 
 const EMPTY: Record<string, { title: string; body: string }> = {
-  new: {
-    title: 'No new leads yet',
-    body: 'Leads appear here after a scan finds posts from people your product can help. Scans run every hour, or press Scan now.',
-  },
-  drafted: {
-    title: 'Nothing drafted yet',
-    body: 'Strong leads get a reviewed reply draft automatically. Other leads can be drafted on request.',
+  todo: {
+    title: 'Nothing to do yet',
+    body: 'Leads appear here, best first, after a scan finds posts from people your product can help. Strong leads come with a reviewed reply draft. Scans run every hour, or press Scan now.',
   },
   replied: {
     title: 'No replies yet',
@@ -29,7 +25,7 @@ const EMPTY: Record<string, { title: string; body: string }> = {
   },
   snoozed: {
     title: 'Nothing snoozed',
-    body: 'Snoozed leads come back to New when their time is up.',
+    body: 'Snoozed leads come back to To do when their time is up.',
   },
   dismissed: {
     title: 'Nothing dismissed',

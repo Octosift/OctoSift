@@ -7,8 +7,7 @@ import { cn } from '../../components/ui/utils';
 import { inboxHref } from './url';
 
 const TABS: { tab: InboxTab; label: string }[] = [
-  { tab: 'new', label: 'New' },
-  { tab: 'drafted', label: 'Drafted' },
+  { tab: 'todo', label: 'To do' },
   { tab: 'replied', label: 'Replied' },
   { tab: 'snoozed', label: 'Snoozed' },
   { tab: 'dismissed', label: 'Dismissed' },

@@ -25,7 +25,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </Link>
           {shell.demo ? <Badge tone="brand">Demo</Badge> : null}
         </div>
-        <Nav newLeads={shell.newLeads} />
+        <Nav toDo={shell.toDo} />
         <div className="mt-auto hidden flex-col gap-2 md:flex">
           <ScanButton state={shell.scan} />
           <p className="px-1 text-xs text-muted-foreground">

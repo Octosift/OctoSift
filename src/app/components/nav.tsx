@@ -13,7 +13,7 @@ const ITEMS = [
   { href: '/settings', label: 'Settings', icon: Settings },
 ] as const;
 
-export function Nav({ newLeads }: { newLeads: number }) {
+export function Nav({ toDo }: { toDo: number }) {
   const pathname = usePathname();
   return (
     <nav aria-label="Main" className="flex gap-0.5 md:flex-col">
@@ -31,9 +31,12 @@ export function Nav({ newLeads }: { newLeads: number }) {
           >
             <Icon className="size-4 shrink-0" aria-hidden />
             <span className="hidden sm:inline">{label}</span>
-            {href === '/inbox' && newLeads > 0 ? (
-              <span className="ml-auto hidden rounded-sm bg-brand-subtle px-1.5 text-[11px] font-medium text-brand-subtle-foreground tabular md:inline">
-                {newLeads}
+            {href === '/inbox' && toDo > 0 ? (
+              <span
+                className="ml-auto hidden rounded-sm bg-brand-subtle px-1.5 text-[11px] font-medium text-brand-subtle-foreground tabular md:inline"
+                aria-label={`${String(toDo)} leads to do`}
+              >
+                {toDo}
               </span>
             ) : null}
           </Link>

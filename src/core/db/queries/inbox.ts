@@ -3,7 +3,8 @@ import { and, count, desc, eq, gte, inArray, lte, ne, sql, type SQL } from 'driz
 import type { Db } from '../client';
 import { drafts, feedback, leads, posts, products, type LeadStatus } from '../schema';
 
-export const INBOX_TABS = ['new', 'drafted', 'replied', 'snoozed', 'dismissed', 'brand'] as const;
+/** "todo" holds every opportunity that still needs action: new and drafted. */
+export const INBOX_TABS = ['todo', 'replied', 'snoozed', 'dismissed', 'brand'] as const;
 export type InboxTab = (typeof INBOX_TABS)[number];
 
 export interface InboxFilters {
@@ -33,9 +34,8 @@ export interface InboxRow {
 
 function tabCondition(tab: InboxTab): SQL | undefined {
   switch (tab) {
-    case 'new':
-    case 'drafted':
-      return and(eq(leads.kind, 'opportunity'), eq(leads.status, tab));
+    case 'todo':
+      return and(eq(leads.kind, 'opportunity'), inArray(leads.status, ['new', 'drafted']));
     case 'brand':
       return and(eq(leads.kind, 'brand_mention'), inArray(leads.status, ['new', 'drafted']));
     default:

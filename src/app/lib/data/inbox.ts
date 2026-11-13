@@ -23,7 +23,7 @@ const optionalText = z
 const optionalNumber = z.coerce.number().int().min(0).max(100_000).optional().catch(undefined);
 
 export const inboxParamsSchema = z.object({
-  tab: z.enum(INBOX_TABS).catch('new'),
+  tab: z.enum(INBOX_TABS).catch('todo'),
   lead: optionalText.catch(undefined),
   product: optionalText.catch(undefined),
   subreddit: optionalText.catch(undefined),

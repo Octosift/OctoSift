@@ -19,8 +19,7 @@ const page = () => ({ limit: 50, offset: 0, now });
 describe('inbox queries', () => {
   it('counts leads per tab', () => {
     expect(countByTab(harness.db)).toEqual({
-      new: 6,
-      drafted: 10,
+      todo: 16,
       replied: 0,
       snoozed: 0,
       dismissed: 0,
@@ -28,29 +27,30 @@ describe('inbox queries', () => {
     });
   });
 
-  it('lists a tab sorted by score, best first', () => {
-    const { rows, total } = listLeads(harness.db, { tab: 'drafted' }, page());
-    expect(total).toBe(10);
+  it('shows every lead that needs action in To do, drafted or not, best first', () => {
+    const { rows, total } = listLeads(harness.db, { tab: 'todo' }, page());
+    expect(total).toBe(16);
     const scores = rows.map((row) => row.score);
     expect(scores).toEqual([...scores].sort((a, b) => b - a));
+    expect(new Set(rows.map((row) => row.status))).toEqual(new Set(['new', 'drafted']));
     expect(rows[0]).toMatchObject({ productName: 'Acme Invoices', status: 'drafted' });
   });
 
   it('filters by subreddit, intent, minimum score and post age', () => {
-    const bySub = listLeads(harness.db, { tab: 'drafted', subreddit: 'smallbiz_demo' }, page());
+    const bySub = listLeads(harness.db, { tab: 'todo', subreddit: 'smallbiz_demo' }, page());
     expect(bySub.rows.every((row) => row.subreddit === 'smallbiz_demo')).toBe(true);
-    const byIntent = listLeads(harness.db, { tab: 'new', intent: 'venting' }, page());
-    expect(byIntent.rows.map((row) => row.intent)).toEqual(['venting', 'venting']);
-    expect(listLeads(harness.db, { tab: 'drafted', minScore: 90 }, page()).total).toBe(6);
-    expect(listLeads(harness.db, { tab: 'drafted', maxAgeHours: 2 }, page()).total).toBe(6);
+    const byIntent = listLeads(harness.db, { tab: 'todo', intent: 'venting' }, page());
+    expect(byIntent.rows.map((row) => row.intent)).toEqual(['venting', 'venting', 'venting']);
+    expect(listLeads(harness.db, { tab: 'todo', minScore: 90 }, page()).total).toBe(6);
+    expect(listLeads(harness.db, { tab: 'todo', maxAgeHours: 2 }, page()).total).toBe(8);
   });
 
   it('pages through results', () => {
-    const first = listLeads(harness.db, { tab: 'drafted' }, { limit: 4, offset: 0, now });
-    const second = listLeads(harness.db, { tab: 'drafted' }, { limit: 4, offset: 4, now });
+    const first = listLeads(harness.db, { tab: 'todo' }, { limit: 4, offset: 0, now });
+    const second = listLeads(harness.db, { tab: 'todo' }, { limit: 4, offset: 4, now });
     expect(first.rows).toHaveLength(4);
     expect(second.rows.map((row) => row.id)).not.toContain(first.rows[0]?.id);
-    expect(second.total).toBe(10);
+    expect(second.total).toBe(16);
   });
 
   it('keeps brand mentions in their own tab', () => {
@@ -63,7 +63,7 @@ describe('inbox queries', () => {
   });
 
   it('returns a lead with its post and latest drafts', () => {
-    const [row] = listLeads(harness.db, { tab: 'drafted' }, page()).rows;
+    const [row] = listLeads(harness.db, { tab: 'todo' }, page()).rows;
     const detail = leadDetail(harness.db, row?.id ?? '');
     expect(detail?.post.title).toBe(row?.title);
     expect(detail?.reply?.kind).toBe('reply');
@@ -71,7 +71,7 @@ describe('inbox queries', () => {
   });
 
   it('brings snoozed leads back when their time comes', () => {
-    const [row] = listLeads(harness.db, { tab: 'new' }, page()).rows;
+    const [row] = listLeads(harness.db, { tab: 'todo' }, page()).rows;
     const id = row?.id ?? '';
     harness.db
       .update(leads)

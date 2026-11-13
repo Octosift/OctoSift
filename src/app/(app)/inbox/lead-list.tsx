@@ -64,7 +64,14 @@ export function LeadList({
             >
               <ScoreBadge score={row.score} kind={row.kind} />
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{row.title}</p>
+                <p className="flex items-center gap-1.5">
+                  <span className="min-w-0 truncate font-medium">{row.title}</span>
+                  {row.status === 'drafted' ? (
+                    <Badge tone="brand" className="shrink-0">
+                      Draft ready
+                    </Badge>
+                  ) : null}
+                </p>
                 <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <span className="truncate">r/{row.subreddit}</span>
                   <span aria-hidden>·</span>

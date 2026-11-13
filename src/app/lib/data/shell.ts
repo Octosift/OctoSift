@@ -9,7 +9,8 @@ import { getRuntime, nowSeconds } from '../runtime';
 
 export interface ShellData {
   products: { id: string; name: string }[];
-  newLeads: number;
+  /** Leads in the To do tab: new and drafted opportunities. */
+  toDo: number;
   health: ReturnType<typeof loadHealth>;
   lastRun: { id: string; startedAt: number; status: string } | null;
   scan: 'idle' | 'requested' | 'running';
@@ -25,7 +26,7 @@ export function loadShell(): ShellData {
   const running = scanInProgress(db, clock.nowMs(), CONFIG.schedule.lockStaleAfterMs);
   return {
     products: listProducts(db).map((product) => ({ id: product.id, name: product.name })),
-    newLeads: countByTab(db).new,
+    toDo: countByTab(db).todo,
     health: loadHealth(db, now),
     lastRun: last ? { id: last.id, startedAt: last.startedAt, status: last.status } : null,
     scan: running ? 'running' : pendingScanRequest(db) ? 'requested' : 'idle',

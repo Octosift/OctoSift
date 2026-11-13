@@ -12,8 +12,7 @@ describe('seedDemo', () => {
     const tabs = countByTab(db);
     expect(summary.leads).toBeGreaterThanOrEqual(38);
     expect(tabs).toMatchObject({ replied: 8, snoozed: 2, dismissed: 3, brand: 2 });
-    expect(tabs.new).toBeGreaterThan(0);
-    expect(tabs.drafted).toBeGreaterThan(0);
+    expect(tabs.todo).toBeGreaterThan(0);
     expect(recentRuns(db, 10).map((run) => run.status)).toEqual(['ok', 'ok', 'partial', 'ok']);
     expect(db.select().from(feedback).all()).toHaveLength(4);
     expect(
