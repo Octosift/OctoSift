@@ -86,9 +86,10 @@ export const SETTINGS = {
   replyPreferences: setting(
     z.object({
       includeLinks: z.boolean(),
-      dmDrafts: z.boolean(),
+      /** Null means automatic: off for consumer products, on otherwise. */
+      dmDrafts: z.boolean().nullable(),
     }),
-    { includeLinks: true, dmDrafts: true },
+    { includeLinks: true, dmDrafts: null },
   ),
   'reddit.userAgent': setting(z.string().trim().min(10).max(400), CONFIG.reddit.defaultUserAgent),
   'reddit.ownUsername': setting(
