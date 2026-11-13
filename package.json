@@ -19,6 +19,7 @@
     "demo": "DATABASE_PATH=data/demo.sqlite tsx scripts/seed-demo.ts && DATABASE_PATH=data/demo.sqlite DEMO_MODE=1 concurrently -k -n web,worker -c cyan,magenta \"pnpm:dev:web\" \"pnpm:dev:worker\"",
     "worker": "tsx src/worker/index.ts",
     "scan": "tsx src/cli/index.ts scan",
+    "eval": "tsx src/cli/index.ts eval",
     "cli": "tsx src/cli/index.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:generate": "drizzle-kit generate",
