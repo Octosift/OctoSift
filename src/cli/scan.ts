@@ -5,7 +5,9 @@
  * regardless of the schedule; the worker is what runs scans on a schedule.
  */
 import { parseArgs } from 'node:util';
+import { CONFIG } from '../core/config';
 import { runScan, type ScanDeps, type ScanReport } from '../core/pipeline/run';
+import { acquireScanLock, heartbeatScanLock, releaseScanLock } from '../core/scan-lock';
 
 export interface ScanCommandOptions {
   productId: string | undefined;
@@ -69,19 +71,35 @@ export function formatScanReport(report: ScanReport, options: ScanCommandOptions
   return `${lines.join('\n')}\n`;
 }
 
+export const SCAN_RUNNING_MESSAGE =
+  'Another scan is running (the worker or another command). Try again in a minute.\n';
+
 export async function runScanCommand(
   deps: ScanDeps,
   options: ScanCommandOptions,
-): Promise<{ code: number; output: string; report: ScanReport }> {
-  const report = await runScan(deps, {
-    trigger: 'cli',
-    dryRun: options.dryRun,
-    ignoreSchedule: true,
-    ...(options.productId ? { productId: options.productId } : {}),
-  });
-  return {
-    code: report.status === 'failed' ? 1 : 0,
-    output: formatScanReport(report, options),
-    report,
-  };
+): Promise<{ code: number; output: string; report: ScanReport | null }> {
+  const owner = `cli-${process.pid}`;
+  if (!acquireScanLock(deps.db, owner, deps.clock.nowMs(), CONFIG.schedule.lockStaleAfterMs)) {
+    return { code: 1, output: SCAN_RUNNING_MESSAGE, report: null };
+  }
+  const heartbeat = setInterval(() => {
+    heartbeatScanLock(deps.db, owner, deps.clock.nowMs());
+  }, CONFIG.schedule.lockHeartbeatMs);
+  heartbeat.unref();
+  try {
+    const report = await runScan(deps, {
+      trigger: 'cli',
+      dryRun: options.dryRun,
+      ignoreSchedule: true,
+      ...(options.productId ? { productId: options.productId } : {}),
+    });
+    return {
+      code: report.status === 'failed' ? 1 : 0,
+      output: formatScanReport(report, options),
+      report,
+    };
+  } finally {
+    clearInterval(heartbeat);
+    releaseScanLock(deps.db, owner);
+  }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createScanHarness } from '../core/testing/scan-harness';
-import { formatScanReport, parseScanArgs, runScanCommand } from './scan';
+import { acquireScanLock } from '../core/scan-lock';
+import { formatScanReport, parseScanArgs, runScanCommand, SCAN_RUNNING_MESSAGE } from './scan';
 
 describe('parseScanArgs', () => {
   it('reads every supported flag', () => {
@@ -71,6 +72,19 @@ describe('runScanCommand', () => {
   });
 });
 
+describe('scan lock', () => {
+  it('refuses to start while another scan holds the lock', async () => {
+    const harness = createScanHarness('acme-logs');
+    acquireScanLock(harness.db, 'worker-elsewhere', harness.clock.nowMs(), 60_000);
+    const result = await runScanCommand(harness.deps, {
+      productId: undefined,
+      json: false,
+      dryRun: false,
+    });
+    expect(result).toEqual({ code: 1, output: SCAN_RUNNING_MESSAGE, report: null });
+  });
+});
+
 describe('formatScanReport', () => {
   it('says when nothing new was found and when prices were unknown', async () => {
     const harness = createScanHarness('acme-logs');
@@ -79,6 +93,7 @@ describe('formatScanReport', () => {
       json: false,
       dryRun: true,
     });
+    if (!report) throw new Error('expected a report');
     const empty = { ...report, leads: [], costIncomplete: true };
     const output = formatScanReport(empty, { productId: undefined, json: false, dryRun: true });
     expect(output).toContain('(dry run, nothing saved)');
