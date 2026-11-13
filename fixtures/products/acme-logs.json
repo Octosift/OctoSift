@@ -43,6 +43,5 @@
   "misconceptions": "People expect it to store logs and draw charts. It reads logs where they already are.",
   "never_reply_to": "Questions about metrics dashboards or tracing.",
   "include_links": true,
-  "reddit_username": null,
-  "short": "Acme Logs: A command-line tool that searches and tails logs from several servers at once in one terminal. For: Developers and operators who run a handful of servers; Small teams without a central logging system. Solves: Opening many SSH sessions to read logs; Searching the same error across several machines; Following a request through logs on multiple servers."
+  "reddit_username": null
 }

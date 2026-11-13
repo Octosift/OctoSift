@@ -10,6 +10,8 @@ export const productProfileSchema = profileWire.extend({
   never_reply_to: z.string().default(''),
   include_links: z.boolean().default(true),
   reddit_username: z.string().nullable().default(null),
+  /** Answers to the extraction's open questions, as "question answer" lines. */
+  founder_notes: z.array(z.string()).default([]),
   /** Under 200 words; the only profile text triage sees. */
   short: z.string(),
 });

@@ -54,6 +54,9 @@ export function profileText(profile: ProductProfile): string {
     `Problems it solves:\n${bulletList(profile.problems_solved)}`,
     profile.best_customer.trim() ? `Best customer: ${profile.best_customer}` : '',
     `Pricing: ${profile.pricing || 'not stated'}`,
+    profile.founder_notes.length > 0
+      ? `Notes from the founder:\n${bulletList(profile.founder_notes)}`
+      : '',
     `Words people with the problem use:\n${bulletList(profile.buyer_phrases)}`,
   ]
     .filter((line) => line.length > 0)
