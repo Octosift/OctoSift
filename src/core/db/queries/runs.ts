@@ -46,6 +46,11 @@ export function finishRun(
     .run();
 }
 
+/** Saves the counts so far, so the dashboard can show a scan's progress. */
+export function updateRunCounts(db: Db, id: string, counts: unknown): void {
+  db.update(runs).set({ countsJson: counts }).where(eq(runs.id, id)).run();
+}
+
 export function getRun(db: Db, id: string): RunRow | null {
   return db.select().from(runs).where(eq(runs.id, id)).get() ?? null;
 }

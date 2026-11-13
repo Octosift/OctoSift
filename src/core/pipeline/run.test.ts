@@ -227,6 +227,20 @@ describe('runScan', () => {
     expect(row?.status).toBe('gone');
   });
 
+  it('saves the funnel counts while the scan runs', async () => {
+    const harness = createScanHarness('acme-plants');
+    const seen: number[] = [];
+    const respond = harness.generator;
+    harness.deps.generator = (request) => {
+      const run = harness.db.select().from(runs).get();
+      const counts = run?.countsJson as { prefilter?: { pass: number } } | undefined;
+      seen.push(counts?.prefilter?.pass ?? -1);
+      return respond(request);
+    };
+    await runScan(harness.deps, { trigger: 'cli' });
+    expect(seen[0]).toBe(25);
+  });
+
   it('notifies about strong leads', async () => {
     const harness = createScanHarness('acme-invoices');
     const notices: number[] = [];

@@ -15,7 +15,7 @@ import { CONFIG } from '../config';
 import type { Db } from '../db/client';
 import { recentPosts } from '../db/queries/posts';
 import { getProduct, listProducts, watchedSubreddits, type Product } from '../db/queries/products';
-import { createRun, finishRun } from '../db/queries/runs';
+import { createRun, finishRun, updateRunCounts } from '../db/queries/runs';
 import type { RunStatus, RunTrigger } from '../db/schema';
 import { newId } from '../ids';
 import type { Logger } from '../log';
@@ -150,6 +150,10 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
       allNames,
       { ignoreSchedule: options.ignoreSchedule ?? false },
     );
+    const progress = () => {
+      updateRunCounts(db, runId, counts);
+    };
+    progress();
     const since = now - settings.get('prefilter.maxPostAgeHours') * 3600;
     for (const product of products) {
       const names = watched.get(product.id) ?? [];
@@ -170,6 +174,7 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
           feedbackFor: deps.feedbackFor ?? (() => NO_FEEDBACK),
           notify: deps.notify ?? null,
           newLeads,
+          onProgress: progress,
           state,
         },
         product,

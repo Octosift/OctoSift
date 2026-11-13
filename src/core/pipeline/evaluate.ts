@@ -69,6 +69,8 @@ export interface EvaluateContext {
   /** Resolves to true when the notification was delivered. */
   notify: ((notice: LeadNotice) => Promise<boolean>) | null;
   newLeads: LeadSummary[];
+  /** Called after each step so progress can be shown while the scan runs. */
+  onProgress: () => void;
   /** Set once the budget is exhausted; shared across products. */
   state: { budgetStop: string | null };
 }
@@ -187,6 +189,7 @@ export async function evaluateProduct(
     toTriage.push(post);
   }
 
+  ctx.onProgress();
   if (toTriage.length > 0 && aiAvailable(ctx)) {
     const run = await triagePosts(
       ctx.ai,
@@ -207,6 +210,7 @@ export async function evaluateProduct(
     }
   }
 
+  ctx.onProgress();
   const feedback = ctx.feedbackFor(product.id);
   for (const post of toQualify) {
     if (!aiAvailable(ctx)) break;
@@ -253,6 +257,7 @@ export async function evaluateProduct(
       ageHours: (ctx.now - post.createdAt) / 3600,
       flags: veto.flags,
     });
+    ctx.onProgress();
     if (!veto.lead || score < thresholds.show) {
       const reason = veto.lead
         ? `Score ${score} is below ${thresholds.show}`
