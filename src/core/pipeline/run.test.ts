@@ -241,6 +241,19 @@ describe('runScan', () => {
     expect(seen[0]).toBe(25);
   });
 
+  it('teaches the qualify stage from the founder feedback', async () => {
+    const harness = createScanHarness('acme-logs');
+    harness.deps.feedbackFor = () => ({
+      rules: ['We never reply to Windows-only questions'],
+      good: [{ title: 'Tail logs on six VMs', reason: 'Exactly our use case' }],
+      bad: [],
+    });
+    await runScan(harness.deps, { trigger: 'cli' });
+    const qualifyCall = harness.generator.calls.find((call) => call.task === 'qualify');
+    expect(qualifyCall?.system).toContain('We never reply to Windows-only questions');
+    expect(qualifyCall?.system).toContain('"Tail logs on six VMs": Exactly our use case');
+  });
+
   it('notifies about strong leads', async () => {
     const harness = createScanHarness('acme-invoices');
     const notices: number[] = [];

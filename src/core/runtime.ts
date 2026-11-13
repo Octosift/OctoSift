@@ -16,6 +16,7 @@ import { createUsageLedger } from './ai/usage';
 import { systemClock, type Clock, type Random } from './clock';
 import { CONFIG } from './config';
 import { openDatabase, type Db } from './db/client';
+import { feedbackContext } from './db/queries/feedback';
 import type { AppEnv } from './env';
 import { createLogger, type Logger, type LogRecord } from './log';
 import { sendWebhook } from './notify/webhook';
@@ -158,6 +159,7 @@ export function createRuntime(options: RuntimeOptions): Runtime {
         random,
         log,
         redact: redactor.redact,
+        feedbackFor: (productId) => feedbackContext(db, productId),
         notify: async (notice) => {
           const hook = secrets.use('webhook_url');
           if (!hook.ok) return false;
