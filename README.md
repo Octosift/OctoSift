@@ -49,7 +49,11 @@ into a spammer.
 
 ## Quick start
 
-You need Node.js 22 or newer and pnpm.
+You need pnpm and Node.js on a long-term support line: 22.12 or later, 24 (recommended, and
+what `.nvmrc` selects) or 26. Node 20 and the odd-numbered releases are not supported; the
+test runner refuses them. On Node 26 the SQLite driver is compiled during `pnpm install`,
+which needs a C++ toolchain (Xcode command line tools on macOS, `python3`, `make` and `g++`
+on Linux).
 
 ```sh
 pnpm install

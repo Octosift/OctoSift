@@ -4,6 +4,11 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
 
 ## Tooling
 
+- **Node.js 22.12+, 24 or 26.** The test runner accepts only these long-term support lines
+  (22 from 22.12), and the SQLite driver and AI SDK need 22 or later. 24 is the default in
+  `.nvmrc` and the Docker image. Node 26 has no prebuilt SQLite binary yet, so it compiles
+  during install. CI runs the checks on all three.
+
 - **TypeScript 6.0, not 7.** The native TypeScript 7 compiler is not yet supported by
   typescript-eslint.
 - **ESLint 9, not 10.** The React, accessibility and import plugins used by Next.js do
