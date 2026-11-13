@@ -39,6 +39,8 @@ const FUNNEL_STAGE: Record<string, Stage | null> = {
 };
 
 const VERDICT_TONE = { pass: 'brand', skip: 'neutral', error: 'danger' } as const;
+/** Longer lists are cut here; the reason counts above still cover every post. */
+const MAX_ENTRIES = 200;
 
 export default async function RunPage({
   params,
@@ -152,7 +154,7 @@ export default async function RunPage({
             </EmptyState>
           ) : (
             <ul className="divide-y divide-border">
-              {entries.map((entry) => (
+              {entries.slice(0, MAX_ENTRIES).map((entry) => (
                 <li key={`${entry.productId}:${entry.postId}`} className="flex gap-3 px-4 py-2.5">
                   <Badge
                     tone={VERDICT_TONE[entry.verdict as keyof typeof VERDICT_TONE]}
@@ -179,6 +181,11 @@ export default async function RunPage({
               ))}
             </ul>
           )}
+          {entries.length > MAX_ENTRIES ? (
+            <p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
+              Showing the first {MAX_ENTRIES} of {entries.length} posts at this stage.
+            </p>
+          ) : null}
         </Card>
       </div>
     </>
