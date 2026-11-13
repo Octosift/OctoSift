@@ -1,0 +1,1 @@
+ALTER TABLE `posts` ADD `body_links_json` text DEFAULT '[]' NOT NULL;

@@ -5,6 +5,7 @@
  * hold data validated at the boundary by Zod. Subreddit names are stored in
  * lower case without the "r/" prefix.
  */
+import { sql } from 'drizzle-orm';
 import {
   index,
   integer,
@@ -77,6 +78,11 @@ export const posts = sqliteTable(
     author: text('author').notNull(),
     title: text('title').notNull(),
     bodyText: text('body_text').notNull(),
+    /** Links found in the body; the prefilter uses them to spot spam. */
+    bodyLinksJson: text('body_links_json', { mode: 'json' })
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'`),
     url: text('url').notNull(),
     imageUrl: text('image_url'),
     createdAt: integer('created_at').notNull(),
