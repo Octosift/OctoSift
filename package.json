@@ -40,11 +40,13 @@
     "@ai-sdk/google": "^4",
     "@ai-sdk/openai": "^4",
     "@ai-sdk/openai-compatible": "^3",
+    "@mozilla/readability": "^0.6.0",
     "ai": "^7",
     "better-sqlite3": "^13.1.1",
     "drizzle-orm": "^0.45.4",
     "fast-xml-parser": "^5.12.1",
     "linkedom": "^0.18.15",
+    "robots-parser": "^3.0.1",
     "undici": "^7.30.2",
     "zod": "^4.6.7"
   }
