@@ -1,5 +1,5 @@
 /** Scan history. */
-import { desc, eq } from 'drizzle-orm';
+import { count, desc, eq } from 'drizzle-orm';
 import type { Db } from '../client';
 import { runs, type RunStatus, type RunTrigger } from '../schema';
 
@@ -57,4 +57,8 @@ export function getRun(db: Db, id: string): RunRow | null {
 
 export function recentRuns(db: Db, limit: number, offset = 0): RunRow[] {
   return db.select().from(runs).orderBy(desc(runs.startedAt)).limit(limit).offset(offset).all();
+}
+
+export function countRuns(db: Db): number {
+  return db.select({ value: count() }).from(runs).get()?.value ?? 0;
 }
