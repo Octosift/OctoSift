@@ -19,7 +19,6 @@ export const SECRET_ENV_VARS = {
   anthropic_api_key: 'ANTHROPIC_API_KEY',
   google_api_key: 'GOOGLE_GENERATIVE_AI_API_KEY',
   openai_compatible_api_key: 'OPENAI_COMPATIBLE_API_KEY',
-  reddit_client_secret: 'REDDIT_CLIENT_SECRET',
   dataforseo_password: 'DATAFORSEO_PASSWORD',
   webhook_url: 'WEBHOOK_URL',
   reddit_proxy_url: 'REDDIT_PROXY_URL',
