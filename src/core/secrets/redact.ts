@@ -26,9 +26,9 @@ const URL_CREDENTIALS = /(\b[a-z][a-z0-9+.-]*:\/\/)[^\s/:@]+:[^\s/@]+@/gi;
 const SECRET_PARAMS = /\b(api[_-]?key|key|token|access_token|secret|password)=([^\s&"']{8,})/gi;
 
 export interface Redactor {
-  remember(value: string): void;
-  redact(text: string): string;
-  redactValue(value: unknown): unknown;
+  remember: (value: string) => void;
+  redact: (text: string) => string;
+  redactValue: (value: unknown) => unknown;
 }
 
 function escapeRegExp(text: string): string {
