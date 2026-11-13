@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { acquireScanLock, requestScan } from '../core/scan-lock';
+import { requestValidation, validationProgress } from '../core/validation-queue';
 import { createScanHarness } from '../core/testing/scan-harness';
 import { runs } from '../core/db/schema';
 import { silentLogger } from '../core/log';
@@ -59,6 +60,17 @@ describe('scheduler', () => {
     expect(await scheduler.tick({ checkSchedule: true })).toEqual({ kind: 'locked' });
     harness.clock.advance(5 * 60 * 1000 + 1);
     expect((await scheduler.tick({ checkSchedule: false })).kind).toBe('scanned');
+  });
+
+  it('checks subreddits the dashboard asked about before scanning', async () => {
+    const { scheduler, harness } = setup();
+    requestValidation(harness.db, ['freelance_demo', 'no_such_demo'], 0);
+    expect(await scheduler.tick({ checkSchedule: true })).toEqual({ kind: 'validated' });
+    expect(validationProgress(harness.db)?.results.map((result) => result.status)).toEqual([
+      'ok',
+      'gone',
+    ]);
+    expect((await scheduler.tick({ checkSchedule: true })).kind).toBe('scanned');
   });
 
   it('keeps checking for work until it is stopped', async () => {

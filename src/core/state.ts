@@ -12,6 +12,20 @@ const STATE = {
   'state.redditPausedUntil': z.number(),
   'state.scanLock': z.object({ owner: z.string(), heartbeatAt: z.number() }),
   'state.scanRequest': z.object({ requestedAt: z.number(), productId: z.string().nullable() }),
+  'state.validationRequest': z.object({ requestedAt: z.number(), names: z.array(z.string()) }),
+  'state.validationProgress': z.object({
+    requestedAt: z.number(),
+    total: z.number(),
+    done: z.boolean(),
+    results: z.array(
+      z.object({
+        name: z.string(),
+        status: z.enum(['ok', 'gone', 'unavailable']),
+        postsPerDay: z.number().optional(),
+        message: z.string().optional(),
+      }),
+    ),
+  }),
 } as const;
 
 export type StateKey = keyof typeof STATE;

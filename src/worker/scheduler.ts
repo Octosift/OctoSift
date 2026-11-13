@@ -20,6 +20,7 @@ import {
   takeScanRequest,
 } from '../core/scan-lock';
 import type { SettingsStore } from '../core/settings/store';
+import { hasValidationRequest, runValidationRequest } from '../core/validation-queue';
 
 export interface SchedulerDeps {
   db: Db;
@@ -36,7 +37,10 @@ export interface SchedulerDeps {
 }
 
 export type TickOutcome =
-  { kind: 'idle' } | { kind: 'locked' } | { kind: 'scanned'; report: ScanReport };
+  | { kind: 'idle' }
+  | { kind: 'locked' }
+  | { kind: 'validated' }
+  | { kind: 'scanned'; report: ScanReport };
 
 function intervalHeartbeat(beat: () => void): () => void {
   const timer = setInterval(beat, CONFIG.schedule.lockHeartbeatMs);
@@ -77,7 +81,21 @@ export function createScheduler(deps: SchedulerDeps) {
   const startHeartbeat = deps.startHeartbeat ?? intervalHeartbeat;
   const sleep = deps.sleep ?? abortableSleep;
 
+  /** Subreddit checks requested by the dashboard read Reddit too, so they share the lock. */
+  async function validate(): Promise<TickOutcome> {
+    if (!acquireScanLock(db, owner, clock.nowMs(), CONFIG.schedule.lockStaleAfterMs)) {
+      return { kind: 'locked' };
+    }
+    try {
+      await runValidationRequest(db, deps.scanDeps().source, nowSeconds(clock));
+      return { kind: 'validated' };
+    } finally {
+      releaseScanLock(db, owner);
+    }
+  }
+
   async function tick(options: { checkSchedule: boolean }): Promise<TickOutcome> {
+    if (hasValidationRequest(db)) return validate();
     const requested = pendingScanRequest(db) !== null;
     const due = requested || (options.checkSchedule && hasDueWork(db, settings, nowSeconds(clock)));
     if (!due) return { kind: 'idle' };

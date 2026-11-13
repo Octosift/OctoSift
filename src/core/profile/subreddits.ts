@@ -72,13 +72,13 @@ export async function validateSubreddits(
   source: RedditSource,
   names: string[],
   now: number,
-  onProgress?: (done: number, total: number) => void,
+  onProgress?: (done: number, total: number, check: SubredditCheck) => void,
 ): Promise<SubredditCheck[]> {
   const results: SubredditCheck[] = [];
   for (const [index, rawName] of names.entries()) {
     const check = await validateSubreddit(source, rawName, now);
     results.push(check);
-    onProgress?.(index + 1, names.length);
+    onProgress?.(index + 1, names.length, check);
     if (check.status === 'unavailable' && check.retryAfterS !== undefined) {
       // Reads are paused; do not spend the remaining names on certain failures.
       for (const rest of names.slice(index + 1)) {
