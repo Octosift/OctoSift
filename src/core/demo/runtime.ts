@@ -4,11 +4,13 @@
  * key and no network are needed, and every screen has realistic content.
  */
 import type { ModelResolution } from '../ai/client';
+import type { Generator } from '../ai/types';
 import { createFakeGenerator } from '../ai/fake';
 import { createFixtureResponder } from '../ai/fake-responder';
 import { systemClock, type Clock } from '../clock';
 import type { GoldenLabel } from '../eval/golden';
 import { goldenToRedditPost, loadGoldenSet } from '../eval/golden';
+import type { RedditClient } from '../reddit/client';
 import { createFixtureClient } from '../reddit/fixture';
 import { createAtomSource } from '../reddit/source';
 import type { RedditPost } from '../reddit/types';
@@ -28,8 +30,28 @@ export const DEMO_QUIET_SUBREDDITS: Record<(typeof SAMPLE_PRODUCT_SLUGS)[number]
   'acme-logs': 'sysadmin_demo',
 };
 
+export interface DemoLatency {
+  redditMs: number;
+  modelMs: number;
+}
+
+/**
+ * Pauses that give live demo scans a believable length and visible progress.
+ * Far shorter than real Reddit pacing, so the demo stays quick.
+ */
+export const DEMO_LATENCY: DemoLatency = { redditMs: 600, modelMs: 120 };
+
+function pause(ms: number): Promise<void> {
+  return ms > 0
+    ? new Promise((resolve) => {
+        setTimeout(resolve, ms);
+      })
+    : Promise.resolve();
+}
+
 export function demoRuntimeOverrides(
   clock: Clock = systemClock,
+  latency: DemoLatency = DEMO_LATENCY,
 ): NonNullable<RuntimeOptions['overrides']> {
   const startS = Math.floor(clock.nowMs() / 1000);
   const profiles = loadSampleProducts();
@@ -50,11 +72,23 @@ export function demoRuntimeOverrides(
     ];
   }
 
-  const client = createFixtureClient({
+  const fixtures = createFixtureClient({
     posts: () => posts,
     clock,
     subreddits: () => Object.values(DEMO_QUIET_SUBREDDITS),
   });
+  const client: RedditClient = {
+    getFeed: (path) => pause(latency.redditMs).then(() => fixtures.getFeed(path)),
+  };
+  const fake = createFakeGenerator(
+    createFixtureResponder({
+      labels,
+      profiles: Object.values(profiles),
+      suggestions,
+      scripted: loadScriptedLeads(),
+    }),
+  );
+  const generator: Generator = (request) => pause(latency.modelMs).then(() => fake(request));
   const resolveModel = (stage: string): ModelResolution => ({
     ok: true,
     model: { provider: 'openai_compatible', model: `demo-${stage}` },
@@ -62,14 +96,7 @@ export function demoRuntimeOverrides(
   });
   return {
     source: createAtomSource({ client, clock }),
-    generator: createFakeGenerator(
-      createFixtureResponder({
-        labels,
-        profiles: Object.values(profiles),
-        suggestions,
-        scripted: loadScriptedLeads(),
-      }),
-    ),
+    generator,
     resolveModel,
   };
 }

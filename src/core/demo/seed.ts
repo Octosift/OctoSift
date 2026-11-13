@@ -10,7 +10,7 @@ import { createFixtureResponder } from '../ai/fake-responder';
 import { frozenClock, seededRandom } from '../clock';
 import type { Db } from '../db/client';
 import { insertProduct, watchSubreddit } from '../db/queries/products';
-import { feedback, leads, posts } from '../db/schema';
+import { feedback, leads, posts, runs } from '../db/schema';
 import { goldenToRedditPost, loadGoldenSet, type GoldenPost } from '../eval/golden';
 import { newId } from '../ids';
 import { silentLogger } from '../log';
@@ -78,7 +78,16 @@ export async function seedDemo(db: Db, nowMs: number): Promise<SeedSummary> {
   });
   const settings = createSettingsStore(db);
 
-  async function scanAt(atS: number, batch: GoldenPost[] | 'blocked'): Promise<void> {
+  /**
+   * Runs one scan at a moment in the past. The clock is frozen there, so the
+   * run is given the duration a real scan would take: about a minute per
+   * Reddit request plus the model calls.
+   */
+  async function scanAt(
+    atS: number,
+    batch: GoldenPost[] | 'blocked',
+    durationS: number,
+  ): Promise<void> {
     const clock = frozenClock(atS * 1000);
     const source: RedditSource =
       batch === 'blocked'
@@ -98,7 +107,7 @@ export async function seedDemo(db: Db, nowMs: number): Promise<SeedSummary> {
             }),
             clock,
           });
-    await runScan(
+    const report = await runScan(
       {
         db,
         source,
@@ -112,12 +121,23 @@ export async function seedDemo(db: Db, nowMs: number): Promise<SeedSummary> {
       },
       { trigger: 'schedule', ignoreSchedule: true },
     );
+    db.update(runs)
+      .set({ finishedAt: atS + durationS })
+      .where(eq(runs.id, report.runId))
+      .run();
   }
 
-  await scanAt(now - 5 * DAY, history.posts.slice(0, 12));
-  await scanAt(now - 3 * DAY, 'blocked');
-  await scanAt(now - 2 * DAY, history.posts.slice(12));
-  await scanAt(now - 2 * HOUR, golden.posts);
+  // Each older scan reads a dozen leads among posts that are not (t3_dem25 onwards).
+  const number = (post: GoldenPost) => Number(post.id.replace('t3_dem', ''));
+  const firstScan = history.posts.filter(
+    (post) => number(post) <= 12 || (number(post) >= 25 && number(post) <= 38),
+  );
+  const secondScan = history.posts.filter((post) => !firstScan.includes(post));
+  await scanAt(now - 5 * DAY, firstScan, 134);
+  await scanAt(now - 3 * DAY, 'blocked', 41);
+  await scanAt(now - 2 * DAY, secondScan, 157);
+  // Recent enough that the demo worker does not rescan the moment it starts.
+  await scanAt(now - 25 * 60, golden.posts, 192);
 
   moveLeadsThroughTheirLife(db, now);
   return {

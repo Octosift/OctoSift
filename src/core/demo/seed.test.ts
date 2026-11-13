@@ -14,6 +14,10 @@ describe('seedDemo', () => {
     expect(tabs).toMatchObject({ replied: 8, snoozed: 2, dismissed: 3, brand: 2 });
     expect(tabs.todo).toBeGreaterThan(0);
     expect(recentRuns(db, 10).map((run) => run.status)).toEqual(['ok', 'ok', 'partial', 'ok']);
+    // Durations a real scan would take, not the zero a frozen clock gives.
+    expect(recentRuns(db, 10).map((run) => (run.finishedAt ?? 0) - run.startedAt)).toEqual([
+      192, 157, 41, 134,
+    ]);
     expect(db.select().from(feedback).all()).toHaveLength(4);
     // Hand-written content: no two drafts alike, and scores spread out.
     const replies = db

@@ -8,10 +8,12 @@ import { createFakeClock } from '../testing/fake-clock';
 import { DEMO_MISSING_SUBREDDIT, DEMO_QUIET_SUBREDDITS, demoRuntimeOverrides } from './runtime';
 import { loadSampleProduct } from './sample-products';
 
+const NO_LATENCY = { redditMs: 0, modelMs: 0 };
+
 describe('demo mode overrides', () => {
   it('runs a full scan with no key and no network', async () => {
     const clock = createFakeClock();
-    const overrides = demoRuntimeOverrides(clock);
+    const overrides = demoRuntimeOverrides(clock, NO_LATENCY);
     const db = openMemoryDatabase();
     const now = Math.floor(clock.nowMs() / 1000);
     insertProduct(db, { id: 'demo', profile: loadSampleProduct('acme-invoices'), now });
@@ -39,7 +41,7 @@ describe('demo mode overrides', () => {
   });
 
   it('knows a quiet subreddit with no posts and rejects one that does not exist', async () => {
-    const overrides = demoRuntimeOverrides(createFakeClock());
+    const overrides = demoRuntimeOverrides(createFakeClock(), NO_LATENCY);
     const quiet = await overrides.source?.fetchNewPosts([DEMO_QUIET_SUBREDDITS['acme-invoices']], {
       limit: 10,
     });

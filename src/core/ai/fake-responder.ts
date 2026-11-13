@@ -74,6 +74,13 @@ const HELPFUL =
   'here usually suggest keeping it simple before spending money, and that advice holds for your ' +
   'situation too.';
 
+/** Why the triage model skipped a post, by the kind of post the label says it is. */
+const SKIP_WHY: Readonly<Record<string, string>> = {
+  off_topic: 'Not about invoicing or getting paid',
+  job_ad: 'A job post, not someone with a problem to solve',
+  own_promotion: 'Someone promoting their own tool',
+};
+
 function reason(label: GoldenLabel): string {
   if (label.fit === 'direct') return 'The author is looking for what the product does.';
   if (label.fit === 'soft') return 'Related to a problem the product solves.';
@@ -145,13 +152,11 @@ export function createFixtureResponder(options: FixtureResponderOptions) {
             results: ids.map((id) => {
               const label = labels.get(id);
               const relevant = label?.relevant ?? false;
-              return {
-                id,
-                relevant,
-                why: relevant
-                  ? 'Mentions a problem the product covers'
-                  : 'Not about a problem the product solves',
-              };
+              const script = scripted.get(id);
+              const kept = script?.reason.split('. ')[0] ?? 'Mentions a problem the product covers';
+              const skipped =
+                SKIP_WHY[label?.category ?? ''] ?? 'Not about a problem the product solves';
+              return { id, relevant, why: relevant ? kept : skipped };
             }),
           },
         };
