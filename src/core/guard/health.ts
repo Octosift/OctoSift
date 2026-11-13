@@ -1,0 +1,145 @@
+/**
+ * Turns recent scans into warnings the dashboard shows as banners.
+ *
+ * "Fail quietly, report loudly": a scan never crashes on a bad fetch or a
+ * failed AI call, so a pipeline that keeps producing nothing has to be
+ * pointed out, with the likely cause in plain language.
+ */
+import { z } from 'zod';
+import { CONFIG } from '../config';
+import type { Db } from '../db/client';
+import { enabledSubredditNames } from '../db/queries/products';
+import { recentRuns, type RunRow } from '../db/queries/runs';
+import { readState } from '../state';
+
+export type HealthIssue =
+  | { kind: 'reddit_paused'; severity: 'warning'; resumesAt: number; message: string }
+  | { kind: 'ai_stopped'; severity: 'error'; message: string }
+  | { kind: 'budget'; severity: 'warning'; message: string }
+  | { kind: 'no_leads'; severity: 'warning'; message: string; causes: string[] }
+  | { kind: 'no_fetch'; severity: 'warning'; message: string; causes: string[] };
+
+const countsSchema = z.object({
+  fetched: z.number().catch(0),
+  prefilter: z.object({ pass: z.number(), skip: z.number() }).catch({ pass: 0, skip: 0 }),
+  triage: z
+    .object({ pass: z.number(), skip: z.number(), error: z.number() })
+    .catch({ pass: 0, skip: 0, error: 0 }),
+  qualify: z.object({ pass: z.number(), error: z.number() }).catch({ pass: 0, error: 0 }),
+  veto: z.object({ pass: z.number(), skip: z.number() }).catch({ pass: 0, skip: 0 }),
+  leads: z.number().catch(0),
+  blocked: z.boolean().catch(false),
+});
+type RunCounts = z.output<typeof countsSchema>;
+
+function countsOf(run: RunRow): RunCounts {
+  return countsSchema.catch(countsSchema.parse({})).parse(run.countsJson);
+}
+
+export interface HealthInput {
+  /** Newest first; dry runs are ignored. */
+  runs: RunRow[];
+  /** Epoch seconds, from the stored Reddit pause. */
+  redditPausedUntil: number | null;
+  hasSubreddits: boolean;
+  now: number;
+}
+
+function likelyCausesOfNoLeads(counts: RunCounts[]): string[] {
+  const total = counts.reduce(
+    (sum, run) => ({
+      prefilterPass: sum.prefilterPass + run.prefilter.pass,
+      triagePass: sum.triagePass + run.triage.pass,
+      triageSkip: sum.triageSkip + run.triage.skip,
+      errors: sum.errors + run.triage.error + run.qualify.error,
+      vetoSkip: sum.vetoSkip + run.veto.skip,
+      blocked: sum.blocked || run.blocked,
+    }),
+    { prefilterPass: 0, triagePass: 0, triageSkip: 0, errors: 0, vetoSkip: 0, blocked: false },
+  );
+  const causes: string[] = [];
+  if (total.errors > 0)
+    causes.push('Some AI calls failed. Check your provider settings and the Runs page.');
+  if (total.blocked) causes.push('Reddit blocked some reads, so fewer posts were checked.');
+  if (total.prefilterPass === 0) {
+    causes.push(
+      'Every post was filtered out before the AI stages. Check the blocklist, languages and maximum post age.',
+    );
+  } else if (total.triagePass === 0 && total.triageSkip > 0) {
+    causes.push(
+      'Triage found nothing relevant. The subreddits may not be where your customers ask questions, or the profile may be too narrow.',
+    );
+  } else if (total.vetoSkip > 0) {
+    causes.push(
+      'Posts were judged but scored below your inbox threshold or were vetoed. Your thresholds may be too high.',
+    );
+  }
+  if (causes.length === 0) causes.push('Try different subreddits or broaden the product profile.');
+  return causes;
+}
+
+export function computeHealth(input: HealthInput): HealthIssue[] {
+  const issues: HealthIssue[] = [];
+  const runs = input.runs.filter((run) => !run.dryRun && run.status !== 'running');
+  const latest = runs[0];
+
+  if (input.redditPausedUntil !== null && input.redditPausedUntil > input.now) {
+    issues.push({
+      kind: 'reddit_paused',
+      severity: 'warning',
+      resumesAt: input.redditPausedUntil,
+      message: 'Reddit is limiting requests from this network, so reading is paused for a while.',
+    });
+  }
+  if (latest?.status === 'failed') {
+    issues.push({
+      kind: 'ai_stopped',
+      severity: 'error',
+      message: latest.error ?? 'The last scan failed. See the Runs page for details.',
+    });
+  } else if (latest?.status === 'budget_stopped') {
+    issues.push({
+      kind: 'budget',
+      severity: 'warning',
+      message: latest.error ?? 'The last scan stopped at the budget cap.',
+    });
+  }
+
+  const window = CONFIG.health.scansWithoutLeadsBeforeWarning;
+  const lastFew = runs.slice(0, window).map(countsOf);
+  if (lastFew.length === window && lastFew.every((run) => run.fetched > 0 && run.leads === 0)) {
+    issues.push({
+      kind: 'no_leads',
+      severity: 'warning',
+      message: `The last ${window} scans read posts but found no leads.`,
+      causes: likelyCausesOfNoLeads(lastFew),
+    });
+  }
+
+  const oldest = runs.at(-1);
+  if (input.hasSubreddits && oldest) {
+    const lastFetch = runs.find((run) => countsOf(run).fetched > 0)?.startedAt ?? oldest.startedAt;
+    const hours = (input.now - lastFetch) / 3600;
+    if (hours > CONFIG.health.hoursWithoutFetchBeforeWarning) {
+      issues.push({
+        kind: 'no_fetch',
+        severity: 'warning',
+        message: `No posts have been read from Reddit for ${Math.floor(hours)} hours.`,
+        causes: [
+          'Check that the worker is running (pnpm start or docker compose up).',
+          'Reddit may be blocking reads from this network; a proxy or Reddit app credentials can help.',
+        ],
+      });
+    }
+  }
+  return issues;
+}
+
+export function loadHealth(db: Db, now: number): HealthIssue[] {
+  return computeHealth({
+    runs: recentRuns(db, 10),
+    redditPausedUntil: readState(db, 'state.redditPausedUntil'),
+    hasSubreddits: enabledSubredditNames(db).length > 0,
+    now,
+  });
+}
