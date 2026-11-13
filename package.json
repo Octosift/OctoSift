@@ -19,7 +19,9 @@
     "format": "prettier --write .",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm leakcheck",
     "leakcheck": "bash scripts/leakcheck.sh --all",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "scan": "tsx src/cli/index.ts scan",
+    "cli": "tsx src/cli/index.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -31,6 +33,7 @@
     "eslint": "^9.39.5",
     "globals": "^17.14.0",
     "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.72.2",
     "vitest": "^5.1.0"
