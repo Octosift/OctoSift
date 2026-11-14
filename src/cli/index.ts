@@ -1,5 +1,5 @@
 /**
- * Command-line entry point: `scan` and `eval`.
+ * Command-line entry point: `scan`, `eval` and `check-source`.
  * Output goes to stdout; logs go to stderr so `--json` output stays clean.
  */
 import { BRAND } from '../core/brand';
@@ -7,6 +7,9 @@ import { demoRuntimeOverrides } from '../core/demo/runtime';
 import { parseEnv } from '../core/env';
 import { createRuntime, type Runtime } from '../core/runtime';
 import { createRedactor } from '../core/secrets/redact';
+import { nowSeconds } from '../core/clock';
+import { enabledSubredditNames } from '../core/db/queries/products';
+import { CHECK_SOURCE_USAGE, parseCheckSourceArgs, runCheckSource } from './check-source';
 import { EVAL_USAGE, parseEvalArgs, runEvalCommand } from './eval';
 import { parseScanArgs, runScanCommand, SCAN_USAGE } from './scan';
 
@@ -65,7 +68,24 @@ async function main(argv: string[]): Promise<number> {
       ),
     );
   }
-  process.stdout.write(`${BRAND.name} command line\n\n${SCAN_USAGE}\n${EVAL_USAGE}\n`);
+  if (command === 'check-source') {
+    const parsed = parseCheckSourceArgs(rest);
+    if (!parsed.ok) return usageError(parsed.message);
+    return withRuntime((runtime) =>
+      runCheckSource(
+        {
+          source: runtime.scanDeps().source,
+          watched: enabledSubredditNames(runtime.db),
+          now: nowSeconds(runtime.clock),
+          ...(runtime.env.DEMO_MODE ? { fallbackId: 'demo' } : {}),
+        },
+        parsed.subreddit,
+      ),
+    );
+  }
+  process.stdout.write(
+    `${BRAND.name} command line\n\n${SCAN_USAGE}\n${EVAL_USAGE}\n${CHECK_SOURCE_USAGE}\n`,
+  );
   return command === undefined || command === 'help' ? 0 : 2;
 }
 

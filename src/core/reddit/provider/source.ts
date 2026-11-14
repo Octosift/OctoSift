@@ -62,7 +62,8 @@ export function createProviderSource(options: ProviderSourceOptions): ProviderSo
     const maxAgeS = options.maxPostAgeHours() * 3600;
     const posts: RedditPost[] = [];
     let after: string | null = null;
-    for (let page = 0; page < CONFIG.provider.feedPages; page += 1) {
+    const pages = Math.min(CONFIG.provider.feedPages, opts.maxPages ?? CONFIG.provider.feedPages);
+    for (let page = 0; page < pages; page += 1) {
       const answer = await call(
         'feed',
         '/v1/reddit/subreddit_feed',

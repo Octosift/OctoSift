@@ -13,6 +13,7 @@ import { CONFIG } from '../config';
 import type { SessionClient } from './session-client';
 import {
   normalizeSubredditName,
+  type FetchOptions,
   type FetchResult,
   type RedditPost,
   type RedditSource,
@@ -156,10 +157,8 @@ export function createSessionSource(options: SessionSourceOptions): RedditSource
     return { ok: true, posts };
   }
 
-  async function readSubreddit(
-    name: string,
-    known: (ids: string[]) => Set<string>,
-  ): Promise<FetchResult> {
+  async function readSubreddit(name: string, opts: FetchOptions): Promise<FetchResult> {
+    const known = opts.knownIds ?? (() => new Set<string>());
     const now = nowSeconds(clock);
     const maxAgeS = options.maxPostAgeHours() * 3600;
     const reachedOld = (page: ListingPage) => {
@@ -167,12 +166,14 @@ export function createSessionSource(options: SessionSourceOptions): RedditSource
       const seen = known(fresh.map((post) => post.id));
       return fresh.some((post) => now - post.createdAt > maxAgeS || seen.has(post.id));
     };
-    const hot = await readListing(`/r/${name}.json`, CONFIG.session.hotPages, reachedOld);
+    const pages = Math.min(CONFIG.session.hotPages, opts.maxPages ?? CONFIG.session.hotPages);
+    const hot = await readListing(`/r/${name}.json`, pages, reachedOld);
     if (!hot.ok) return hot;
     let all = hot.posts;
     const unpinned = hot.posts.filter((post) => !post.stickied);
     // Three full hot pages all from the last day: the subreddit is busy, so add the day's top.
     const busy =
+      opts.maxPages === undefined &&
       unpinned.length >= CONFIG.session.hotPages * 100 - 10 &&
       unpinned.every((post) => now - post.createdAt < DAY_S);
     if (busy) {
@@ -200,10 +201,9 @@ export function createSessionSource(options: SessionSourceOptions): RedditSource
       if (names.length === 0 || names.some((name) => !VALID_NAME.test(name))) {
         return { ok: false, kind: 'gone', message: 'Invalid subreddit name' };
       }
-      const known = opts.knownIds ?? (() => new Set<string>());
       const posts: RedditPost[] = [];
       for (const name of names) {
-        const result = await readSubreddit(name, known);
+        const result = await readSubreddit(name, opts);
         if (!result.ok) return result;
         posts.push(...result.posts);
       }

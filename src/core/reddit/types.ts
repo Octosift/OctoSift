@@ -79,6 +79,8 @@ export interface FetchOptions {
   /** Which of these post ids are already stored, so paging can stop early. */
   knownIds?: (ids: string[]) => Set<string>;
   spend?: SpendHooks;
+  /** Read at most this many pages per subreddit, for a quick check of a source. */
+  maxPages?: number;
 }
 
 export type DetailsResult =
