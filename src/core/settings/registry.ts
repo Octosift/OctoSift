@@ -44,6 +44,8 @@ const thresholds = z
 const price = z.object({
   inputPerMillionUsd: z.number().min(0),
   outputPerMillionUsd: z.number().min(0),
+  /** The rate for input served from the provider's prompt cache, when it has one. */
+  cachedInputPerMillionUsd: z.number().min(0).optional(),
 });
 
 const phraseList = z.array(z.string().trim().min(1).max(200)).max(200);

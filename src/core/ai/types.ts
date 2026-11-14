@@ -32,6 +32,13 @@ export interface ProviderCredentials {
   baseUrl: string | null;
 }
 
+/** Prices per million tokens, as stored in the price table. */
+export interface ModelPrice {
+  inputPerMillionUsd: number;
+  outputPerMillionUsd: number;
+  cachedInputPerMillionUsd?: number | undefined;
+}
+
 export interface AiUsage {
   inputTokens: number;
   outputTokens: number;
