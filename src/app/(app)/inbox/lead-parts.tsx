@@ -33,11 +33,12 @@ const CHECK_LABELS: Readonly<Record<string, string>> = {
 };
 const RESULTS = {
   visible: { label: 'visible', tone: 'brand' },
-  hidden: { label: 'hidden from logged-out readers', tone: 'danger' },
+  removed: { label: 'removed', tone: 'danger' },
   post_gone: { label: 'the post is gone', tone: 'warning' },
+  unknown: { label: 'could not tell', tone: 'outline' },
 } as const;
 
-/** The reply's visibility checks, when a data provider ran them. */
+/** The reply's visibility checks, read with the connected Reddit account. */
 function ReplyChecks({ checks, now }: { checks: LeadDetail['replyChecks']; now: number }) {
   if (checks.length === 0) return null;
   return (

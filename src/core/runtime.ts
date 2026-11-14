@@ -55,9 +55,9 @@ export interface Runtime {
   ai(): AiClient;
   /** Google results for evergreen threads; null until DataForSEO credentials are saved. */
   serp(): SerpFetcher | null;
-  /** Whether a data provider key is saved, which reply visibility checks need. */
-  hasProvider(): boolean;
-  /** Runs the reply visibility checks that are due; spends through the usage ledger. */
+  /** Whether a Reddit account is connected, which reply checks read with. */
+  hasRedditAccount(): boolean;
+  /** Runs the reply visibility checks that are due, through the connected account. */
   checkReplies(): Promise<number>;
   scanDeps(): ScanDeps;
   close(): void;
@@ -165,6 +165,28 @@ export function createRuntime(options: RuntimeOptions): Runtime {
     name: 'vendor',
   });
 
+  /**
+   * A client for the connected account. Every client shares the session's
+   * limiter, so scans and checks keep one pace and one hourly cap.
+   */
+  function sessionClient(webPageMeansSignedOut: boolean) {
+    return createSessionClient({
+      cookie: () => {
+        const cookie = secrets.use('reddit_session_cookie');
+        return cookie.ok ? cookie.value : null;
+      },
+      userAgent: () => settings.get('reddit.userAgent'),
+      limiter: sessionLimiter,
+      clock,
+      webPageMeansSignedOut,
+      onInvalid: (reason) => {
+        markSessionNeedsReauth(db, reason, nowSeconds(clock));
+        log.warn('Reddit session needs reconnecting', { reason });
+      },
+    });
+  }
+  const hasRedditAccount = () => sessionStatus(db, secrets).status === 'connected';
+
   /** The sources that are set up, in the order the user prefers. */
   function candidates(): SourceCandidate[] {
     const available: SourceCandidate[] = [];
@@ -173,24 +195,11 @@ export function createRuntime(options: RuntimeOptions): Runtime {
       if (id === 'provider' && secrets.describe('vendor_api_key').configured) {
         available.push({ id, source: providerSource });
       }
-      if (id === 'session' && sessionStatus(db, secrets).status === 'connected') {
-        const sessionClient = createSessionClient({
-          cookie: () => {
-            const cookie = secrets.use('reddit_session_cookie');
-            return cookie.ok ? cookie.value : null;
-          },
-          userAgent: () => settings.get('reddit.userAgent'),
-          limiter: sessionLimiter,
-          clock,
-          onInvalid: (reason) => {
-            markSessionNeedsReauth(db, reason, nowSeconds(clock));
-            log.warn('Reddit session needs reconnecting', { reason });
-          },
-        });
+      if (id === 'session' && hasRedditAccount()) {
         available.push({
           id,
           source: createSessionSource({
-            client: sessionClient,
+            client: sessionClient(true),
             clock,
             maxPostAgeHours: () => settings.get('prefilter.maxPostAgeHours'),
           }),
@@ -248,33 +257,16 @@ export function createRuntime(options: RuntimeOptions): Runtime {
         redact: redactor.redact,
         log,
       }),
-    hasProvider: () => secrets.describe('vendor_api_key').configured,
+    hasRedditAccount,
     checkReplies: async () => {
-      if (!secrets.describe('vendor_api_key').configured) return 0;
-      const ledger = createUsageLedger({
-        db,
-        clock,
-        runId: null,
-        prices: () => settings.get('ai.prices'),
-        caps: () => ({
-          perRunUsd: Number.POSITIVE_INFINITY,
-          perDayUsd: settings.get('budget.perDayUsd'),
-        }),
-      });
+      if (!hasRedditAccount()) return 0;
+      const session = sessionStatus(db, secrets);
       return runDueReplyChecks({
         db,
-        provider: providerSource,
+        reddit: sessionClient(false),
+        account: session.status === 'connected' ? session.username : null,
         now: nowSeconds(clock),
         log,
-        spend: {
-          refuse: () => {
-            const check = ledger.check();
-            return check.ok ? null : check.message;
-          },
-          record: (costUsd, what) => {
-            ledger.recordData(costUsd, what);
-          },
-        },
       });
     },
     serp: () => {

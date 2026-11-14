@@ -39,7 +39,7 @@ export function ReplyConfirmDialog({
         <Field
           label="Link to your comment (optional)"
           htmlFor="comment-url"
-          hint="Kept with the lead. With a data provider set up, it is also used to check that logged-out readers can see your comment."
+          hint="Kept with the lead. With a Reddit account connected, the app checks an hour and a day later that others can still see your comment. Reply from a different account than the connected one, or the check cannot tell."
         >
           <Input
             id="comment-url"

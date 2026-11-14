@@ -11,7 +11,7 @@ import type { Db } from '../db/client';
 import { enabledSubredditNames } from '../db/queries/products';
 import { recentRuns, type RunRow } from '../db/queries/runs';
 import { readState } from '../state';
-import { hiddenReplySubreddits } from './visibility';
+import { removedReplySubreddits } from './visibility';
 
 export type HealthIssue =
   | { kind: 'reddit_paused'; severity: 'warning'; resumesAt: number; message: string }
@@ -21,7 +21,7 @@ export type HealthIssue =
   | { kind: 'no_fetch'; severity: 'warning'; message: string; causes: string[] }
   | { kind: 'session_reauth'; severity: 'error'; message: string; reason: string }
   | { kind: 'source_failover'; severity: 'warning'; message: string; reason: string }
-  | { kind: 'replies_hidden'; severity: 'warning' | 'error'; message: string; reason: string };
+  | { kind: 'replies_removed'; severity: 'warning' | 'error'; message: string; reason: string };
 
 const countsSchema = z.object({
   fetched: z.number().catch(0),
@@ -51,8 +51,8 @@ export interface HealthInput {
   sessionProblem?: string | null;
   /** The last switch away from the preferred source, if it has not recovered since. */
   failover?: { from: string; to: string | null; reason: string } | null;
-  /** Subreddits where one of your replies was hidden in the last week. */
-  hiddenReplies?: string[];
+  /** Subreddits where one of your replies was removed in the last week. */
+  removedReplies?: string[];
 }
 
 const SOURCE_NAMES: Readonly<Record<string, string>> = {
@@ -107,20 +107,20 @@ export function computeHealth(input: HealthInput): HealthIssue[] {
       reason: input.sessionProblem,
     });
   }
-  const hidden = input.hiddenReplies ?? [];
-  if (hidden.length === 1) {
+  const removed = input.removedReplies ?? [];
+  if (removed.length === 1) {
     issues.push({
-      kind: 'replies_hidden',
+      kind: 'replies_removed',
       severity: 'warning',
-      message: `Your reply in r/${hidden[0] ?? ''} is not visible to logged-out readers.`,
+      message: `Your reply in r/${removed[0] ?? ''} was removed or is not visible to others.`,
       reason:
         'A subreddit filter often holds new or linked comments. Ask the moderators, or post without links',
     });
-  } else if (hidden.length > 1) {
+  } else if (removed.length > 1) {
     issues.push({
-      kind: 'replies_hidden',
+      kind: 'replies_removed',
       severity: 'error',
-      message: `Your replies were hidden in ${hidden.map((name) => `r/${name}`).join(', ')} this week.`,
+      message: `Your replies were removed in ${removed.map((name) => `r/${name}`).join(', ')} this week.`,
       reason:
         'Reddit may be hiding comments from your account. Pause product mentions and links, and check the account',
     });
@@ -200,6 +200,6 @@ export function loadHealth(db: Db, now: number): HealthIssue[] {
     sessionProblem:
       session?.status === 'needs_reauth' ? (session.reason ?? 'Reddit refused it') : null,
     failover: readState(db, 'state.sourceFailover'),
-    hiddenReplies: hiddenReplySubreddits(db, now),
+    removedReplies: removedReplySubreddits(db, now),
   });
 }

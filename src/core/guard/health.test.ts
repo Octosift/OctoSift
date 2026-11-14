@@ -52,19 +52,19 @@ describe('computeHealth', () => {
     ]);
   });
 
-  it('warns about a hidden reply, and more strongly when it happens in several subreddits', () => {
-    expect(health({ hiddenReplies: ['freelance_demo'] })).toMatchObject([
+  it('warns about a removed reply, and more strongly when it happens in several subreddits', () => {
+    expect(health({ removedReplies: ['freelance_demo'] })).toMatchObject([
       {
-        kind: 'replies_hidden',
+        kind: 'replies_removed',
         severity: 'warning',
-        message: 'Your reply in r/freelance_demo is not visible to logged-out readers.',
+        message: 'Your reply in r/freelance_demo was removed or is not visible to others.',
       },
     ]);
-    expect(health({ hiddenReplies: ['freelance_demo', 'smallbiz_demo'] })).toMatchObject([
+    expect(health({ removedReplies: ['freelance_demo', 'smallbiz_demo'] })).toMatchObject([
       {
-        kind: 'replies_hidden',
+        kind: 'replies_removed',
         severity: 'error',
-        message: 'Your replies were hidden in r/freelance_demo, r/smallbiz_demo this week.',
+        message: 'Your replies were removed in r/freelance_demo, r/smallbiz_demo this week.',
       },
     ]);
   });

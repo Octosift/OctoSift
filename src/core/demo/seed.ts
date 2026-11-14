@@ -189,7 +189,7 @@ function moveLeadsThroughTheirLife(db: Db, now: number): void {
     });
   };
   /** A synthetic comment link and the visibility checks a data provider would have run. */
-  const checked = (postId: string, results: ('visible' | 'hidden' | null)[]) => {
+  const checked = (postId: string, results: ('visible' | 'removed' | null)[]) => {
     const [lead] = byPost([postId]);
     const row = db.select().from(leads).where(eq(leads.postId, postId)).get();
     if (!lead || !row?.repliedAt) return;

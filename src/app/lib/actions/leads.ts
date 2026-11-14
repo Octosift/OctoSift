@@ -46,8 +46,8 @@ export async function markReplied(input: z.input<typeof repliedInput>): Promise<
   const now = nowSeconds();
   const runtime = getRuntime();
   const commentUrl = parsed.data.commentUrl ?? '';
-  // Visibility checks need the data provider; without it the link is only kept.
-  if (commentUrl !== '' && runtime.hasProvider()) {
+  // Visibility checks read with the connected account; without one the link is only kept.
+  if (commentUrl !== '' && runtime.hasRedditAccount()) {
     scheduleReplyChecks(runtime.db, { leadId: parsed.data.leadId, commentUrl, now });
   }
   updateLead(

@@ -333,8 +333,11 @@ export const replyChecks = sqliteTable(
     commentUrl: text('comment_url').notNull(),
     dueAt: integer('due_at').notNull(),
     kind: text('kind').notNull(),
+    /** visible, removed, post_gone or unknown; null until checked. */
     result: text('result'),
     checkedAt: integer('checked_at'),
+    /** Failed tries so far; the check gives up as unknown after a few. */
+    attempts: integer('attempts').notNull().default(0),
   },
   (table) => [index('reply_checks_due_idx').on(table.dueAt)],
 );

@@ -276,10 +276,19 @@ export const CONFIG = deepFreeze({
     summaryCacheS: 30 * DAY_S,
   },
 
+  /** Checks of posted replies and of the connected account, read with the session. */
   visibility: {
+    replyChecks: [
+      { kind: '1h', afterS: HOUR_S },
+      { kind: '24h', afterS: DAY_S },
+    ],
+    /** Reply checks per worker tick; each waits its turn behind the session's pacing. */
+    checksPerTick: 5,
+    /** A check that could not run is tried again this much later, a few times. */
+    retryAfterS: 30 * 60,
+    maxAttempts: 3,
     profileCheckIntervalS: DAY_S,
     profileRecheckAfterS: 30 * 60,
-    replyCheckDelaysS: [HOUR_S, DAY_S],
     multiSubredditWindowDays: 7,
   },
 

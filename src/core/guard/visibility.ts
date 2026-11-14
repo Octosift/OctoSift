@@ -1,41 +1,42 @@
 /**
- * Checks that the founder's posted replies can be seen by logged-out readers.
+ * Checks that the founder's posted replies stay up.
  *
  * When a lead is marked as replied with the comment's link, two checks are
- * scheduled, one hour and one day later. Each reads the post's comments
- * through the data provider and records whether the comment is there. A
- * hidden reply in one subreddit is often a filter; hidden replies in several
- * subreddits within a week suggest the account itself is being hidden.
+ * scheduled, an hour and a day later. Each reads the comment's own permalink
+ * through the connected Reddit session, which shows the comment the way other
+ * people see it: there, "[removed]", or missing. That only holds when the
+ * reply was posted from a different account, because Reddit shows authors
+ * their own removed comments, so a reply from the connected account itself is
+ * reported as unknown.
  *
- * Only runs with a data provider, which has its own limiter, so these reads
- * never pause scanning.
+ * A removed reply in one subreddit is often a filter; removed replies in
+ * several subreddits within a week suggest the account itself is being hidden.
+ *
+ * These reads go through the session's limiter, so they share its pacing and
+ * hourly cap with scans. Only a refusal or a sign-in redirect marks the
+ * session for reconnecting; any other failure is retried a few times.
  */
 import { and, desc, eq, gte, isNotNull, isNull, lte } from 'drizzle-orm';
+import { z } from 'zod';
+import { CONFIG } from '../config';
 import type { Db } from '../db/client';
 import { leads, posts, replyChecks } from '../db/schema';
 import { newId } from '../ids';
 import type { Logger } from '../log';
-import type { ProviderSource } from '../reddit/provider/source';
-import { containsComment, postPresent } from '../reddit/provider/vendor-parse';
-import type { SpendHooks } from '../reddit/types';
+import type { SessionClient } from '../reddit/session-client';
 
-export type ReplyCheckResult = 'visible' | 'hidden' | 'post_gone';
-
-const CHECKS = [
-  { kind: '1h', afterS: 3600 },
-  { kind: '24h', afterS: 86_400 },
-] as const;
-
-const WEEK_S = 7 * 86_400;
+export type ReplyCheckResult = 'visible' | 'removed' | 'post_gone' | 'unknown';
 
 export interface CommentLink {
   subreddit: string;
   postId: string;
   commentId: string;
+  /** The permalink's path, as Reddit serves it, ending in a slash. */
+  path: string;
 }
 
 const PERMALINK =
-  /^\/r\/([A-Za-z0-9_]{2,21})\/comments\/([a-z0-9]+)\/(?:[^/]+\/|comment\/)?([a-z0-9]+)\/?$/i;
+  /^\/r\/([A-Za-z0-9_]{2,21})\/comments\/([a-z0-9]+)\/([\w%-]{1,120})\/([a-z0-9]+)\/?$/i;
 
 /** Reads a comment permalink; null for links that are not to a comment. */
 export function parseCommentLink(raw: string): CommentLink | null {
@@ -47,14 +48,69 @@ export function parseCommentLink(raw: string): CommentLink | null {
     return null;
   }
   const host = url.hostname.toLowerCase();
-  if (host !== 'reddit.com' && !host.endsWith('.reddit.com')) return null;
+  if (url.protocol !== 'https:' || (host !== 'reddit.com' && !host.endsWith('.reddit.com'))) {
+    return null;
+  }
   const match = PERMALINK.exec(url.pathname);
-  if (!match?.[1] || !match[2] || !match[3]) return null;
+  const [, subreddit, post, slug, comment] = match ?? [];
+  if (!subreddit || !post || !slug || !comment) return null;
   return {
-    subreddit: match[1].toLowerCase(),
-    postId: `t3_${match[2].toLowerCase()}`,
-    commentId: `t1_${match[3].toLowerCase()}`,
+    subreddit: subreddit.toLowerCase(),
+    postId: `t3_${post.toLowerCase()}`,
+    commentId: `t1_${comment.toLowerCase()}`,
+    path: `/r/${subreddit}/comments/${post.toLowerCase()}/${slug}/${comment.toLowerCase()}/`,
   };
+}
+
+const thing = z.object({ kind: z.string(), data: z.record(z.string(), z.unknown()) });
+const listing = z.object({ data: z.object({ children: z.array(thing) }) });
+const thread = z.tuple([listing, listing]).rest(z.unknown());
+type Thing = z.output<typeof thing>;
+
+const text = (value: unknown): string => (typeof value === 'string' ? value : '');
+
+function postIsGone(post: Thing['data']): boolean {
+  const removedBy = post.removed_by_category;
+  return (
+    (typeof removedBy === 'string' && removedBy !== '') ||
+    ['[removed]', '[deleted]'].includes(text(post.selftext))
+  );
+}
+
+/** Finds a comment by fullname among a listing's comments and their replies. */
+function findComment(children: Thing[], fullname: string): Thing['data'] | null {
+  for (const child of children) {
+    if (child.kind !== 't1') continue;
+    if (text(child.data.name) === fullname || `t1_${text(child.data.id)}` === fullname) {
+      return child.data;
+    }
+    const replies = listing.safeParse(child.data.replies);
+    const found = replies.success ? findComment(replies.data.data.children, fullname) : null;
+    if (found) return found;
+  }
+  return null;
+}
+
+/**
+ * Judges a comment permalink's thread. `account` is the connected account's
+ * name: its own comments look fine to it even when removed. Null when the
+ * answer is not a thread at all.
+ */
+export function judgeThread(
+  json: unknown,
+  commentId: string,
+  account: string | null,
+): ReplyCheckResult | null {
+  const parsed = thread.safeParse(json);
+  if (!parsed.success) return null;
+  const [postListing, commentListing] = parsed.data;
+  const post = postListing.data.children.find((child) => child.kind === 't3')?.data;
+  if (!post || postIsGone(post)) return 'post_gone';
+  const comment = findComment(commentListing.data.children, commentId);
+  if (!comment) return 'removed';
+  if (['[removed]', '[deleted]'].includes(text(comment.body))) return 'removed';
+  if (account?.toLowerCase() === text(comment.author).toLowerCase()) return 'unknown';
+  return 'visible';
 }
 
 /** Schedules the 1-hour and 24-hour checks for a reply; returns false for an unusable link. */
@@ -64,7 +120,7 @@ export function scheduleReplyChecks(
 ): boolean {
   if (!parseCommentLink(input.commentUrl)) return false;
   db.delete(replyChecks).where(eq(replyChecks.leadId, input.leadId)).run();
-  for (const check of CHECKS) {
+  for (const check of CONFIG.visibility.replyChecks) {
     db.insert(replyChecks)
       .values({
         id: newId(),
@@ -89,51 +145,74 @@ export function replyChecksFor(db: Db, leadId: string) {
     .all();
 }
 
-/** Runs the checks that are due; returns how many got a result. */
+function record(db: Db, id: string, result: ReplyCheckResult, now: number, attempts?: number) {
+  db.update(replyChecks)
+    .set({ result, checkedAt: now, ...(attempts === undefined ? {} : { attempts }) })
+    .where(eq(replyChecks.id, id))
+    .run();
+}
+
+/** Runs the checks that are due, a few at a time; returns how many got a result. */
 export async function runDueReplyChecks(deps: {
   db: Db;
-  provider: Pick<ProviderSource, 'fetchComments'>;
+  reddit: Pick<SessionClient, 'getJson'>;
+  /** The connected account's name, when known. */
+  account: string | null;
   now: number;
-  spend?: SpendHooks;
   log: Logger;
 }): Promise<number> {
-  const due = deps.db
+  const { db, now, log } = deps;
+  const { checksPerTick, retryAfterS, maxAttempts } = CONFIG.visibility;
+  const due = db
     .select()
     .from(replyChecks)
-    .where(and(isNull(replyChecks.result), lte(replyChecks.dueAt, deps.now)))
+    .where(and(isNull(replyChecks.result), lte(replyChecks.dueAt, now)))
     .orderBy(replyChecks.dueAt)
-    .limit(20)
+    .limit(checksPerTick)
     .all();
   let done = 0;
   for (const check of due) {
     const link = parseCommentLink(check.commentUrl);
-    if (!link) continue;
-    const answer = await deps.provider.fetchComments(link.postId, {
-      ...(deps.spend ? { spend: deps.spend } : {}),
-    });
-    if (!answer.ok) {
-      deps.log.warn('Reply check could not run', { kind: answer.kind, reason: answer.message });
-      // A missing key or a spent budget fails every check the same way; try again later.
-      if (answer.kind === 'auth' || answer.kind === 'budget') break;
+    if (!link) {
+      record(db, check.id, 'unknown', now);
       continue;
     }
-    const result: ReplyCheckResult = !postPresent(answer.data)
-      ? 'post_gone'
-      : containsComment(answer.data, link.commentId)
-        ? 'visible'
-        : 'hidden';
-    deps.db
-      .update(replyChecks)
-      .set({ result, checkedAt: deps.now })
-      .where(eq(replyChecks.id, check.id))
-      .run();
+    const answer = await deps.reddit.getJson(`${link.path}.json?raw_json=1`);
+    let result: ReplyCheckResult | null = null;
+    if (answer.ok) {
+      result = judgeThread(answer.json, link.commentId, deps.account);
+    } else if (answer.kind === 'auth' || answer.kind === 'rate_limited') {
+      // The session needs reconnecting, or its hourly allowance is used up: try later.
+      log.warn('Reply checks paused', { reason: answer.message });
+      break;
+    } else if (answer.kind === 'gone' && (answer.status === 404 || answer.status === 403)) {
+      // Not found, or the subreddit went private or was banned.
+      result = 'post_gone';
+    }
+    if (result === null) {
+      const attempts = check.attempts + 1;
+      log.warn('Reply check could not run', {
+        reason: answer.ok ? 'Not a comment thread' : answer.message,
+        attempts,
+      });
+      if (attempts < maxAttempts) {
+        db.update(replyChecks)
+          .set({ attempts, dueAt: now + retryAfterS })
+          .where(eq(replyChecks.id, check.id))
+          .run();
+        continue;
+      }
+      record(db, check.id, 'unknown', now, attempts);
+    } else {
+      record(db, check.id, result, now);
+    }
     done += 1;
   }
   return done;
 }
 
-/** Subreddits where a reply was found hidden in the last week, newest first. */
-export function hiddenReplySubreddits(db: Db, now: number): string[] {
+/** Subreddits where a reply was found removed in the last week, newest first. */
+export function removedReplySubreddits(db: Db, now: number): string[] {
   const rows = db
     .select({ subreddit: posts.subreddit })
     .from(replyChecks)
@@ -141,9 +220,9 @@ export function hiddenReplySubreddits(db: Db, now: number): string[] {
     .innerJoin(posts, eq(posts.id, leads.postId))
     .where(
       and(
-        eq(replyChecks.result, 'hidden'),
+        eq(replyChecks.result, 'removed'),
         isNotNull(replyChecks.checkedAt),
-        gte(replyChecks.checkedAt, now - WEEK_S),
+        gte(replyChecks.checkedAt, now - CONFIG.visibility.multiSubredditWindowDays * 86_400),
       ),
     )
     .orderBy(desc(replyChecks.checkedAt))
