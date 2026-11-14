@@ -9,7 +9,6 @@ import { getRuntime } from '../runtime';
 const SHOWN_SECRETS = [
   'openai_api_key',
   'anthropic_api_key',
-  'google_api_key',
   'openai_compatible_api_key',
   'reddit_proxy_url',
   'webhook_url',

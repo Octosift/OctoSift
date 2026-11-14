@@ -17,7 +17,6 @@ import type { Redactor } from './redact';
 export const SECRET_ENV_VARS = {
   openai_api_key: 'OPENAI_API_KEY',
   anthropic_api_key: 'ANTHROPIC_API_KEY',
-  google_api_key: 'GOOGLE_GENERATIVE_AI_API_KEY',
   openai_compatible_api_key: 'OPENAI_COMPATIBLE_API_KEY',
   reddit_session_cookie: 'REDDIT_SESSION_COOKIE',
   dataforseo_login: 'DATAFORSEO_LOGIN',

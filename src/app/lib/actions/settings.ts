@@ -20,7 +20,6 @@ import { getRuntime } from '../runtime';
 const EDITABLE_SECRETS: readonly SecretName[] = [
   'openai_api_key',
   'anthropic_api_key',
-  'google_api_key',
   'openai_compatible_api_key',
   'reddit_proxy_url',
   'webhook_url',
@@ -108,7 +107,6 @@ export async function testStageConnection(stage: string): Promise<ConnectionResu
 const SECRET_FOR: Record<ProviderId, SecretName> = {
   openai: 'openai_api_key',
   anthropic: 'anthropic_api_key',
-  google: 'google_api_key',
   openai_compatible: 'openai_compatible_api_key',
 };
 

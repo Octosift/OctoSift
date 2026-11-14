@@ -8,7 +8,7 @@
 import { z } from 'zod';
 import { CONFIG } from '../config';
 
-export const PROVIDER_IDS = ['openai', 'anthropic', 'google', 'openai_compatible'] as const;
+export const PROVIDER_IDS = ['openai', 'anthropic', 'openai_compatible'] as const;
 export type ProviderId = (typeof PROVIDER_IDS)[number];
 
 export const AI_STAGES = ['triage', 'qualify', 'draft', 'review'] as const;

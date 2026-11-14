@@ -158,12 +158,6 @@ describe('listModels', () => {
     expect(calls[0]?.headers['x-api-key']).toBe(FAKE_KEYS.anthropic);
   });
 
-  it('strips the "models/" prefix from Google model names', async () => {
-    const { impl } = fakeFetch(200, { models: [{ name: 'models/gem-1' }] });
-    const result = await listModels('google', { apiKey: FAKE_KEYS.google, baseUrl: null }, impl);
-    expect(result).toEqual({ ok: true, models: ['gem-1'] });
-  });
-
   it('lists models from an OpenAI-compatible endpoint at its base URL', async () => {
     const { calls, impl } = fakeFetch(200, { data: [{ id: 'local-model' }] });
     await listModels(

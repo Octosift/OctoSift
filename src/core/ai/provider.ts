@@ -7,7 +7,6 @@
  * picker and runs the one-token connection test.
  */
 import { createAnthropic } from '@ai-sdk/anthropic';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { generateText, NoObjectGeneratedError, Output, type LanguageModel } from 'ai';
@@ -28,8 +27,6 @@ export const sdkModelFactory: ModelFactory = (model, { apiKey, baseUrl }) => {
       return createOpenAI({ apiKey })(model.model);
     case 'anthropic':
       return createAnthropic({ apiKey })(model.model);
-    case 'google':
-      return createGoogleGenerativeAI({ apiKey })(model.model);
     case 'openai_compatible':
       if (baseUrl === null) throw new Error('An OpenAI-compatible model needs a base URL');
       return createOpenAICompatible({
@@ -141,13 +138,13 @@ interface ListEndpoint {
   read: (body: unknown) => string[];
 }
 
-function readIds(body: unknown, key: 'data' | 'models', field: 'id' | 'name'): string[] {
+function readIds(body: unknown): string[] {
   if (typeof body !== 'object' || body === null) return [];
-  const list: unknown = (body as Record<string, unknown>)[key];
+  const list: unknown = (body as Record<string, unknown>).data;
   if (!Array.isArray(list)) return [];
   return list
     .map((item: unknown) =>
-      typeof item === 'object' && item !== null ? (item as Record<string, unknown>)[field] : null,
+      typeof item === 'object' && item !== null ? (item as Record<string, unknown>).id : null,
     )
     .filter((id): id is string => typeof id === 'string');
 }
@@ -163,26 +160,19 @@ function listEndpoint(
       return {
         url: 'https://api.openai.com/v1/models',
         headers: bearer,
-        read: (body) => readIds(body, 'data', 'id'),
+        read: readIds,
       };
     case 'anthropic':
       return {
         url: 'https://api.anthropic.com/v1/models?limit=100',
         headers: { 'x-api-key': credentials.apiKey, 'anthropic-version': '2023-06-01' },
-        read: (body) => readIds(body, 'data', 'id'),
-      };
-    case 'google':
-      return {
-        url: 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',
-        headers: { 'x-goog-api-key': credentials.apiKey },
-        read: (body) =>
-          readIds(body, 'models', 'name').map((name) => name.replace(/^models\//, '')),
+        read: readIds,
       };
     case 'openai_compatible':
       return {
         url: `${(credentials.baseUrl ?? '').replace(/\/+$/, '')}/models`,
         headers: bearer,
-        read: (body) => readIds(body, 'data', 'id'),
+        read: readIds,
       };
   }
 }

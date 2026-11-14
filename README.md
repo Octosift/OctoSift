@@ -130,7 +130,7 @@ down to every fifteen minutes.
 
 ## Cost
 
-You bring your own AI provider (OpenAI, Anthropic, Google, or any OpenAI-compatible endpoint
+You bring your own AI provider (OpenAI or Anthropic, or any OpenAI-compatible endpoint
 such as OpenRouter, Ollama or LM Studio) and pick one model per stage. Spending stays low
 because each stage only sees what the previous one let through:
 
@@ -197,20 +197,20 @@ To spend less:
 Settings live in the dashboard and are stored in a local SQLite file. Environment variables
 (see `.env.example`) cover deployment options and can supply provider keys.
 
-| Variable                                                                                           | Default                      | Purpose                                                              |
-| -------------------------------------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------- |
-| `DATABASE_PATH`                                                                                    | `data/app.sqlite`            | Where the database lives                                             |
-| `APP_SECRET`                                                                                       | random key in `data/.secret` | Encrypts saved API keys                                              |
-| `APP_PASSWORD`                                                                                     | none                         | Requires a password to open the dashboard                            |
-| `HOST`, `PORT`                                                                                     | `127.0.0.1`, `3005`          | Where the dashboard listens                                          |
-| `PUBLIC_URL`                                                                                       | `http://127.0.0.1:3005`      | Used for links in notifications                                      |
-| `LOG_LEVEL`                                                                                        | `info`                       | `debug`, `info`, `warn` or `error`                                   |
-| `DEMO_MODE`                                                                                        | off                          | Synthetic data and a simulated AI provider                           |
-| `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `OPENAI_COMPATIBLE_API_KEY` | none                         | Provider keys; they take precedence over keys saved in the dashboard |
-| `REDDIT_PROXY_URL`                                                                                 | none                         | Proxy for Reddit reads                                               |
-| `WEBHOOK_URL`                                                                                      | none                         | Webhook for strong leads (Slack-style or Discord-style)              |
-| `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`                                                          | none                         | Optional: finds Reddit threads that rank on Google for your keywords |
-| `REDDIT_SESSION_COOKIE`                                                                            | none                         | The Cookie header of a connected Reddit account, instead of Settings |
+| Variable                                                           | Default                      | Purpose                                                              |
+| ------------------------------------------------------------------ | ---------------------------- | -------------------------------------------------------------------- |
+| `DATABASE_PATH`                                                    | `data/app.sqlite`            | Where the database lives                                             |
+| `APP_SECRET`                                                       | random key in `data/.secret` | Encrypts saved API keys                                              |
+| `APP_PASSWORD`                                                     | none                         | Requires a password to open the dashboard                            |
+| `HOST`, `PORT`                                                     | `127.0.0.1`, `3005`          | Where the dashboard listens                                          |
+| `PUBLIC_URL`                                                       | `http://127.0.0.1:3005`      | Used for links in notifications                                      |
+| `LOG_LEVEL`                                                        | `info`                       | `debug`, `info`, `warn` or `error`                                   |
+| `DEMO_MODE`                                                        | off                          | Synthetic data and a simulated AI provider                           |
+| `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_COMPATIBLE_API_KEY` | none                         | Provider keys; they take precedence over keys saved in the dashboard |
+| `REDDIT_PROXY_URL`                                                 | none                         | Proxy for Reddit reads                                               |
+| `WEBHOOK_URL`                                                      | none                         | Webhook for strong leads (Slack-style or Discord-style)              |
+| `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`                          | none                         | Optional: finds Reddit threads that rank on Google for your keywords |
+| `REDDIT_SESSION_COOKIE`                                            | none                         | The Cookie header of a connected Reddit account, instead of Settings |
 
 In the dashboard you also set the model for each stage, prices, budget caps, the scan
 interval, score thresholds, filters, your Reddit username (to skip your own posts), the

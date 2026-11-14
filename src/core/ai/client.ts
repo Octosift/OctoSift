@@ -128,14 +128,12 @@ export function createAiClient(options: AiClientOptions): AiClient {
 const PROVIDER_SECRET: Record<ProviderId, SecretName> = {
   openai: 'openai_api_key',
   anthropic: 'anthropic_api_key',
-  google: 'google_api_key',
   openai_compatible: 'openai_compatible_api_key',
 };
 
 const PROVIDER_LABEL: Record<ProviderId, string> = {
   openai: 'OpenAI',
   anthropic: 'Anthropic',
-  google: 'Google',
   openai_compatible: 'the OpenAI-compatible endpoint',
 };
 

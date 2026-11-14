@@ -54,7 +54,6 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4",
-    "@ai-sdk/google": "^4",
     "@ai-sdk/openai": "^4",
     "@ai-sdk/openai-compatible": "^3",
     "@mozilla/readability": "^0.6.0",

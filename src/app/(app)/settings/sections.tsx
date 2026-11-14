@@ -33,11 +33,6 @@ export function KeysSection({ data }: { data: SettingsData }) {
           description={data.secrets.anthropic_api_key}
         />
         <SecretField
-          name="google_api_key"
-          label="Google AI API key"
-          description={data.secrets.google_api_key}
-        />
-        <SecretField
           name="openai_compatible_api_key"
           label="OpenAI-compatible key (if needed)"
           description={data.secrets.openai_compatible_api_key}

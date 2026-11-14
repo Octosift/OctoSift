@@ -103,7 +103,7 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
 
 ## AI
 
-- **Vercel AI SDK** for OpenAI, Anthropic, Google and OpenAI-compatible endpoints.
+- **Vercel AI SDK** for OpenAI, Anthropic and OpenAI-compatible endpoints.
   Credentials are always passed explicitly, so the SDK never falls back to reading
   environment variables.
 - **Limits are applied after parsing.** Wire schemas sent to models contain types,

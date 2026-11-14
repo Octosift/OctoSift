@@ -16,7 +16,6 @@ import { useSettingsForm } from './use-settings-form';
 const PROVIDERS: { id: ProviderId; label: string }[] = [
   { id: 'openai', label: 'OpenAI' },
   { id: 'anthropic', label: 'Anthropic' },
-  { id: 'google', label: 'Google' },
   { id: 'openai_compatible', label: 'OpenAI-compatible' },
 ];
 

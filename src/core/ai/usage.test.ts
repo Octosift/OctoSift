@@ -25,7 +25,7 @@ describe('priceFor', () => {
       PRICES['anthropic/strong-model'],
     );
     expect(priceFor(PRICES, small)).toEqual(PRICES['small-model']);
-    expect(priceFor(PRICES, { provider: 'google', model: 'unknown' })).toBeNull();
+    expect(priceFor(PRICES, { provider: 'openai_compatible', model: 'unknown' })).toBeNull();
   });
 });
 
@@ -50,7 +50,7 @@ describe('usage ledger', () => {
   it('records an unknown price as unknown and marks the run total incomplete', () => {
     const { db, make } = setup();
     const ledger = make(null);
-    const mystery = { provider: 'google' as const, model: 'mystery' };
+    const mystery = { provider: 'openai_compatible' as const, model: 'mystery' };
     expect(ledger.record('qualify', mystery, { inputTokens: 10, outputTokens: 5 })).toBeNull();
     expect(db.select().from(usage).get()?.costUsd).toBeNull();
     expect(ledger.summary()).toEqual({ costUsd: 0, incomplete: true, calls: 1 });

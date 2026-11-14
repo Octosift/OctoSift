@@ -178,3 +178,53 @@ describe('removing the paid data source', () => {
     expect(columns(db, 'posts')).not.toContain('partial');
   });
 });
+
+describe('removing the Google provider', () => {
+  it('unsets the stages that used it and drops its prices and key, keeping the rest', () => {
+    const db = databaseBefore('0008_drop_google_provider');
+    const sql = db.$client;
+    const setting = sql.prepare('insert into settings (key, value_json) values (?, ?)');
+    setting.run(
+      'ai.stages',
+      JSON.stringify({
+        triage: { provider: 'google', model: 'gem-small' },
+        qualify: { provider: 'openai', model: 'strong-model' },
+        draft: { provider: 'google', model: 'gem-large' },
+        review: null,
+      }),
+    );
+    setting.run(
+      'ai.prices',
+      JSON.stringify({
+        'google/gem-small': { inputPerMillionUsd: 0.1, outputPerMillionUsd: 0.4 },
+        'openai/strong-model': { inputPerMillionUsd: 2, outputPerMillionUsd: 10 },
+      }),
+    );
+    const secret = sql.prepare(
+      "insert into secrets (name, ciphertext, nonce, created_at) values (?, 'c', 'n', 1)",
+    );
+    secret.run('openai_api_key');
+    secret.run('google_api_key');
+
+    migrate(drizzle(sql), { migrationsFolder: DEFAULT_MIGRATIONS_FOLDER });
+
+    const read = (key: string) =>
+      JSON.parse(
+        (
+          sql.prepare('select value_json as v from settings where key = ?').get(key) as {
+            v: string;
+          }
+        ).v,
+      ) as unknown;
+    expect(read('ai.stages')).toEqual({
+      triage: null,
+      qualify: { provider: 'openai', model: 'strong-model' },
+      draft: null,
+      review: null,
+    });
+    expect(read('ai.prices')).toEqual({
+      'openai/strong-model': { inputPerMillionUsd: 2, outputPerMillionUsd: 10 },
+    });
+    expect(sql.prepare('select name from secrets').all()).toEqual([{ name: 'openai_api_key' }]);
+  });
+});

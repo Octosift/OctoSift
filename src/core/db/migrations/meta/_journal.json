@@ -57,6 +57,13 @@
       "when": 1794633524772,
       "tag": "0007_drop_data_provider",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1794638310275,
+      "tag": "0008_drop_google_provider",
+      "breakpoints": true
     }
   ]
 }
