@@ -127,10 +127,10 @@ export function StepSubreddits({ productId, saved }: { productId: string; saved:
   return (
     <section aria-labelledby="step-subreddits" className="flex flex-col gap-4">
       <div>
-        <h2 id="step-subreddits" className="text-sm font-semibold">
+        <h2 id="step-subreddits" className="text-xl font-semibold tracking-tight">
           Where do your customers ask questions?
         </h2>
-        <p className="mt-1 text-[13px] text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           The best matches are ticked. Untick any that look wrong or add your own; {minSelected} to{' '}
           {maxSelected} work best. The first scan tells you if one does not exist.
         </p>

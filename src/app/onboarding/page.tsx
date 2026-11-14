@@ -1,4 +1,6 @@
+import { ArrowLeft, MessagesSquare } from 'lucide-react';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { AI_STAGES } from '@/core/settings/registry';
 import { listProducts, watchedSubreddits } from '@/core/db/queries/products';
 import { recentRuns } from '@/core/db/queries/runs';
@@ -6,11 +8,11 @@ import { BRAND } from '@/core/brand';
 import { sessionStatus } from '@/core/reddit/account';
 import { loadSettings } from '../lib/data/settings';
 import { getRuntime, nowSeconds } from '../lib/runtime';
-import { stepNumber } from './steps';
+import { STEPS, stepNumber, type StepId } from './steps';
 import { Wizard, type OnboardingState } from './wizard';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Get started' };
+export const metadata: Metadata = { title: 'Set up' };
 
 function loadState(): OnboardingState {
   const runtime = getRuntime();
@@ -29,25 +31,22 @@ function loadState(): OnboardingState {
   };
 }
 
-/**
- * The furthest step that may be shown, and the one to open by default. Only
- * the AI step is required: the account and subreddit steps can be skipped,
- * and skipping the product step ends onboarding. A fresh setup still opens on
- * each optional step once.
- */
-function progress(state: OnboardingState): { allowed: number; landing: number } {
-  const at = (id: Parameters<typeof stepNumber>[0]) => stepNumber(id);
-  if (!state.aiReady) return { allowed: at('ai'), landing: at('ai') };
-  if (!state.product) {
-    return {
-      allowed: at('product'),
-      landing: state.accountConnected ? at('product') : at('account'),
-    };
+/** The step that has to be done before this one, if any. */
+function blockerOf(step: StepId, state: OnboardingState): StepId | null {
+  if (step === 'product' && !state.aiReady && !state.demo) return 'ai';
+  if ((step === 'subreddits' || step === 'scan') && !state.product) {
+    return state.aiReady || state.demo ? 'product' : 'ai';
   }
-  return {
-    allowed: at('scan'),
-    landing: state.subreddits.length === 0 ? at('subreddits') : at('scan'),
-  };
+  return null;
+}
+
+/** Without a step in the address, the first one not done yet. */
+function firstOpen(state: OnboardingState): StepId {
+  if (!state.aiReady && !state.demo) return 'ai';
+  if (!state.accountConnected && !state.demo) return 'account';
+  if (!state.product) return 'product';
+  if (state.subreddits.length === 0) return 'subreddits';
+  return 'scan';
 }
 
 export default async function OnboardingPage({
@@ -56,27 +55,36 @@ export default async function OnboardingPage({
   searchParams: Promise<{ step?: string }>;
 }) {
   const state = loadState();
-  const { allowed, landing } = progress(state);
-  const requested = Number((await searchParams).step ?? landing);
-  const step =
-    Number.isInteger(requested) && requested >= 1 && requested <= allowed ? requested : landing;
-  const needsSettings = step === stepNumber('ai') || step === stepNumber('account');
+  const number = Number((await searchParams).step);
+  const requested: StepId = STEPS[number - 1]?.id ?? firstOpen(state);
+  const blocker = blockerOf(requested, state);
+  const step = blocker ?? requested;
+  const needsSettings = step === 'ai' || step === 'account';
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <header className="flex flex-col gap-1">
-        <p className="text-sm font-semibold">{BRAND.name}</p>
-        <h1 className="text-lg font-semibold tracking-tight">Set up your first product</h1>
-        <p className="text-[13px] text-muted-foreground">
-          About five minutes. Everything stays on this machine; you can change any of it later.
-        </p>
+    <div className="flex min-h-dvh flex-col">
+      <header className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6">
+        <Link href="/" className="flex items-center gap-2.5">
+          <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <MessagesSquare className="size-4" aria-hidden />
+          </span>
+          <span className="text-[15px] font-semibold tracking-tight">{BRAND.name}</span>
+        </Link>
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-3.5" aria-hidden /> Back to home
+        </Link>
       </header>
-      <Wizard
-        step={step}
-        state={state}
-        settings={needsSettings ? loadSettings() : null}
-        now={nowSeconds()}
-        blocked={requested > allowed}
-      />
-    </main>
+      <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-10 sm:px-6">
+        <Wizard
+          step={stepNumber(step)}
+          state={state}
+          settings={needsSettings ? loadSettings() : null}
+          now={nowSeconds()}
+          blockedBy={blocker === null ? null : { wanted: requested, needed: blocker }}
+        />
+      </main>
+    </div>
   );
 }

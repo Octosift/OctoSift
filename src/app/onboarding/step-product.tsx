@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import type { ExtractedProfile } from '@/core/ai/schemas';
@@ -48,12 +49,23 @@ export function StepProduct({
 
   if (existing && phase === 'url' && !profile) {
     return (
-      <Card>
-        <CardHeader title={existing.name} description={existing.url} />
-        <div className="flex items-center justify-between gap-3 px-4 py-3">
-          <p className="text-[13px] text-muted-foreground">
-            The profile is saved. You can edit it later on the Product page.
+      <section aria-labelledby="step-product-saved" className="flex flex-col gap-4">
+        <div>
+          <h2 id="step-product-saved" className="text-xl font-semibold tracking-tight">
+            Your product
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            The profile is saved. Edit it any time on the{' '}
+            <Link href="/product" className="text-foreground underline underline-offset-2">
+              Product page
+            </Link>
+            .
           </p>
+        </div>
+        <Card>
+          <CardHeader title={existing.name} description={existing.url} />
+        </Card>
+        <div className="flex justify-end">
           <Button
             variant="primary"
             onClick={() => {
@@ -63,7 +75,7 @@ export function StepProduct({
             Continue
           </Button>
         </div>
-      </Card>
+      </section>
     );
   }
 
@@ -136,10 +148,10 @@ export function StepProduct({
     return (
       <section aria-labelledby="step-product" className="flex flex-col gap-4">
         <div>
-          <h2 id="step-product" className="text-sm font-semibold">
+          <h2 id="step-product" className="text-xl font-semibold tracking-tight">
             What did you build?
           </h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Paste your website. We read a few of its pages and draft a profile you can edit.
           </p>
         </div>
@@ -184,11 +196,11 @@ export function StepProduct({
               onClick={() => {
                 startTransition(async () => {
                   await completeOnboarding();
-                  router.push('/inbox');
+                  router.push('/');
                 });
               }}
             >
-              Skip for now and add a product later
+              Skip for now
             </Button>
           </div>
         ) : null}
@@ -231,10 +243,10 @@ export function StepProduct({
   return (
     <section aria-labelledby="step-review" className="flex flex-col gap-4">
       <div>
-        <h2 id="step-review" className="text-sm font-semibold">
+        <h2 id="step-review" className="text-xl font-semibold tracking-tight">
           Check the profile
         </h2>
-        <p className="mt-1 text-[13px] text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Drafted from your site. Fix anything that is wrong, then continue.
         </p>
       </div>
@@ -250,7 +262,7 @@ export function StepProduct({
       </Card>
 
       <details className="group rounded-lg border border-border bg-surface">
-        <summary className="cursor-pointer list-none px-4 py-3 text-[13px] font-medium">
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium">
           A few optional questions
           <span className="ml-2 text-xs font-normal text-muted-foreground">
             Answers make leads more precise.
@@ -302,7 +314,7 @@ export function StepProduct({
               />
             </Field>
           ))}
-          <label className="flex items-center gap-2 text-[13px]">
+          <label className="flex items-center gap-2 text-sm">
             <Checkbox
               checked={answers.includeLinks}
               onChange={(event) => {

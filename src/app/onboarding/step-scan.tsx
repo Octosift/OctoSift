@@ -119,10 +119,10 @@ export function StepScan({
   return (
     <section aria-labelledby="step-scan" className="flex flex-col gap-4">
       <div>
-        <h2 id="step-scan" className="text-sm font-semibold">
+        <h2 id="step-scan" className="text-xl font-semibold tracking-tight">
           Run the first scan
         </h2>
-        <p className="mt-1 text-[13px] text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           {subredditCount === 0
             ? 'No subreddits are saved yet, so there is nothing to read. Add them on the Subreddits page later.'
             : 'Reads the last two days of posts, then the AI judges them. Reading is slow on purpose so Reddit does not block you.'}
@@ -205,15 +205,11 @@ export function StepScan({
           onClick={() => {
             startTransition(async () => {
               await completeOnboarding();
-              router.push('/inbox');
+              router.push(since === null && !finished ? '/' : '/inbox');
             });
           }}
         >
-          {finished
-            ? 'Open the inbox'
-            : since !== null
-              ? 'Open the inbox now'
-              : 'Skip and open the inbox'}
+          {finished ? 'Open the inbox' : since !== null ? 'Open the inbox now' : 'Skip for now'}
         </Button>
       </div>
     </section>

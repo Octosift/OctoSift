@@ -25,10 +25,10 @@ export function StepAccount({
   return (
     <section aria-labelledby="step-account" className="flex flex-col gap-4">
       <div>
-        <h2 id="step-account" className="text-sm font-semibold">
+        <h2 id="step-account" className="text-xl font-semibold tracking-tight">
           Connect a Reddit account
         </h2>
-        <p className="mt-1 text-[13px] text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           The subreddits you choose are read with a Reddit account you connect. Sign in through a
           browser window the app opens, or paste the session cookie if the app runs in Docker.
         </p>

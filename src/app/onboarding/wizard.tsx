@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Minus } from 'lucide-react';
+import { Check } from 'lucide-react';
 import Link from 'next/link';
 import { Banner } from '../components/ui/display';
 import { cn } from '../components/ui/utils';
@@ -10,7 +10,7 @@ import { StepAi } from './step-ai';
 import { StepProduct } from './step-product';
 import { StepScan } from './step-scan';
 import { StepSubreddits } from './step-subreddits';
-import { STEPS, stepNumber } from './steps';
+import { STEPS, stepNumber, type StepId } from './steps';
 
 export interface OnboardingState {
   aiReady: boolean;
@@ -26,63 +26,68 @@ export function Wizard({
   state,
   settings,
   now,
-  blocked,
+  blockedBy,
 }: {
   step: number;
   state: OnboardingState;
   settings: SettingsData | null;
   now: number;
-  blocked: boolean;
+  /** The step asked for could not be shown yet, and why. */
+  blockedBy: { wanted: StepId; needed: StepId } | null;
 }) {
   const show = (id: Parameters<typeof stepNumber>[0]) => step === stepNumber(id);
+  const label = (id: StepId) => STEPS.find((entry) => entry.id === id)?.label ?? id;
   return (
-    <div className="flex flex-col gap-6">
-      <ol className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Progress">
-        {STEPS.map(({ id, label }, index) => {
-          const number = index + 1;
-          const current = number === step;
-          // Passing an optional step without doing it skips it rather than finishing it.
-          const skipped =
-            number < step &&
-            ((id === 'account' && !state.accountConnected && !state.demo) ||
-              (id === 'subreddits' && state.subreddits.length === 0));
-          const done = number < step && !skipped;
-          return (
-            <li key={id} aria-current={current ? 'step' : undefined}>
-              <Link
-                href={`/onboarding?step=${number}`}
-                className={cn(
-                  'flex items-center gap-2 text-[13px] text-muted-foreground',
-                  current && 'font-medium text-foreground',
-                  number > step && 'pointer-events-none',
-                )}
-                aria-disabled={number > step ? true : undefined}
-                tabIndex={number > step ? -1 : undefined}
-              >
-                <span
-                  className={cn(
-                    'flex size-5 items-center justify-center rounded-full border border-border text-[11px] tabular',
-                    current && 'border-brand bg-brand text-brand-foreground',
-                    done && 'border-brand text-brand',
-                  )}
+    <div className="flex flex-col gap-8">
+      <nav aria-label="Setup steps" className="flex flex-col gap-3">
+        <p className="text-[13px] text-muted-foreground tabular">
+          Step {step} of {STEPS.length}
+        </p>
+        <ol className="grid grid-cols-5 gap-1.5">
+          {STEPS.map(({ id, label: name }, index) => {
+            const number = index + 1;
+            const current = number === step;
+            const done =
+              (id === 'ai' && (state.aiReady || state.demo)) ||
+              (id === 'account' && (state.accountConnected || state.demo)) ||
+              (id === 'product' && state.product !== null) ||
+              (id === 'subreddits' && state.subreddits.length > 0) ||
+              (id === 'scan' && state.hasRun);
+            return (
+              <li key={id} aria-current={current ? 'step' : undefined}>
+                <Link
+                  href={`/onboarding?step=${String(number)}`}
+                  className="group flex flex-col gap-2"
                 >
-                  {done ? (
-                    <Check className="size-3" aria-hidden />
-                  ) : skipped ? (
-                    <Minus className="size-3" aria-hidden />
-                  ) : (
-                    number
-                  )}
-                </span>
-                {label}
-                {skipped ? <span className="sr-only"> (skipped)</span> : null}
-              </Link>
-            </li>
-          );
-        })}
-      </ol>
-      {blocked ? (
-        <Banner tone="warning">Finish this step first; the next one depends on it.</Banner>
+                  <span
+                    className={cn(
+                      'h-1 rounded-full bg-muted transition-colors',
+                      done && 'bg-brand/50',
+                      current && 'bg-brand',
+                    )}
+                    aria-hidden
+                  />
+                  <span
+                    className={cn(
+                      'flex items-center gap-1 truncate text-xs text-muted-foreground group-hover:text-foreground',
+                      current && 'font-medium text-foreground',
+                    )}
+                  >
+                    {done && !current ? <Check className="size-3 text-brand" aria-hidden /> : null}
+                    <span className="hidden sm:inline">{name}</span>
+                    <span className="sm:hidden">{number}</span>
+                    {done ? <span className="sr-only"> (done)</span> : null}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+      {blockedBy ? (
+        <Banner tone="warning">
+          {label(blockedBy.wanted)} needs {label(blockedBy.needed).toLowerCase()} first.
+        </Banner>
       ) : null}
       {show('ai') && settings ? (
         <StepAi settings={settings} ready={state.aiReady} demo={state.demo} />

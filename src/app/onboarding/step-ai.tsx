@@ -49,10 +49,10 @@ export function StepAi({
   return (
     <section aria-labelledby="step-ai" className="flex flex-col gap-4">
       <div>
-        <h2 id="step-ai" className="text-sm font-semibold">
+        <h2 id="step-ai" className="text-xl font-semibold tracking-tight">
           Connect an AI provider
         </h2>
-        <p className="mt-1 text-[13px] text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Paste one API key. The preset picks a model for each step; you can change them later in
           Settings.
         </p>
@@ -60,7 +60,7 @@ export function StepAi({
       {demo ? (
         <Banner>Demo mode uses a simulated provider, so this step is already done.</Banner>
       ) : (
-        <div className="flex flex-col gap-4 text-[13px]">
+        <div className="flex flex-col gap-4 text-sm">
           <ProviderChoice
             value={provider}
             cli={ai.cliProviders}
