@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { scheduleReplyChecks } from '@/core/guard/visibility';
 import { FITS, INTENTS } from '@/core/ai/schemas';
 import { getLead, updateDraftText, updateLead } from '@/core/db/queries/leads';
 import { getPost } from '@/core/db/queries/posts';
@@ -43,8 +44,14 @@ export async function markReplied(input: z.input<typeof repliedInput>): Promise<
   const parsed = repliedInput.safeParse(input);
   if (!parsed.success) return invalid(parsed.error);
   const now = nowSeconds();
+  const runtime = getRuntime();
+  const commentUrl = parsed.data.commentUrl ?? '';
+  // Visibility checks need the data provider; without it the link is only kept.
+  if (commentUrl !== '' && runtime.hasProvider()) {
+    scheduleReplyChecks(runtime.db, { leadId: parsed.data.leadId, commentUrl, now });
+  }
   updateLead(
-    getRuntime().db,
+    runtime.db,
     parsed.data.leadId,
     {
       status: 'replied',

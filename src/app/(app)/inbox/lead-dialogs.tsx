@@ -39,7 +39,7 @@ export function ReplyConfirmDialog({
         <Field
           label="Link to your comment (optional)"
           htmlFor="comment-url"
-          hint="Used later to check that your comment is visible."
+          hint="Kept with the lead. With a data provider set up, it is also used to check that logged-out readers can see your comment."
         >
           <Input
             id="comment-url"

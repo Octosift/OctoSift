@@ -10,7 +10,7 @@ import { createFixtureResponder } from '../ai/fake-responder';
 import { frozenClock, seededRandom } from '../clock';
 import type { Db } from '../db/client';
 import { getProduct, insertProduct, watchSubreddit } from '../db/queries/products';
-import { feedback, leads, posts, runs } from '../db/schema';
+import { feedback, leads, posts, replyChecks, runs } from '../db/schema';
 import { goldenToRedditPost, loadGoldenSet, type GoldenPost } from '../eval/golden';
 import { newId } from '../ids';
 import { silentLogger } from '../log';
@@ -188,6 +188,30 @@ function moveLeadsThroughTheirLife(db: Db, now: number): void {
       updatedAt: now - daysAgo * DAY,
     });
   };
+  /** A synthetic comment link and the visibility checks a data provider would have run. */
+  const checked = (postId: string, results: ('visible' | 'hidden' | null)[]) => {
+    const [lead] = byPost([postId]);
+    const row = db.select().from(leads).where(eq(leads.postId, postId)).get();
+    if (!lead || !row?.repliedAt) return;
+    const id = postId.replace('t3_', '');
+    const commentUrl = `https://www.reddit.com/r/freelance_demo/comments/${id}/demo_thread/c${id}/`;
+    db.update(leads).set({ commentUrl }).where(eq(leads.id, lead.id)).run();
+    const repliedAt = row.repliedAt;
+    results.forEach((result, index) => {
+      const afterS = index === 0 ? 3600 : DAY;
+      db.insert(replyChecks)
+        .values({
+          id: newId(),
+          leadId: lead.id,
+          commentUrl,
+          dueAt: repliedAt + afterS,
+          kind: index === 0 ? '1h' : '24h',
+          result,
+          checkedAt: result === null ? null : repliedAt + afterS,
+        })
+        .run();
+    });
+  };
 
   replied('t3_dem01', 4.8, true);
   replied('t3_dem02', 4.7, false);
@@ -197,6 +221,8 @@ function moveLeadsThroughTheirLife(db: Db, now: number): void {
   replied('t3_dem09', 3.9, false);
   replied('t3_dem14', 1.8, false);
   replied('t3_dem18', 1.6, false);
+  checked('t3_dem14', ['visible', 'visible']);
+  checked('t3_dem18', ['visible', 'visible']);
   set(['t3_dem06', 't3_dem10'], {
     status: 'dismissed',
     dismissReason: 'Already solved in the comments',

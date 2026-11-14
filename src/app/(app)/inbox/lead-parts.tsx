@@ -1,8 +1,8 @@
 'use client';
 
 import type { LeadDetail } from '@/core/db/queries/inbox';
-import { Banner } from '../../components/ui/display';
-import { formatAgo } from '../../lib/format';
+import { Badge, Banner } from '../../components/ui/display';
+import { formatAge, formatAgo } from '../../lib/format';
 import { highlightQuote } from '../../lib/text';
 
 export function PostBody({ text, quote }: { text: string; quote: string }) {
@@ -27,6 +27,43 @@ export function PostBody({ text, quote }: { text: string; quote: string }) {
   );
 }
 
+const CHECK_LABELS: Readonly<Record<string, string>> = {
+  '1h': 'After an hour',
+  '24h': 'After a day',
+};
+const RESULTS = {
+  visible: { label: 'visible', tone: 'brand' },
+  hidden: { label: 'hidden from logged-out readers', tone: 'danger' },
+  post_gone: { label: 'the post is gone', tone: 'warning' },
+} as const;
+
+/** The reply's visibility checks, when a data provider ran them. */
+function ReplyChecks({ checks, now }: { checks: LeadDetail['replyChecks']; now: number }) {
+  if (checks.length === 0) return null;
+  return (
+    <span className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+      {checks.map((check) => {
+        const label = CHECK_LABELS[check.kind] ?? check.kind;
+        const result = check.result ? RESULTS[check.result as keyof typeof RESULTS] : null;
+        return (
+          <span key={check.kind} className="flex items-center gap-1.5">
+            {label}:
+            {result ? (
+              <Badge tone={result.tone}>{result.label}</Badge>
+            ) : (
+              <span className="text-muted-foreground">
+                {check.dueAt > now
+                  ? `checking in ${formatAge(check.dueAt - now)}`
+                  : 'checking soon'}
+              </span>
+            )}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 export function StatusNote({ detail, now }: { detail: LeadDetail; now: number }) {
   const { lead } = detail;
   if (lead.status === 'replied' && lead.repliedAt !== null) {
@@ -44,6 +81,7 @@ export function StatusNote({ detail, now }: { detail: LeadDetail; now: number })
             Your comment
           </a>
         ) : null}
+        <ReplyChecks checks={detail.replyChecks} now={now} />
       </Banner>
     );
   }
