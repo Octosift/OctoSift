@@ -31,7 +31,7 @@ export function DataSourceSection({ data }: { data: SettingsData }) {
     <Card id="data-source">
       <CardHeader
         title="Data source"
-        description="How posts are read. The preferred source is tried first; the others follow if it fails."
+        description="How posts are read. The preferred source is tried first; the other follows if it fails."
       />
       <div className="flex flex-col gap-4 px-4 py-4 text-[13px]">
         {data.demo ? (
@@ -75,7 +75,7 @@ export function DataSourceSection({ data }: { data: SettingsData }) {
             }}
           />
           <span>
-            <span className="font-medium">Fall back to the next source</span>
+            <span className="font-medium">Fall back to the other source</span>
             <span className="block text-xs text-muted-foreground">
               When the preferred source stops working during a scan (an expired session, a blocked
               feed), the rest of the scan uses the other one, if it is set up.
