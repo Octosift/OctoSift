@@ -208,6 +208,9 @@ export function createRuntime(options: RuntimeOptions): Runtime {
     env: options.rawEnv,
     effort: (request) => settings.get('ai.codexEffort')[TASK_STAGE[request.task]],
     redact: redactor.redact,
+    warn: (message, fields) => {
+      log.warn(message, fields);
+    },
   });
   const generator: Generator =
     options.overrides?.generator ??

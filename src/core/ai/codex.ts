@@ -131,10 +131,22 @@ const failureEvent = z.object({
   message: z.string().optional(),
 });
 
-/** Token usage and any failure reported in the JSONL event stream. */
-export function readEvents(jsonl: string): { usage: AiUsage | null; failure: string | null } {
+const TOOL_ITEMS = new Set(['command_execution', 'web_search', 'mcp_tool_call', 'file_change']);
+
+const toolItem = z.object({
+  type: z.literal('item.completed'),
+  item: z.object({ type: z.string() }),
+});
+
+/** Token usage, tool calls and any failure reported in the JSONL event stream. */
+export function readEvents(jsonl: string): {
+  usage: AiUsage | null;
+  failure: string | null;
+  toolCalls: number;
+} {
   let usage: AiUsage | null = null;
   let failure: string | null = null;
+  let toolCalls = 0;
   for (const line of jsonl.split('\n')) {
     if (!line.trim().startsWith('{')) continue;
     let event: unknown;
@@ -157,8 +169,10 @@ export function readEvents(jsonl: string): { usage: AiUsage | null; failure: str
     }
     const failed = failureEvent.safeParse(event);
     if (failed.success) failure = failed.data.error?.message ?? failed.data.message ?? 'failed';
+    const item = toolItem.safeParse(event);
+    if (item.success && TOOL_ITEMS.has(item.data.item.type)) toolCalls += 1;
   }
-  return { usage, failure };
+  return { usage, failure, toolCalls };
 }
 
 interface RunResult {
@@ -245,6 +259,8 @@ export interface CodexOptions {
   env: Readonly<Record<string, string | undefined>>;
   effort: (request: GenerateRequest) => CodexEffort;
   redact: (text: string) => string;
+  /** Told when Codex used tools anyway, which multiplies the tokens of a call. */
+  warn?: (message: string, fields: Record<string, unknown>) => void;
   spawn?: SpawnLike;
   timeoutMs?: number;
   tempRoot?: string;
@@ -252,11 +268,39 @@ export interface CodexOptions {
 
 const NO_USAGE: AiUsage = { inputTokens: 0, outputTokens: 0 };
 
+/**
+ * Codex is an agent: given the chance it runs commands or searches between
+ * turns, and every extra turn sends the whole context again. These settings,
+ * from the Codex configuration reference, switch its tools off so a call is
+ * one turn. If a CLI version rejects them, the call is retried without them.
+ */
+export const NO_TOOLS = [
+  '-c',
+  'features.shell_tool=false',
+  '-c',
+  'features.view_image=false',
+  '-c',
+  'web_search="disabled"',
+];
+
+/** Put before every prompt: the answer must come from the message alone. */
+export const SINGLE_TURN =
+  'Answer in a single reply. Do not run commands, read files, search the web or use any other tool: everything you need is in this message.';
+
+/** Whether a failed run complained about the configuration rather than the request. */
+export function rejectedConfig(run: { stderr: string; stdout: string }): boolean {
+  return /unknown (feature|config|field|key)|invalid (value|config|feature)|unrecognized|unsupported (feature|config)/i.test(
+    `${run.stderr}\n${run.stdout}`,
+  );
+}
+
 /** The Codex CLI as a generator. Calls are queued so only one runs at a time. */
 export function createCodexGenerator(options: CodexOptions): Generator {
   const spawn = options.spawn ?? (nodeSpawn as unknown as SpawnLike);
   const timeoutMs = options.timeoutMs ?? CONFIG.ai.cliTimeoutMs;
   let queue: Promise<unknown> = Promise.resolve();
+  // Set once a CLI version rejects the tool settings, so later calls skip them.
+  let toolSettingsRejected = false;
 
   async function call(request: GenerateRequest): Promise<GenerateResponse> {
     const bin = options.bin();
@@ -296,10 +340,28 @@ export function createCodexGenerator(options: CodexOptions): Generator {
         await writeFile(schemaPath, JSON.stringify(strictSchema(request.schema)));
         args.push('--output-schema', schemaPath);
       }
-      args.push(`${request.system}\n\n${request.prompt}`);
-      const run = await runCodex(spawn, bin, args, childEnv(options.env), timeoutMs);
+      const prompt = `${SINGLE_TURN}\n\n${request.system}\n\n${request.prompt}`;
+      const env = childEnv(options.env);
+      let run = await runCodex(
+        spawn,
+        bin,
+        [...args, ...(toolSettingsRejected ? [] : NO_TOOLS), prompt],
+        env,
+        timeoutMs,
+      );
+      if (!toolSettingsRejected && run.code !== 0 && !run.timedOut && rejectedConfig(run)) {
+        toolSettingsRejected = true;
+        run = await runCodex(spawn, bin, [...args, prompt], env, timeoutMs);
+      }
       const events = readEvents(run.stdout);
       const usage = events.usage ?? NO_USAGE;
+      if (events.toolCalls > 0) {
+        options.warn?.('Codex used tools despite the instructions', {
+          task: request.task,
+          toolCalls: events.toolCalls,
+          inputTokens: usage.inputTokens,
+        });
+      }
       if (run.code !== 0 || run.timedOut || run.spawnError) {
         return {
           ok: false,

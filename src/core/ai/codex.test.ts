@@ -11,6 +11,9 @@ import {
   createCodexGenerator,
   findCodexBin,
   MACOS_APP_CODEX,
+  NO_TOOLS,
+  readEvents,
+  SINGLE_TURN,
   strictSchema,
   summarizeOutput,
   type ChildLike,
@@ -157,8 +160,9 @@ describe('codex generator', () => {
     expect(call?.args).toEqual(
       expect.arrayContaining(['read-only', '-c', 'model_reasoning_effort=low', '-m', 'gpt-6-luna']),
     );
+    expect(call?.args).toEqual(expect.arrayContaining(NO_TOOLS));
     expect(call?.args.at(-1)).toBe(
-      'You screen synthetic posts.\n\n<post id="t3_cdx001">Title: Chasing late invoices</post>',
+      `${SINGLE_TURN}\n\nYou screen synthetic posts.\n\n<post id="t3_cdx001">Title: Chasing late invoices</post>`,
     );
     expect(call?.workEmpty).toBe(true);
     expect(call?.stdio[0]).toBe('ignore');
@@ -237,6 +241,39 @@ describe('codex generator', () => {
       ok: false,
       message: 'The Codex CLI was not found. Install it, or set CODEX_BIN to its path.',
     });
+  });
+
+  it('retries without the tool settings when the CLI rejects them, and remembers', async () => {
+    const { generate, calls } = await generator([
+      { code: 2, stderr: "Error: unknown feature 'shell_tool'" },
+      { stdout: fixture('triage-ok.jsonl'), answer: ANSWER },
+      { stdout: fixture('triage-ok.jsonl'), answer: ANSWER },
+    ]);
+    expect(await generate(request())).toMatchObject({ ok: true });
+    expect(await generate(request())).toMatchObject({ ok: true });
+    expect(calls.map((call) => call.args.includes('features.shell_tool=false'))).toEqual([
+      true,
+      false,
+      false,
+    ]);
+  });
+
+  it('reports tool calls Codex made anyway', async () => {
+    const warnings: Record<string, unknown>[] = [];
+    await mkdir(TEMP, { recursive: true });
+    const fake = fakeCodex([{ stdout: fixture('tool-calls.jsonl'), answer: ANSWER }]);
+    const generate = createCodexGenerator({
+      bin: () => '/opt/codex/bin/codex',
+      env: {},
+      effort: () => 'low',
+      redact: (text) => text,
+      warn: (_message, fields) => warnings.push(fields),
+      spawn: fake.spawn,
+      tempRoot: TEMP,
+    });
+    await generate(request());
+    expect(warnings).toEqual([{ task: 'triage', toolCalls: 2, inputTokens: 61_204 }]);
+    expect(readEvents(fixture('triage-ok.jsonl')).toolCalls).toBe(0);
   });
 
   it('runs one call at a time', async () => {
