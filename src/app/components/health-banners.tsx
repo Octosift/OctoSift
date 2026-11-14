@@ -44,6 +44,7 @@ export function HealthBanners({ issues }: { issues: HealthIssue[] }) {
                 .
               </p>
             ) : null}
+            {issue.kind === 'replies_hidden' ? <p className="mt-0.5">{issue.reason}.</p> : null}
             {issue.kind === 'ai_stopped' || issue.kind === 'budget' ? (
               <p className="mt-0.5">
                 See{' '}

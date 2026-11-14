@@ -52,6 +52,23 @@ describe('computeHealth', () => {
     ]);
   });
 
+  it('warns about a hidden reply, and more strongly when it happens in several subreddits', () => {
+    expect(health({ hiddenReplies: ['freelance_demo'] })).toMatchObject([
+      {
+        kind: 'replies_hidden',
+        severity: 'warning',
+        message: 'Your reply in r/freelance_demo is not visible to logged-out readers.',
+      },
+    ]);
+    expect(health({ hiddenReplies: ['freelance_demo', 'smallbiz_demo'] })).toMatchObject([
+      {
+        kind: 'replies_hidden',
+        severity: 'error',
+        message: 'Your replies were hidden in r/freelance_demo, r/smallbiz_demo this week.',
+      },
+    ]);
+  });
+
   it('explains a switch to another source, or that none was left', () => {
     expect(
       health({ failover: { from: 'session', to: 'rss', reason: 'Reddit refused the session' } }),

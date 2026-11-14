@@ -1,7 +1,7 @@
 /** Reads for the inbox: lead lists by tab and filter, counts, and one lead in full. */
 import { and, count, desc, eq, gte, inArray, lte, ne, sql, type SQL } from 'drizzle-orm';
 import type { Db } from '../client';
-import { drafts, feedback, leads, posts, products, type LeadStatus } from '../schema';
+import { drafts, feedback, leads, posts, products, replyChecks, type LeadStatus } from '../schema';
 
 /** "todo" holds every opportunity that still needs action: new and drafted. */
 export const INBOX_TABS = ['todo', 'replied', 'snoozed', 'dismissed', 'brand'] as const;
@@ -161,6 +161,17 @@ export function leadDetail(db: Db, id: string) {
     reply: latest('reply'),
     dm: latest('dm'),
     feedback: verdict ?? null,
+    replyChecks: db
+      .select({
+        kind: replyChecks.kind,
+        dueAt: replyChecks.dueAt,
+        result: replyChecks.result,
+        checkedAt: replyChecks.checkedAt,
+      })
+      .from(replyChecks)
+      .where(eq(replyChecks.leadId, id))
+      .orderBy(replyChecks.dueAt)
+      .all(),
     draftCount:
       db
         .select({ value: sql<number>`count(*)` })

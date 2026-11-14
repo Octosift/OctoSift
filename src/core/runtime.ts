@@ -13,6 +13,7 @@ import {
 import { createSdkGenerator } from './ai/provider';
 import type { AiStage, Generator } from './ai/types';
 import { createUsageLedger } from './ai/usage';
+import { runDueReplyChecks } from './guard/visibility';
 import { nowSeconds, systemClock, type Clock, type Random } from './clock';
 import { CONFIG } from './config';
 import { openDatabase, type Db } from './db/client';
@@ -54,6 +55,10 @@ export interface Runtime {
   ai(): AiClient;
   /** Google results for evergreen threads; null until DataForSEO credentials are saved. */
   serp(): SerpFetcher | null;
+  /** Whether a data provider key is saved, which reply visibility checks need. */
+  hasProvider(): boolean;
+  /** Runs the reply visibility checks that are due; spends through the usage ledger. */
+  checkReplies(): Promise<number>;
   scanDeps(): ScanDeps;
   close(): void;
 }
@@ -243,6 +248,35 @@ export function createRuntime(options: RuntimeOptions): Runtime {
         redact: redactor.redact,
         log,
       }),
+    hasProvider: () => secrets.describe('vendor_api_key').configured,
+    checkReplies: async () => {
+      if (!secrets.describe('vendor_api_key').configured) return 0;
+      const ledger = createUsageLedger({
+        db,
+        clock,
+        runId: null,
+        prices: () => settings.get('ai.prices'),
+        caps: () => ({
+          perRunUsd: Number.POSITIVE_INFINITY,
+          perDayUsd: settings.get('budget.perDayUsd'),
+        }),
+      });
+      return runDueReplyChecks({
+        db,
+        provider: providerSource,
+        now: nowSeconds(clock),
+        log,
+        spend: {
+          refuse: () => {
+            const check = ledger.check();
+            return check.ok ? null : check.message;
+          },
+          record: (costUsd, what) => {
+            ledger.recordData(costUsd, what);
+          },
+        },
+      });
+    },
     serp: () => {
       if (options.overrides?.serp) return options.overrides.serp;
       const login = secrets.use('dataforseo_login');
