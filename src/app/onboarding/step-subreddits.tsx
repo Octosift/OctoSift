@@ -14,6 +14,7 @@ import {
   saveSubreddits,
   suggestForProduct,
 } from '../lib/actions/onboarding';
+import { stepHref } from './steps';
 
 interface Candidate {
   name: string;
@@ -129,7 +130,7 @@ export function StepSubreddits({ productId, saved }: { productId: string; saved:
     startTransition(async () => {
       const result = await saveSubreddits({ productId, names: [...selected] });
       if (result.ok) {
-        router.push('/onboarding?step=4');
+        router.push(stepHref('scan'));
         router.refresh();
       } else {
         setError(result.error ?? 'Could not save.');

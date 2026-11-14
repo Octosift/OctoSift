@@ -18,7 +18,15 @@ import { formatAgo } from '../../lib/format';
 
 type Account = SettingsData['account'];
 
-function StatusLine({ account, now }: { account: Account; now: number }) {
+function StatusLine({ account, now, demo }: { account: Account; now: number; demo: boolean }) {
+  if (demo) {
+    return (
+      <span className="flex flex-wrap items-center gap-2">
+        <Badge tone="brand">Demo source</Badge>
+        <span className="text-xs text-muted-foreground">synthetic posts, no account needed</span>
+      </span>
+    );
+  }
   if (account.status === 'not_connected') {
     return <Badge tone="outline">Not connected</Badge>;
   }
@@ -146,7 +154,11 @@ function PasteDialog({
   );
 }
 
-export function RedditAccountCard({
+/**
+ * Connecting, reconnecting and disconnecting the account, with the advice to
+ * use a separate one. Shared by Settings and onboarding.
+ */
+export function RedditConnect({
   account,
   now,
   demo,
@@ -183,14 +195,10 @@ export function RedditAccountCard({
 
   const connected = account.status !== 'not_connected';
   return (
-    <Card id="reddit">
-      <CardHeader
-        title="Reddit account"
-        description="The default way of reading Reddit: listings read with an account you connect."
-      />
-      <div className="flex flex-col gap-3 px-4 py-4 text-[13px]">
+    <>
+      <div className="flex flex-col gap-3 text-[13px]">
         <div className="flex">
-          <StatusLine account={account} now={now} />
+          <StatusLine account={account} now={now} demo={demo} />
         </div>
         <p className="text-xs text-muted-foreground">
           Use a separate Reddit account for this, not your main one. The app only reads public
@@ -258,7 +266,8 @@ export function RedditAccountCard({
         </div>
         {demo ? (
           <p className="text-xs text-muted-foreground">
-            Demo mode reads synthetic posts, so connecting an account is turned off here.
+            Demo mode reads synthetic posts from the demo source, so connecting an account is turned
+            off here.
           </p>
         ) : null}
         {account.inContainer ? (
@@ -277,6 +286,28 @@ export function RedditAccountCard({
         ) : null}
       </div>
       <PasteDialog open={pasteOpen} onOpenChange={setPasteOpen} />
+    </>
+  );
+}
+
+export function RedditAccountCard({
+  account,
+  now,
+  demo,
+}: {
+  account: Account;
+  now: number;
+  demo: boolean;
+}) {
+  return (
+    <Card id="reddit">
+      <CardHeader
+        title="Reddit account"
+        description="The default way of reading Reddit: listings read with an account you connect."
+      />
+      <div className="px-4 py-4">
+        <RedditConnect account={account} now={now} demo={demo} />
+      </div>
     </Card>
   );
 }

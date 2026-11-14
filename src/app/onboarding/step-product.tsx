@@ -8,6 +8,7 @@ import { Button } from '../components/ui/button';
 import { Banner, Card, CardHeader } from '../components/ui/display';
 import { Checkbox, Field, Input, Textarea } from '../components/ui/fields';
 import { buildProfile, crawlSite, createProduct } from '../lib/actions/onboarding';
+import { stepHref } from './steps';
 
 type Phase = 'url' | 'working' | 'review';
 
@@ -51,7 +52,7 @@ export function StepProduct({
           <Button
             variant="primary"
             onClick={() => {
-              router.push('/onboarding?step=3');
+              router.push(stepHref('subreddits'));
             }}
           >
             Continue
@@ -114,7 +115,7 @@ export function StepProduct({
       if (result.ok) {
         router.push(
           afterCreate === 'onboarding'
-            ? '/onboarding?step=3'
+            ? stepHref('subreddits')
             : `/subreddits?product=${encodeURIComponent(result.productId)}`,
         );
         router.refresh();

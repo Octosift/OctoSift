@@ -6,6 +6,7 @@ import { KeysSection } from '../(app)/settings/sections';
 import { Button } from '../components/ui/button';
 import { Banner } from '../components/ui/display';
 import type { SettingsData } from '../lib/data/settings';
+import { stepHref } from './steps';
 
 export function StepAi({
   settings,
@@ -46,7 +47,7 @@ export function StepAi({
         <Button
           variant="primary"
           onClick={() => {
-            router.push('/onboarding?step=2');
+            router.push(stepHref('account'));
             router.refresh();
           }}
         >

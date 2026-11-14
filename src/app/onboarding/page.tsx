@@ -3,8 +3,10 @@ import { AI_STAGES } from '@/core/settings/registry';
 import { listProducts, watchedSubreddits } from '@/core/db/queries/products';
 import { recentRuns } from '@/core/db/queries/runs';
 import { BRAND } from '@/core/brand';
+import { sessionStatus } from '@/core/reddit/account';
 import { loadSettings } from '../lib/data/settings';
-import { getRuntime } from '../lib/runtime';
+import { getRuntime, nowSeconds } from '../lib/runtime';
+import { stepNumber } from './steps';
 import { Wizard, type OnboardingState } from './wizard';
 
 export const dynamic = 'force-dynamic';
@@ -19,6 +21,7 @@ function loadState(): OnboardingState {
     : [];
   return {
     aiReady: AI_STAGES.every((stage) => runtime.resolveModel(stage).ok),
+    accountConnected: sessionStatus(runtime.db, runtime.secrets).status === 'connected',
     product: product ? { id: product.id, name: product.name, url: product.url } : null,
     subreddits,
     hasRun: recentRuns(runtime.db, 1).length > 0,
@@ -26,11 +29,22 @@ function loadState(): OnboardingState {
   };
 }
 
-function firstIncomplete(state: OnboardingState): number {
-  if (!state.aiReady) return 1;
-  if (!state.product) return 2;
-  if (state.subreddits.length < 3) return 3;
-  return 4;
+/**
+ * The furthest step that may be shown, and the one to open by default. The
+ * account step is optional, so the product step is reachable without it, but
+ * a fresh setup still opens on it.
+ */
+function progress(state: OnboardingState): { allowed: number; landing: number } {
+  const at = (id: Parameters<typeof stepNumber>[0]) => stepNumber(id);
+  if (!state.aiReady) return { allowed: at('ai'), landing: at('ai') };
+  if (!state.product) {
+    return {
+      allowed: at('product'),
+      landing: state.accountConnected ? at('product') : at('account'),
+    };
+  }
+  if (state.subreddits.length < 3) return { allowed: at('subreddits'), landing: at('subreddits') };
+  return { allowed: at('scan'), landing: at('scan') };
 }
 
 export default async function OnboardingPage({
@@ -39,10 +53,11 @@ export default async function OnboardingPage({
   searchParams: Promise<{ step?: string }>;
 }) {
   const state = loadState();
-  const allowed = firstIncomplete(state);
-  const requested = Number((await searchParams).step ?? allowed);
+  const { allowed, landing } = progress(state);
+  const requested = Number((await searchParams).step ?? landing);
   const step =
-    Number.isInteger(requested) && requested >= 1 && requested <= allowed ? requested : allowed;
+    Number.isInteger(requested) && requested >= 1 && requested <= allowed ? requested : landing;
+  const needsSettings = step === stepNumber('ai') || step === stepNumber('account');
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
       <header className="flex flex-col gap-1">
@@ -55,7 +70,8 @@ export default async function OnboardingPage({
       <Wizard
         step={step}
         state={state}
-        settings={step === 1 ? loadSettings() : null}
+        settings={needsSettings ? loadSettings() : null}
+        now={nowSeconds()}
         blocked={requested > allowed}
       />
     </main>
