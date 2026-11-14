@@ -6,10 +6,10 @@ import { emptyCounts, type FunnelCounts } from '@/core/pipeline/funnel';
 import { Button } from '../../components/ui/button';
 import { Badge, Card, EmptyState, PageHeader } from '../../components/ui/display';
 import { cn } from '../../components/ui/utils';
-import { formatAgo, formatUsd } from '../../lib/format';
+import { formatAgo } from '../../lib/format';
 import { getRuntime, nowSeconds } from '../../lib/runtime';
 import { RunFunnelCard } from './run-funnel-card';
-import { formatDuration, RunStatus, TRIGGER_LABELS } from './run-status';
+import { formatDuration, RunCost, RunStatus, TRIGGER_LABELS } from './run-status';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Runs' };
@@ -135,7 +135,11 @@ export default async function RunsPage({
                         <td className="px-2 py-2 text-right tabular">{counts.leads}</td>
                         <td className="px-2 py-2 text-right tabular">{counts.drafts.reply}</td>
                         <td className="px-4 py-2 text-right tabular">
-                          {formatUsd(run.costUsd, run.costIncomplete)}
+                          <RunCost
+                            costUsd={run.costUsd}
+                            dataCostUsd={run.dataCostUsd}
+                            incomplete={run.costIncomplete}
+                          />
                         </td>
                       </tr>
                     );
