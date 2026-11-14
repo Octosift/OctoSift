@@ -30,7 +30,7 @@ export function InboxFilters({ products, subreddits, values }: Props) {
   const active = Object.keys(values).length > 0;
   return (
     <div
-      className="flex flex-wrap items-center gap-1.5 border-b border-border px-4 py-2.5"
+      className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-border px-4 py-2.5"
       role="group"
       aria-label="Filters"
     >

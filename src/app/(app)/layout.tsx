@@ -55,7 +55,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </aside>
-      <main className="flex min-w-0 flex-1 flex-col">
+      <main className="flex min-w-0 flex-1 flex-col md:h-dvh md:overflow-y-auto">
         <HealthBanners issues={shell.health} />
         {children}
       </main>

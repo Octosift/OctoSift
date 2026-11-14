@@ -39,7 +39,7 @@ export function InboxTabs({
   return (
     <nav
       aria-label="Lead status"
-      className="no-scrollbar flex gap-3.5 overflow-x-auto border-b border-border px-4"
+      className="no-scrollbar flex shrink-0 gap-3.5 overflow-x-auto border-b border-border px-4"
     >
       {tabs.map(({ tab, label, count }) => (
         <Link

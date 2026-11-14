@@ -1,16 +1,27 @@
 'use client';
 
+import { ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 import type { LeadDetail } from '@/core/db/queries/inbox';
 import { Badge, Banner } from '../../components/ui/display';
+import { cn } from '../../components/ui/utils';
 import { formatAge, formatAgo } from '../../lib/format';
 import { highlightQuote } from '../../lib/text';
 
-export function PostBody({ text, quote }: { text: string; quote: string }) {
+export function PostBody({
+  text,
+  quote,
+  className,
+}: {
+  text: string;
+  quote: string;
+  className?: string;
+}) {
   if (text.trim().length === 0) {
     return <p className="text-sm text-muted-foreground italic">This post has no text.</p>;
   }
   return (
-    <p className="text-sm leading-6 whitespace-pre-wrap">
+    <p className={cn('text-sm leading-6 whitespace-pre-wrap', className)}>
       {highlightQuote(text, quote).map((segment, index) =>
         segment.highlight ? (
           <mark
@@ -24,6 +35,47 @@ export function PostBody({ text, quote }: { text: string; quote: string }) {
         ),
       )}
     </p>
+  );
+}
+
+/** The post, folded to a few lines so the reply stays in view; the reason sits on top. */
+export function PostCard({ text, quote, reason }: { text: string; quote: string; reason: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const long = text.length > 320 || text.split('\n').length > 4;
+  return (
+    <section
+      aria-labelledby="post-heading"
+      className="rounded-xl border border-border bg-surface shadow-card"
+    >
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
+        <h3 id="post-heading" className="text-sm font-semibold">
+          Post
+        </h3>
+        {long ? (
+          <button
+            type="button"
+            aria-expanded={expanded}
+            onClick={() => {
+              setExpanded(!expanded);
+            }}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            {expanded ? 'Show less' : 'Show the whole post'}
+            <ChevronDown
+              className={cn('size-3.5 transition-transform', expanded && 'rotate-180')}
+              aria-hidden
+            />
+          </button>
+        ) : null}
+      </div>
+      <div className="flex flex-col gap-2 px-4 py-3">
+        <p className="text-[13px] text-muted-foreground">
+          <span className="font-medium text-foreground">Why it is a lead: </span>
+          {reason}
+        </p>
+        <PostBody text={text} quote={quote} className={cn(long && !expanded && 'line-clamp-4')} />
+      </div>
+    </section>
   );
 }
 

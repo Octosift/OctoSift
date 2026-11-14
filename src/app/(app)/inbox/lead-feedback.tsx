@@ -26,40 +26,43 @@ export function LeadFeedback({
     });
   };
   return (
-    <section aria-labelledby="feedback-heading" className="flex flex-col gap-2">
-      <h3 id="feedback-heading" className="text-xs font-medium text-muted-foreground">
-        Was this a good lead?{' '}
+    <section
+      aria-labelledby="feedback-heading"
+      className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-border px-4 py-2.5"
+    >
+      <h3 id="feedback-heading" className="text-[13px] text-muted-foreground">
+        Was this a good lead?
         {feedback
-          ? `You said ${feedback.signal}${feedback.note ? `: ${feedback.note}` : ''}.`
+          ? ` You said ${feedback.signal}${feedback.note ? `: ${feedback.note}` : ''}.`
           : null}
       </h3>
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          aria-label="Note for future scans"
-          className="h-8 max-w-sm flex-1"
-          placeholder="Optional note, e.g. we don't serve students"
-          value={note}
-          onChange={(event) => {
-            setNote(event.target.value);
-          }}
-        />
-        <Button
-          onClick={() => {
-            give('good');
-          }}
-          disabled={pending}
-        >
-          <ThumbsUp aria-hidden /> Good
-        </Button>
-        <Button
-          onClick={() => {
-            give('bad');
-          }}
-          disabled={pending}
-        >
-          <ThumbsDown aria-hidden /> Bad
-        </Button>
-      </div>
+      <Input
+        aria-label="Note for future scans"
+        className="h-8 min-w-40 flex-1 text-[13px]"
+        placeholder="Optional note, e.g. we don't serve students"
+        value={note}
+        onChange={(event) => {
+          setNote(event.target.value);
+        }}
+      />
+      <Button
+        size="sm"
+        onClick={() => {
+          give('good');
+        }}
+        disabled={pending}
+      >
+        <ThumbsUp aria-hidden /> Good
+      </Button>
+      <Button
+        size="sm"
+        onClick={() => {
+          give('bad');
+        }}
+        disabled={pending}
+      >
+        <ThumbsDown aria-hidden /> Bad
+      </Button>
     </section>
   );
 }

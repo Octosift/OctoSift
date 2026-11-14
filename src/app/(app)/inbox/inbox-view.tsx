@@ -117,11 +117,11 @@ export function InboxView({ data }: { data: InboxData }) {
   const empty = EMPTY[data.params.tab] ?? { title: 'Nothing here', body: '' };
 
   return (
-    <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(340px,440px)_minmax(0,1fr)] xl:grid-cols-[480px_minmax(0,1fr)]">
+    <div className="grid min-h-0 flex-1 md:grid-rows-[minmax(0,1fr)] lg:grid-cols-[minmax(340px,440px)_minmax(0,1fr)] xl:grid-cols-[480px_minmax(0,1fr)]">
       <section
         aria-label="Lead list"
         className={cn(
-          'flex min-w-0 flex-col border-border lg:border-r',
+          'flex min-h-0 min-w-0 flex-col border-border lg:border-r',
           explicitSelection && 'hidden lg:flex',
         )}
       >
@@ -153,7 +153,7 @@ export function InboxView({ data }: { data: InboxData }) {
             <EmptyState title={empty.title}>{empty.body}</EmptyState>
           )
         ) : (
-          <>
+          <div className="min-h-0 flex-1 md:overflow-y-auto">
             <LeadList rows={data.rows} selectedId={selectedId} now={data.now} />
             {data.total > data.pageSize ? (
               <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground">
@@ -182,12 +182,12 @@ export function InboxView({ data }: { data: InboxData }) {
                 </div>
               </div>
             ) : null}
-          </>
+          </div>
         )}
       </section>
       <section
         aria-label="Lead detail"
-        className={cn('min-w-0 overflow-y-auto', !explicitSelection && 'hidden lg:block')}
+        className={cn('flex min-h-0 min-w-0 flex-col', !explicitSelection && 'hidden lg:flex')}
       >
         {data.detail ? (
           <LeadPanel

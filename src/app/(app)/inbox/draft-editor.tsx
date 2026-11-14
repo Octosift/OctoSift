@@ -77,14 +77,22 @@ export function DraftEditor({
   ];
 
   return (
-    <section aria-labelledby="draft-heading" className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-2">
+    <section
+      aria-labelledby="draft-heading"
+      className="rounded-xl border border-border bg-surface shadow-card transition-colors has-[textarea:focus]:border-ring/60"
+    >
+      <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2.5">
         <h3 id="draft-heading" className="text-sm font-semibold">
           Reply draft
         </h3>
         {review ? <Badge tone={review.tone}>{review.label}</Badge> : null}
         {draft ? <Badge tone="outline">{MODE_LABELS[draft.mode]}</Badge> : null}
         {draft?.editedByUser ? <Badge tone="outline">Edited</Badge> : null}
+        {draft ? (
+          <span className="ml-auto text-xs text-muted-foreground tabular">
+            {wordCount(text)} words
+          </span>
+        ) : null}
       </div>
 
       {draft ? (
@@ -99,81 +107,74 @@ export function DraftEditor({
             onChange={(event) => {
               onTextChange(event.target.value);
             }}
-            rows={9}
-            className="w-full rounded-md border border-input bg-surface px-3 py-2 text-sm leading-5"
+            rows={8}
+            className="block w-full resize-y bg-transparent px-4 py-3 text-sm leading-6 focus:outline-none focus-visible:outline-none"
           />
-          <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-            <span className="tabular">{wordCount(text)} words</span>
-            {dirty ? (
-              <Button size="sm" variant="outline" onClick={save} disabled={pending}>
-                Save edits
-              </Button>
-            ) : null}
-          </div>
-          {problems.length > 0 ? (
-            <ul className="list-disc rounded-md border border-warning-border bg-warning px-3 py-2 pl-7 text-xs text-warning-foreground">
-              {problems.map((problem) => (
-                <li key={problem}>{problem}</li>
-              ))}
-            </ul>
-          ) : null}
-          {draft.notesForUser ? (
-            <p className="text-xs text-muted-foreground">Note: {draft.notesForUser}</p>
+          {problems.length > 0 || draft.notesForUser ? (
+            <div className="flex flex-col gap-2 px-4 pb-3">
+              {problems.length > 0 ? (
+                <ul className="list-disc rounded-lg border border-warning-border bg-warning px-3 py-2 pl-7 text-xs text-warning-foreground">
+                  {problems.map((problem) => (
+                    <li key={problem}>{problem}</li>
+                  ))}
+                </ul>
+              ) : null}
+              {draft.notesForUser ? (
+                <p className="text-xs text-muted-foreground">Note: {draft.notesForUser}</p>
+              ) : null}
+            </div>
           ) : null}
         </>
       ) : (
-        <p className="rounded-md border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
+        <p className="px-4 py-6 text-sm text-muted-foreground">
           {detail.lead.draftError ??
             'No draft yet. Leads below the draft threshold are drafted on request.'}
         </p>
       )}
 
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="draft-mode" className="text-xs text-muted-foreground">
-            Mode
-          </label>
-          <Select
-            id="draft-mode"
-            className="h-7 w-auto text-xs"
-            value={mode}
-            onChange={(event) => {
-              setMode(event.target.value as Mode);
-            }}
-          >
-            {Object.entries(MODE_LABELS).map(([value, label]) => (
-              <option
-                key={value}
-                value={value}
-                disabled={value !== 'helpful_only' && !detail.lead.mentionOk}
-              >
-                {label}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div className="flex min-w-40 flex-1 flex-col gap-1">
-          <label htmlFor="draft-instruction" className="text-xs text-muted-foreground">
-            Instruction (optional)
-          </label>
-          <Input
-            id="draft-instruction"
-            className="h-7 text-xs"
-            placeholder="e.g. shorter, mention the free plan"
-            value={instruction}
-            onChange={(event) => {
-              setInstruction(event.target.value);
-            }}
-          />
-        </div>
+      <div className="flex flex-wrap items-center gap-2 rounded-b-xl border-t border-border bg-surface-raised/60 px-4 py-2.5">
+        <Select
+          id="draft-mode"
+          aria-label="Reply mode"
+          className="h-8 w-auto text-[13px]"
+          value={mode}
+          onChange={(event) => {
+            setMode(event.target.value as Mode);
+          }}
+        >
+          {Object.entries(MODE_LABELS).map(([value, label]) => (
+            <option
+              key={value}
+              value={value}
+              disabled={value !== 'helpful_only' && !detail.lead.mentionOk}
+            >
+              {label}
+            </option>
+          ))}
+        </Select>
+        <Input
+          id="draft-instruction"
+          aria-label="Instruction for the next draft"
+          className="h-8 min-w-40 flex-1 text-[13px]"
+          placeholder="Instruction for a new draft, e.g. shorter"
+          value={instruction}
+          onChange={(event) => {
+            setInstruction(event.target.value);
+          }}
+        />
         <Button size="sm" onClick={regenerate} disabled={pending}>
           <RotateCw className={pending ? 'animate-spin' : undefined} aria-hidden />
           {draft ? 'Regenerate' : 'Write a draft'}
-          <Kbd className="ml-1">r</Kbd>
+          <Kbd className="ml-0.5">r</Kbd>
         </Button>
+        {dirty ? (
+          <Button size="sm" variant="primary" onClick={save} disabled={pending}>
+            Save edits
+          </Button>
+        ) : null}
       </div>
       {!detail.lead.mentionOk ? (
-        <p className="text-xs text-muted-foreground">
+        <p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
           Only helpful replies are offered here: the author is venting, asked for no tools, or the
           subreddit does not allow promotion.
         </p>
