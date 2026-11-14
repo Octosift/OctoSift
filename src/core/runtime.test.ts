@@ -3,6 +3,7 @@ import { join, relative, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createFakeGenerator } from './ai/fake';
 import type { LogRecord } from './log';
+import type { SourceChain } from './reddit/chain';
 import { createRuntime } from './runtime';
 import { writeState } from './state';
 import { createFakeClock } from './testing/fake-clock';
@@ -72,6 +73,18 @@ describe('createRuntime', () => {
     expect(runtime.serp()).toBeNull();
     runtime.secrets.set('dataforseo_password', 'not-a-real-password');
     expect(runtime.serp()).toBeTypeOf('function');
+    runtime.close();
+  });
+
+  it('reads through the preferred source when it is set up, and otherwise through RSS', () => {
+    const runtime = createRuntime({ env: env(databasePath()), rawEnv: {} });
+    runtime.settings.set('reddit.source', 'provider');
+    const active = () => (runtime.scanDeps().source as SourceChain).active();
+    expect(active()).toBe('rss');
+    runtime.secrets.set('vendor_api_key', 'synthetic-provider-key-0000');
+    expect(active()).toBe('provider');
+    runtime.settings.set('reddit.source', 'rss');
+    expect(active()).toBe('rss');
     runtime.close();
   });
 

@@ -25,6 +25,8 @@ import { createRedditClient } from './reddit/client';
 import { createRateLimiter } from './reddit/ratelimit';
 import { markSessionNeedsReauth, sessionStatus } from './reddit/account';
 import { createSourceChain, sourceOrder, type SourceCandidate } from './reddit/chain';
+import { createProviderSource } from './reddit/provider/source';
+import { createVendorClient } from './reddit/provider/vendor';
 import { createSessionSource } from './reddit/session';
 import { createSessionClient } from './reddit/session-client';
 import { createAtomSource } from './reddit/source';
@@ -134,11 +136,38 @@ export function createRuntime(options: RuntimeOptions): Runtime {
     maxPerHour: CONFIG.session.maxPerHour,
   });
 
+  // The provider has its own limiter: a few requests a second, unrelated to Reddit's pace.
+  const providerLimiter = createRateLimiter({
+    clock,
+    random,
+    minSpacingMs: Math.ceil(1_000 / CONFIG.provider.perSecond),
+    maxJitterMs: 0,
+    maxWaitMs: 60_000,
+  });
+  const providerSource = createProviderSource({
+    client: createVendorClient({
+      key: () => {
+        const key = secrets.use('vendor_api_key');
+        return key.ok ? key.value : null;
+      },
+      limiter: providerLimiter,
+      clock,
+      redact: redactor.redact,
+    }),
+    clock,
+    maxPostAgeHours: () => settings.get('prefilter.maxPostAgeHours'),
+    pricePerRequestUsd: () => settings.get('reddit.providerPriceUsd'),
+    name: 'vendor',
+  });
+
   /** The sources that are set up, in the order the user prefers. */
   function candidates(): SourceCandidate[] {
     const available: SourceCandidate[] = [];
     for (const id of sourceOrder(settings.get('reddit.source'))) {
       if (id === 'rss') available.push({ id, source: rssSource });
+      if (id === 'provider' && secrets.describe('vendor_api_key').configured) {
+        available.push({ id, source: providerSource });
+      }
       if (id === 'session' && sessionStatus(db, secrets).status === 'connected') {
         const sessionClient = createSessionClient({
           cookie: () => {

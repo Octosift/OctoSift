@@ -94,6 +94,12 @@ export const SETTINGS = {
   /** The preferred way of reading Reddit; others are tried after it when failover is on. */
   'reddit.source': setting(z.enum(['session', 'provider', 'rss']), 'session'),
   'reddit.failover': setting(z.boolean(), true),
+  /** Which paid data provider adapter to use when its key is set. */
+  'reddit.provider': setting(z.enum(['vendor']), 'vendor'),
+  'reddit.providerPriceUsd': setting(
+    z.number().min(0).max(1),
+    CONFIG.provider.defaultPricePerRequestUsd,
+  ),
   'reddit.userAgent': setting(z.string().trim().min(10).max(400), CONFIG.reddit.defaultUserAgent),
   'reddit.ownUsername': setting(
     z
