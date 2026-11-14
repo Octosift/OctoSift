@@ -155,7 +155,10 @@ export function StepScan({
           }
         />
         <div className="px-4 py-4">
-          <Funnel counts={run?.counts ?? emptyCounts()} />
+          <Funnel
+            counts={run?.counts ?? emptyCounts()}
+            reading={!finished && status?.worker?.activity === 'reading'}
+          />
         </div>
       </Card>
       {line ? (

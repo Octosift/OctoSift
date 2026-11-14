@@ -12,14 +12,15 @@ export interface FunnelStep {
   drop?: boolean;
 }
 
-export function funnelSteps(counts: FunnelCounts): FunnelStep[] {
+/** `reading`: posts are still coming in, so nothing has been filtered yet. */
+export function funnelSteps(counts: FunnelCounts, reading = false): FunnelStep[] {
   return [
     { key: 'fetched', label: 'Read', value: counts.fetched, hint: 'Posts in the feeds' },
     {
       key: 'filtered',
       label: 'Filtered out',
       // Seen before, too old for a first read, or stopped by the free checks.
-      value: Math.max(0, counts.fetched - counts.prefilter.pass),
+      value: reading ? 0 : Math.max(0, counts.fetched - counts.prefilter.pass),
       hint: 'Seen before or stopped by free checks',
       drop: true,
     },
@@ -59,15 +60,18 @@ export function Funnel({
   counts,
   hrefFor,
   showHints = false,
+  reading = false,
   className,
 }: {
   counts: FunnelCounts;
+  /** Posts are still being read; the later stages have not started. */
+  reading?: boolean;
   hrefFor?: (step: FunnelStepKey) => string | null;
   /** Explain each stage under its label; for wider layouts. */
   showHints?: boolean;
   className?: string;
 }) {
-  const steps = funnelSteps(counts);
+  const steps = funnelSteps(counts, reading);
   const read = counts.fetched;
   const scale = Math.max(1, read, ...steps.map((step) => step.value));
   return (
