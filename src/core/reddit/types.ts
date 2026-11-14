@@ -55,8 +55,18 @@ export interface RateInfo {
   resetS: number | null;
 }
 
-/** "auth": the source's account or key no longer works and needs the user's attention. */
-export type FetchFailureKind = 'blocked' | 'rate_limited' | 'gone' | 'network' | 'auth';
+/**
+ * "auth": the source's account or key no longer works and needs the user's attention.
+ * "budget": a paid source stopped because the budget is spent.
+ */
+export type FetchFailureKind = 'blocked' | 'rate_limited' | 'gone' | 'network' | 'auth' | 'budget';
+
+/** How a paid source asks permission to spend and reports what it spent. */
+export interface SpendHooks {
+  /** Null when another paid request may start, otherwise why not. */
+  refuse(): string | null;
+  record(costUsd: number, what: string): void;
+}
 
 export type FetchResult =
   | { ok: true; posts: RedditPost[]; rate: RateInfo }
@@ -68,13 +78,19 @@ export interface FetchOptions {
   limit: number;
   /** Which of these post ids are already stored, so paging can stop early. */
   knownIds?: (ids: string[]) => Set<string>;
+  spend?: SpendHooks;
 }
+
+export type DetailsResult =
+  { ok: true; posts: RedditPost[] } | { ok: false; kind: FetchFailureKind; message: string };
 
 /** A way of reading Reddit: Atom feeds, a connected session or a data provider. */
 export interface RedditSource {
   /** How many subreddits one request may combine; the configured default when absent. */
   maxSubredditsPerRequest?: number;
   fetchNewPosts(subreddits: string[], opts: FetchOptions): Promise<FetchResult>;
+  /** Full posts for ids whose listing only had a preview; for sources that mark posts partial. */
+  fetchDetails?(ids: string[], opts: { spend?: SpendHooks }): Promise<DetailsResult>;
   fetchPostWithComments?(subreddit: string, postId: string): Promise<PostThread | null>;
   fetchRules?(subreddit: string): Promise<SubredditRules | null>;
   checkUser?(username: string): Promise<UserVisibility>;

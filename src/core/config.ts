@@ -230,6 +230,19 @@ export const CONFIG = deepFreeze({
     signInTimeoutMs: 5 * 60_000,
   },
 
+  /** A paid Reddit data provider (optional). */
+  provider: {
+    feedPages: 3,
+    detailsBatch: 30,
+    /** At most this many requests a second. */
+    perSecond: 5,
+    retries: 2,
+    retryBackoffMs: 1_000,
+    timeoutMs: 30_000,
+    /** Price of one billed request until the user enters their own. */
+    defaultPricePerRequestUsd: 0.001,
+  },
+
   /** Threads that rank on Google, from DataForSEO (optional). */
   serp: {
     locationCode: 2840, // United States

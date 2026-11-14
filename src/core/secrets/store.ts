@@ -20,6 +20,7 @@ export const SECRET_ENV_VARS = {
   google_api_key: 'GOOGLE_GENERATIVE_AI_API_KEY',
   openai_compatible_api_key: 'OPENAI_COMPATIBLE_API_KEY',
   reddit_session_cookie: 'REDDIT_SESSION_COOKIE',
+  vendor_api_key: 'VENDOR_API_KEY',
   dataforseo_login: 'DATAFORSEO_LOGIN',
   dataforseo_password: 'DATAFORSEO_PASSWORD',
   webhook_url: 'WEBHOOK_URL',

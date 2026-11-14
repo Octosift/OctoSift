@@ -1,0 +1,45 @@
+{
+  "code": 200,
+  "message": "Request successful.",
+  "data": {
+    "postInfoById": {
+      "id": "t3_prv001",
+      "commentForest": {
+        "trees": [
+          {
+            "depth": 0,
+            "node": {
+              "__typename": "Comment",
+              "id": "t1_cmt001",
+              "authorInfo": {
+                "name": "demo_founder"
+              },
+              "content": {
+                "markdown": "Synthetic helpful reply."
+              }
+            }
+          },
+          {
+            "depth": 0,
+            "node": {
+              "__typename": "Comment",
+              "id": "t1_cmt002",
+              "authorInfo": {
+                "name": "demo_user_40"
+              },
+              "content": {
+                "markdown": "Another synthetic reply."
+              }
+            }
+          },
+          {
+            "depth": 0,
+            "more": {
+              "cursor": "synthetic-more-cursor"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

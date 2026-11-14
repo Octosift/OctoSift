@@ -1,0 +1,25 @@
+{
+  "code": 200,
+  "message": "Request successful.",
+  "data": {
+    "children": [
+      {
+        "community": {
+          "id": "t5_a",
+          "name": "freelance_demo",
+          "subscribersCount": 12000
+        }
+      },
+      {
+        "community": {
+          "id": "t5_b",
+          "name": "Freelance_Writing_Demo"
+        }
+      }
+    ],
+    "pageInfo": {
+      "endCursor": null,
+      "hasNextPage": false
+    }
+  }
+}

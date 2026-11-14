@@ -1,0 +1,7 @@
+{
+  "code": 200,
+  "message": "Request successful.",
+  "data": {
+    "postInfoById": null
+  }
+}
