@@ -39,6 +39,18 @@ const STATE = {
     z.string(),
     z.object({ models: z.array(z.string()), fetchedAt: z.number() }),
   ),
+  /** The last subreddit suggestions, kept until the product's profile changes. */
+  'state.subredditSuggestions': z.object({
+    productId: z.string(),
+    profileAt: z.number(),
+    suggestions: z.array(
+      z.object({
+        name: z.string(),
+        reason: z.string(),
+        promotionStrictness: z.enum(['lenient', 'moderate', 'strict', 'unknown']),
+      }),
+    ),
+  }),
   'state.scanRequest': z.object({ requestedAt: z.number(), productId: z.string().nullable() }),
   'state.validationRequest': z.object({ requestedAt: z.number(), names: z.array(z.string()) }),
   'state.validationProgress': z.object({

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { suggestOnce } from '@/core/profile/suggestion-cache';
 import { webUrl } from '@/core/urls';
 import { profileWire, type ExtractedProfile } from '@/core/ai/schemas';
 import { CONFIG } from '@/core/config';
@@ -14,11 +15,6 @@ import { crawlProduct } from '@/core/profile/crawl';
 import { extractProfile, mergeInterview } from '@/core/profile/extract';
 import { suggestSubreddits } from '@/core/profile/subreddits';
 import { requestScan } from '@/core/scan-lock';
-import {
-  requestValidation,
-  validationProgress,
-  type ValidationProgress,
-} from '@/core/validation-queue';
 import { getRuntime, nowSeconds } from '../runtime';
 
 const pageSchema = z.object({
@@ -143,8 +139,9 @@ export async function suggestForProduct(
 > {
   const runtime = getRuntime();
   const product = getProduct(runtime.db, productId);
-  if (!product?.profile) return { ok: false, message: 'Create the product first.' };
-  return suggestSubreddits(runtime.ai(), product.profile);
+  const profile = product?.profile;
+  if (!product || !profile) return { ok: false, message: 'Create the product first.' };
+  return suggestOnce(runtime.db, product, () => suggestSubreddits(runtime.ai(), profile));
 }
 
 const names = z
@@ -157,18 +154,6 @@ const names = z
   )
   .min(1)
   .max(CONFIG.subreddits.maxSuggestions + 10);
-
-export async function checkSubreddits(input: string[]): Promise<{ ok: boolean; error?: string }> {
-  const parsed = names.safeParse(input.map((name) => name.replace(/^\/?r\//i, '')));
-  if (!parsed.success)
-    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid names' };
-  requestValidation(getRuntime().db, [...new Set(parsed.data)], nowSeconds());
-  return Promise.resolve({ ok: true });
-}
-
-export async function checkProgress(): Promise<ValidationProgress | null> {
-  return Promise.resolve(validationProgress(getRuntime().db));
-}
 
 export async function saveSubreddits(input: {
   productId: string;
