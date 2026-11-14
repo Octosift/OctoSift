@@ -1,0 +1,5 @@
+{"type":"thread.started","thread_id":"00000000-0000-4000-8000-000000000001"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"reasoning","text":"Checking each synthetic post against the product."}}
+{"type":"item.completed","item":{"id":"item_1","type":"agent_message","text":"{\"results\":[{\"id\":\"t3_cdx001\",\"relevant\":true,\"why\":\"Asks how to chase late invoices\"},{\"id\":\"t3_cdx002\",\"relevant\":false,\"why\":\"A meme about coffee\"}]}"}}
+{"type":"turn.completed","usage":{"input_tokens":18942,"cached_input_tokens":17920,"cache_write_input_tokens":0,"output_tokens":212,"reasoning_output_tokens":96}}

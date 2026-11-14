@@ -187,6 +187,14 @@ export const CONFIG = deepFreeze({
     /** The failure ratio is only judged after this many calls. */
     minCallsBeforeFailureCheck: 5,
     requestTimeoutMs: 60_000,
+    /** The experimental CLI provider: one call at a time, killed after this long. */
+    cliTimeoutMs: 180_000,
+    /**
+     * Posts per CLI call. Every call carries about 18,000 tokens of the CLI's
+     * own instructions, so the CLI provider batches far more than the APIs.
+     */
+    cliBatch: { triage: 25, qualify: 5 },
+    cliOverheadInputTokens: 18_000,
   },
 
   health: {

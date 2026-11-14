@@ -40,8 +40,11 @@ export interface ModelPrice {
 }
 
 export interface AiUsage {
+  /** All input tokens, cached ones included. */
   inputTokens: number;
   outputTokens: number;
+  /** The part of the input served from the provider's prompt cache, when reported. */
+  cachedInputTokens?: number;
 }
 
 /**
