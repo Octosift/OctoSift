@@ -12,6 +12,7 @@ import {
   replyChecks,
   runs,
   secrets,
+  serpRuns,
   serpThreads,
   settings,
   subreddits,
@@ -31,6 +32,8 @@ export function exportData(db: Db) {
     feedback: db.select().from(feedback).all(),
     runs: db.select().from(runs).all(),
     usage: db.select().from(usage).all(),
+    serpRuns: db.select().from(serpRuns).all(),
+    serpThreads: db.select().from(serpThreads).all(),
     settings: db
       .select()
       .from(settings)
@@ -45,6 +48,7 @@ export function deleteAllData(db: Db): void {
       for (const table of [
         replyChecks,
         serpThreads,
+        serpRuns,
         drafts,
         feedback,
         leads,

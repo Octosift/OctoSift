@@ -108,6 +108,11 @@ export const SETTINGS = {
   'ai.compatibleBaseUrl': setting(z.url().nullable(), null),
   'ai.prices': setting(z.record(z.string().min(1), price), {}),
   'ai.imageDescriptions': setting(z.boolean(), CONFIG.images.enabledByDefault),
+  /** Searches to check for evergreen threads; empty means the product's buyer phrases. */
+  'evergreen.keywords': setting(
+    z.array(z.string().trim().min(2).max(100)).max(CONFIG.serp.maxKeywords),
+    [],
+  ),
   'notify.format': setting(z.enum(['slack', 'discord']), 'slack'),
   'onboarding.completed': setting(z.boolean(), false),
 } as const;
@@ -117,7 +122,12 @@ export type SettingValue<K extends SettingKey> = z.output<(typeof SETTINGS)[K]['
 export type SettingInput<K extends SettingKey> = z.input<(typeof SETTINGS)[K]['schema']>;
 
 /** Settings a product may override; the product value wins when present. */
-export const PRODUCT_SETTING_KEYS = ['thresholds', 'vetoPhrases', 'replyPreferences'] as const;
+export const PRODUCT_SETTING_KEYS = [
+  'thresholds',
+  'vetoPhrases',
+  'replyPreferences',
+  'evergreen.keywords',
+] as const;
 export type ProductSettingKey = (typeof PRODUCT_SETTING_KEYS)[number];
 
 export function isSettingKey(value: string): value is SettingKey {

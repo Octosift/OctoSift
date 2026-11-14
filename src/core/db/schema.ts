@@ -251,6 +251,30 @@ export const secrets = sqliteTable('secrets', {
   createdAt: integer('created_at').notNull(),
 });
 
+export type SerpRunStatus = 'running' | 'ok' | 'partial' | 'failed';
+export type SerpRunTrigger = 'schedule' | 'manual';
+
+/** One check of the buyer keywords against Google, with the cost DataForSEO reported. */
+export const serpRuns = sqliteTable(
+  'serp_runs',
+  {
+    id: text('id').primaryKey(),
+    productId: text('product_id')
+      .notNull()
+      .references(() => products.id, { onDelete: 'cascade' }),
+    trigger: text('trigger').$type<SerpRunTrigger>().notNull(),
+    status: text('status').$type<SerpRunStatus>().notNull(),
+    startedAt: integer('started_at').notNull(),
+    finishedAt: integer('finished_at'),
+    keywords: integer('keywords').notNull(),
+    threads: integer('threads').notNull().default(0),
+    costUsd: real('cost_usd').notNull().default(0),
+    error: text('error'),
+  },
+  (table) => [index('serp_runs_product_started_idx').on(table.productId, table.startedAt)],
+);
+
+/** A Reddit thread that ranked for a keyword; updated in place on every check. */
 export const serpThreads = sqliteTable(
   'serp_threads',
   {
@@ -261,10 +285,23 @@ export const serpThreads = sqliteTable(
     keyword: text('keyword').notNull(),
     url: text('url').notNull(),
     postId: text('post_id'),
+    subreddit: text('subreddit').notNull().default(''),
+    title: text('title').notNull().default(''),
     rank: integer('rank').notNull(),
+    /** When Google shows a date for the thread. */
+    publishedAt: integer('published_at'),
+    archived: integer('archived', { mode: 'boolean' }).notNull().default(false),
+    runId: text('run_id').references(() => serpRuns.id, { onDelete: 'set null' }),
     checkedAt: integer('checked_at').notNull(),
   },
-  (table) => [index('serp_threads_product_keyword_idx').on(table.productId, table.keyword)],
+  (table) => [
+    index('serp_threads_product_keyword_idx').on(table.productId, table.keyword),
+    uniqueIndex('serp_threads_product_keyword_url_idx').on(
+      table.productId,
+      table.keyword,
+      table.url,
+    ),
+  ],
 );
 
 export const replyChecks = sqliteTable(

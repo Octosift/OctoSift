@@ -35,6 +35,7 @@ describe('openMemoryDatabase', () => {
       'reply_checks',
       'runs',
       'secrets',
+      'serp_runs',
       'serp_threads',
       'settings',
       'subreddits',
