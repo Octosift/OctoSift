@@ -60,6 +60,8 @@ export interface GenerateRequest {
   maxOutputTokens: number;
   timeoutMs: number;
   subject: AiSubject;
+  /** An image sent with the prompt, for models that accept images. */
+  imageUrl?: string;
 }
 
 export type GenerateFailureKind = 'invalid_output' | 'provider_error';

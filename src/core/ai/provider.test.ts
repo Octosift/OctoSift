@@ -7,6 +7,8 @@ import type { GenerateRequest } from './types';
 
 function mockModel(text: string | Error) {
   return new MockLanguageModelV4({
+    // Image URLs pass straight to the model, so tests never download anything.
+    supportedUrls: { 'image/*': [/^https:\/\//] },
     doGenerate: () => {
       if (text instanceof Error) return Promise.reject(text);
       return Promise.resolve({
@@ -53,6 +55,28 @@ describe('SDK generator', () => {
   it('returns plain text when no schema is given', async () => {
     const result = await createSdkGenerator(() => mockModel('Hello there'))(request());
     expect(result).toMatchObject({ ok: true, output: 'Hello there' });
+  });
+
+  it('sends an image with the prompt when one is given', async () => {
+    const model = mockModel('A chart of unpaid invoices by month.');
+    const result = await createSdkGenerator(() => model)(
+      request({ task: 'image', imageUrl: 'https://i.redd.it/abc123.png' }),
+    );
+    expect(result).toMatchObject({ ok: true, output: 'A chart of unpaid invoices by month.' });
+    const sent = model.doGenerateCalls[0]?.prompt ?? [];
+    const user = sent.find((message) => message.role === 'user');
+    expect(user?.content).toEqual([
+      expect.objectContaining({ type: 'text', text: 'prompt' }),
+      expect.objectContaining({
+        type: 'file',
+        mediaType: 'image',
+        data: expect.objectContaining({ type: 'url' }) as unknown,
+      }),
+    ]);
+    const image = user?.content.find((part) => part.type === 'file');
+    expect(image?.type === 'file' && image.data.type === 'url' && image.data.url.href).toBe(
+      'https://i.redd.it/abc123.png',
+    );
   });
 
   it('reports output that does not match the schema, keeping the usage', async () => {

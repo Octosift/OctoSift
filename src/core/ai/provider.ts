@@ -58,10 +58,23 @@ export function createSdkGenerator(factory: ModelFactory = sdkModelFactory): Gen
   return async (request: GenerateRequest): Promise<GenerateResponse> => {
     try {
       const model = factory(request.model, request.credentials);
+      const input = request.imageUrl
+        ? {
+            messages: [
+              {
+                role: 'user' as const,
+                content: [
+                  { type: 'text' as const, text: request.prompt },
+                  { type: 'image' as const, image: new URL(request.imageUrl) },
+                ],
+              },
+            ],
+          }
+        : { prompt: request.prompt };
       const common = {
         model,
         system: request.system,
-        prompt: request.prompt,
+        ...input,
         maxOutputTokens: request.maxOutputTokens,
         maxRetries: 1,
         abortSignal: AbortSignal.timeout(request.timeoutMs),

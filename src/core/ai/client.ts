@@ -41,6 +41,7 @@ export interface AiCall {
   prompt: string;
   maxOutputTokens?: number;
   subject?: AiSubject;
+  imageUrl?: string;
 }
 
 export interface AiClient {
@@ -85,6 +86,7 @@ export function createAiClient(options: AiClientOptions): AiClient {
       maxOutputTokens: call.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
       timeoutMs: CONFIG.ai.requestTimeoutMs,
       subject: call.subject ?? {},
+      ...(call.imageUrl ? { imageUrl: call.imageUrl } : {}),
     });
     const costUsd = usage.record(call.task, model, response.usage);
 
