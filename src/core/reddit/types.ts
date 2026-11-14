@@ -44,11 +44,6 @@ export interface PostThread {
   comments: RedditComment[];
 }
 
-export interface SubredditRules {
-  subreddit: string;
-  text: string;
-}
-
 export interface RateInfo {
   used: number | null;
   remaining: number | null;
@@ -94,7 +89,6 @@ export interface RedditSource {
   /** Full posts for ids whose listing only had a preview; for sources that mark posts partial. */
   fetchDetails?(ids: string[], opts: { spend?: SpendHooks }): Promise<DetailsResult>;
   fetchPostWithComments?(subreddit: string, postId: string): Promise<PostThread | null>;
-  fetchRules?(subreddit: string): Promise<SubredditRules | null>;
   checkUser?(username: string): Promise<UserVisibility>;
 }
 
