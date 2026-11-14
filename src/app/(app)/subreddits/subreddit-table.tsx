@@ -110,8 +110,8 @@ export function SubredditTable({
   };
 
   return (
-    <Card className="overflow-x-auto">
-      <table className="w-full min-w-[56rem] text-left text-[13px]">
+    <Card className="relative overflow-x-auto">
+      <table className="w-full min-w-[56rem] text-left text-sm">
         <thead className="border-b border-border text-xs text-muted-foreground">
           <tr>
             <th scope="col" className="px-4 py-2 font-medium">

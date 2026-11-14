@@ -6,12 +6,13 @@ import type { InboxTab } from '@/core/db/queries/inbox';
 import { cn } from '../../components/ui/utils';
 import { inboxHref } from './url';
 
-const TABS: { tab: InboxTab; label: string }[] = [
-  { tab: 'todo', label: 'To do' },
-  { tab: 'replied', label: 'Replied' },
-  { tab: 'snoozed', label: 'Snoozed' },
-  { tab: 'dismissed', label: 'Dismissed' },
-  { tab: 'brand', label: 'Mentions' },
+/** Counts only where they ask for attention; the archive tabs stay quiet. */
+const TABS: { tab: InboxTab; label: string; counted: boolean }[] = [
+  { tab: 'todo', label: 'To do', counted: true },
+  { tab: 'replied', label: 'Replied', counted: false },
+  { tab: 'snoozed', label: 'Snoozed', counted: false },
+  { tab: 'dismissed', label: 'Dismissed', counted: false },
+  { tab: 'brand', label: 'Mentions', counted: true },
 ];
 
 export function InboxTabs({
@@ -24,8 +25,12 @@ export function InboxTabs({
   /** Threads worth answering; null hides the tab until DataForSEO is set up. */
   evergreen: number | null;
 }) {
-  const tabs: { tab: InboxTab | 'evergreen'; label: string; count: number }[] = [
-    ...TABS.map((entry) => ({ ...entry, count: counts[entry.tab] })),
+  const tabs: { tab: InboxTab | 'evergreen'; label: string; count: number | null }[] = [
+    ...TABS.map(({ tab, label, counted }) => ({
+      tab,
+      label,
+      count: counted ? counts[tab] : null,
+    })),
     ...(evergreen === null
       ? []
       : [{ tab: 'evergreen' as const, label: 'Evergreen', count: evergreen }]),
@@ -34,7 +39,7 @@ export function InboxTabs({
   return (
     <nav
       aria-label="Lead status"
-      className="flex gap-0.5 overflow-x-auto border-b border-border px-2"
+      className="no-scrollbar flex gap-3.5 overflow-x-auto border-b border-border px-4"
     >
       {tabs.map(({ tab, label, count }) => (
         <Link
@@ -42,12 +47,14 @@ export function InboxTabs({
           href={inboxHref(searchParams, { tab, lead: null, page: null })}
           aria-current={tab === active ? 'page' : undefined}
           className={cn(
-            '-mb-px flex shrink-0 items-center gap-1 border-b-2 border-transparent px-1.5 py-2 text-[13px] text-muted-foreground hover:text-foreground',
-            tab === active && 'border-brand font-medium text-foreground',
+            '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 border-transparent py-2.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground',
+            tab === active && 'border-foreground font-medium text-foreground',
           )}
         >
           {label}
-          <span className="text-[11px] tabular text-muted-foreground">{count}</span>
+          {count === null ? null : (
+            <span className="text-xs tabular text-muted-foreground">{count}</span>
+          )}
         </Link>
       ))}
     </nav>

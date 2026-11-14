@@ -236,7 +236,7 @@ export function EvergreenView({ data }: { data: EvergreenData }) {
               <h2 id="evergreen-heading" className="text-[15px] font-semibold">
                 Threads that rank on Google
               </h2>
-              <p className="mt-0.5 text-[13px] text-muted-foreground">
+              <p className="mt-0.5 text-sm text-muted-foreground">
                 People searching these phrases land on these threads for months, so a helpful reply
                 keeps being read.
                 {data.checkedAt !== null ? ` Checked ${formatAgo(data.checkedAt, data.now)}.` : ''}
@@ -280,7 +280,7 @@ export function EvergreenView({ data }: { data: EvergreenData }) {
                   title={`“${group.keyword}”`}
                   description={`${String(group.rows.filter((row) => !row.archived).length)} open, ${String(group.rows.filter((row) => row.archived).length)} archived`}
                 />
-                <ul className="divide-y divide-border text-[13px]">
+                <ul className="divide-y divide-border text-sm">
                   {group.rows.map((thread) => (
                     <ThreadRow key={thread.id} thread={thread} now={data.now} />
                   ))}

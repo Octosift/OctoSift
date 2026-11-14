@@ -1,7 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Select } from '../../components/ui/fields';
+import { cn } from '../../components/ui/utils';
 import { INTENT_LABELS } from '../../lib/text';
 import { inboxHref } from './url';
 
@@ -18,17 +20,24 @@ export function InboxFilters({ products, subreddits, values }: Props) {
   const set = (key: string, value: string) => {
     router.push(inboxHref(searchParams, { [key]: value, lead: null, page: null }));
   };
-  const select = 'h-7 w-full min-w-0 text-xs sm:w-auto sm:max-w-44';
+  /** Compact chips; a chip with a value set is tinted so active filters stand out. */
+  const chip = (value: unknown) =>
+    cn(
+      'field-sizing-content h-7 w-auto max-w-44 min-w-0 rounded-md border-transparent bg-muted pr-7 pl-2.5 text-xs shadow-none hover:border-transparent hover:bg-muted/70',
+      value !== undefined &&
+        'bg-brand-subtle font-medium text-brand-subtle-foreground hover:bg-brand-subtle',
+    );
+  const active = Object.keys(values).length > 0;
   return (
     <div
-      className="grid grid-cols-2 gap-1.5 border-b border-border px-3 py-2 sm:flex sm:flex-wrap"
+      className="flex flex-wrap items-center gap-1.5 border-b border-border px-4 py-2.5"
       role="group"
       aria-label="Filters"
     >
       {products.length > 1 ? (
         <Select
           aria-label="Product"
-          className={select}
+          className={chip(values.product)}
           value={values.product ?? ''}
           onChange={(event) => {
             set('product', event.target.value);
@@ -44,7 +53,7 @@ export function InboxFilters({ products, subreddits, values }: Props) {
       ) : null}
       <Select
         aria-label="Subreddit"
-        className={select}
+        className={chip(values.subreddit)}
         value={values.subreddit ?? ''}
         onChange={(event) => {
           set('subreddit', event.target.value);
@@ -59,7 +68,7 @@ export function InboxFilters({ products, subreddits, values }: Props) {
       </Select>
       <Select
         aria-label="Intent"
-        className={select}
+        className={chip(values.intent)}
         value={values.intent ?? ''}
         onChange={(event) => {
           set('intent', event.target.value);
@@ -74,7 +83,7 @@ export function InboxFilters({ products, subreddits, values }: Props) {
       </Select>
       <Select
         aria-label="Minimum score"
-        className={select}
+        className={chip(values.min)}
         value={values.min?.toString() ?? ''}
         onChange={(event) => {
           set('min', event.target.value);
@@ -86,7 +95,7 @@ export function InboxFilters({ products, subreddits, values }: Props) {
       </Select>
       <Select
         aria-label="Post age"
-        className={select}
+        className={chip(values.age)}
         value={values.age?.toString() ?? ''}
         onChange={(event) => {
           set('age', event.target.value);
@@ -97,6 +106,14 @@ export function InboxFilters({ products, subreddits, values }: Props) {
         <option value="24">Last 24 hours</option>
         <option value="48">Last 2 days</option>
       </Select>
+      {active ? (
+        <Link
+          href={inboxHref({}, { tab: searchParams.get('tab') ?? undefined })}
+          className="ml-1 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+        >
+          Clear
+        </Link>
+      ) : null}
     </div>
   );
 }

@@ -57,7 +57,7 @@ export function SecretField({
         {label}
       </label>
       {description.source === 'environment' ? (
-        <p className="flex items-center gap-2 text-[13px]">
+        <p className="flex items-center gap-2 text-sm">
           <code className="font-mono text-xs" data-testid={`${name}-mask`}>
             {description.mask}
           </code>

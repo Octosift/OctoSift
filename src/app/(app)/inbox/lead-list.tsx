@@ -10,19 +10,22 @@ import { formatAge } from '../../lib/format';
 import { intentLabel, scoreTone } from '../../lib/text';
 import { inboxHref } from './url';
 
+/** Quieter as the score drops: tinted, then grey, then outlined. */
+const SCORE_BADGE = { strong: 'brand', brand: 'neutral', neutral: 'outline' } as const;
+
 export function ScoreBadge({ score, kind }: { score: number; kind: string }) {
   if (kind === 'brand_mention') {
     return (
-      <Badge tone="outline" className="mt-px w-8 self-start justify-center">
+      <Badge tone="outline" className="mt-px w-8 shrink-0 self-start justify-center">
         @
       </Badge>
     );
   }
   return (
     <Badge
-      tone={scoreTone(score)}
-      className="mt-px w-8 self-start justify-center tabular"
-      aria-label={`Score ${score}`}
+      tone={SCORE_BADGE[scoreTone(score)]}
+      className="mt-px w-8 shrink-0 self-start justify-center tabular"
+      aria-label={`Score ${String(score)}`}
     >
       {score}
     </Badge>
@@ -58,30 +61,33 @@ export function LeadList({
               aria-current={selected ? 'true' : undefined}
               data-lead-id={row.id}
               className={cn(
-                'flex gap-2.5 border-b border-l-2 border-border border-l-transparent px-3 py-2 hover:bg-muted/60',
-                selected && 'border-l-brand bg-selection hover:bg-selection',
+                'relative flex gap-3 border-b border-border px-4 py-3 transition-colors hover:bg-surface-raised',
+                selected &&
+                  'bg-muted before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-brand hover:bg-muted',
               )}
             >
               <ScoreBadge score={row.score} kind={row.kind} />
               <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5">
-                  <span className="min-w-0 truncate font-medium">{row.title}</span>
-                  {row.status === 'drafted' ? (
-                    <Badge tone="brand" className="shrink-0">
-                      Draft ready
-                    </Badge>
-                  ) : null}
+                <p className="flex items-baseline gap-3">
+                  <span className="min-w-0 flex-1 truncate font-medium">{row.title}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground tabular">
+                    {formatAge(now - row.postCreatedAt)}
+                  </span>
                 </p>
                 <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <span className="truncate">r/{row.subreddit}</span>
                   <span aria-hidden>·</span>
-                  <span className="shrink-0 tabular">{formatAge(now - row.postCreatedAt)}</span>
-                  <span aria-hidden>·</span>
                   <span className="shrink-0">
                     {row.kind === 'brand_mention' ? 'Brand mention' : intentLabel(row.intent)}
                   </span>
+                  {row.status === 'drafted' ? (
+                    <span className="ml-auto flex shrink-0 items-center gap-1.5 pl-2 text-brand-subtle-foreground">
+                      <span className="size-1.5 rounded-full bg-brand" aria-hidden />
+                      Draft ready
+                    </span>
+                  ) : null}
                 </p>
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">{row.reason}</p>
+                <p className="mt-1 line-clamp-1 text-[13px] text-muted-foreground">{row.reason}</p>
               </div>
             </Link>
           </li>

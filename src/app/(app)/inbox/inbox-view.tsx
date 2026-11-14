@@ -117,7 +117,7 @@ export function InboxView({ data }: { data: InboxData }) {
   const empty = EMPTY[data.params.tab] ?? { title: 'Nothing here', body: '' };
 
   return (
-    <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(320px,440px)_minmax(0,1fr)]">
+    <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(340px,440px)_minmax(0,1fr)] xl:grid-cols-[480px_minmax(0,1fr)]">
       <section
         aria-label="Lead list"
         className={cn(
@@ -156,7 +156,7 @@ export function InboxView({ data }: { data: InboxData }) {
           <>
             <LeadList rows={data.rows} selectedId={selectedId} now={data.now} />
             {data.total > data.pageSize ? (
-              <div className="flex items-center justify-between px-3 py-2 text-xs text-muted-foreground">
+              <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground">
                 <span className="tabular">
                   {first}–{last} of {data.total}
                 </span>
@@ -206,7 +206,7 @@ export function InboxView({ data }: { data: InboxData }) {
         )}
       </section>
       <Dialog open={help} onOpenChange={setHelp} title="Keyboard shortcuts">
-        <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-[13px]">
+        <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-sm">
           {SHORTCUTS.map(([key, label]) => (
             <div key={key} className="contents">
               <dt>

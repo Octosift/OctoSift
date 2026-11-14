@@ -98,7 +98,7 @@ export function Funnel({
                   title
                 )}
                 {showHints ? (
-                  <span className="truncate text-[11px] text-muted-foreground">{step.hint}</span>
+                  <span className="truncate text-xs text-muted-foreground">{step.hint}</span>
                 ) : null}
               </span>
               <span className="flex shrink-0 items-baseline gap-2 tabular">
@@ -106,7 +106,7 @@ export function Funnel({
                   {step.drop && step.value > 0 ? `−${String(step.value)}` : step.value}
                 </span>
                 {step.key !== 'fetched' && read > 0 ? (
-                  <span className="w-9 text-right text-[11px] text-muted-foreground">
+                  <span className="w-9 text-right text-xs text-muted-foreground">
                     {percentOf(step.value, read)}
                   </span>
                 ) : null}

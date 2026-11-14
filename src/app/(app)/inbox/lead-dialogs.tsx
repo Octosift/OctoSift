@@ -53,7 +53,7 @@ export function ReplyConfirmDialog({
             }}
           />
         </Field>
-        <label className="flex items-center gap-2 text-[13px]">
+        <label className="flex items-center gap-2 text-sm">
           <Checkbox
             checked={mentioned}
             onChange={(event) => {

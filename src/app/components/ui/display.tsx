@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { cn } from './utils';
 
 const badgeVariants = cva(
-  'inline-flex items-center gap-1 rounded-sm px-1.5 py-px text-[11px] font-medium leading-4 whitespace-nowrap',
+  'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium leading-4 whitespace-nowrap',
   {
     variants: {
       tone: {
@@ -30,7 +30,10 @@ export function Badge({
 
 export function Card({ className, ...props }: ComponentProps<'section'>) {
   return (
-    <section className={cn('rounded-lg border border-border bg-surface', className)} {...props} />
+    <section
+      className={cn('rounded-xl border border-border bg-surface shadow-card', className)}
+      {...props}
+    />
   );
 }
 
@@ -44,10 +47,12 @@ export function CardHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="flex items-start justify-between gap-4 border-b border-border px-4 py-3">
+    <header className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
       <div className="min-w-0">
-        <h2 className="text-[13px] font-semibold">{title}</h2>
-        {description ? <p className="mt-0.5 text-xs text-muted-foreground">{description}</p> : null}
+        <h2 className="text-[15px] font-semibold tracking-tight">{title}</h2>
+        {description ? (
+          <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>
+        ) : null}
       </div>
       {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
     </header>
@@ -70,7 +75,7 @@ export function Skeleton({ className, ...props }: ComponentProps<'div'>) {
   return <div className={cn('animate-pulse rounded-md bg-muted', className)} {...props} />;
 }
 
-const bannerVariants = cva('flex items-start gap-3 rounded-md border px-3 py-2 text-[13px]', {
+const bannerVariants = cva('flex items-start gap-3 rounded-lg border px-3.5 py-2.5 text-sm', {
   variants: {
     tone: {
       warning: 'border-warning-border bg-warning text-warning-foreground',
@@ -99,10 +104,10 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="mx-auto flex max-w-sm flex-col items-center gap-2 px-6 py-16 text-center">
-      <h2 className="text-sm font-semibold">{title}</h2>
-      <div className="text-[13px] text-muted-foreground">{children}</div>
-      {action ? <div className="mt-2">{action}</div> : null}
+    <div className="mx-auto flex max-w-sm flex-col items-center gap-2 px-6 py-20 text-center">
+      <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+      <div className="text-sm text-muted-foreground">{children}</div>
+      {action ? <div className="mt-3">{action}</div> : null}
     </div>
   );
 }
@@ -117,12 +122,10 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border px-6 py-4">
+    <div className="flex flex-wrap items-end justify-between gap-4 px-6 pt-7 pb-5">
       <div className="min-w-0">
-        <h1 className="text-base font-semibold tracking-tight">{title}</h1>
-        {description ? (
-          <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>
-        ) : null}
+        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
       </div>
       {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
     </div>

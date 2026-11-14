@@ -88,7 +88,7 @@ export default async function RunPage({
           </span>
         }
         actions={
-          <Link href="/runs" className="text-[13px] text-muted-foreground hover:text-foreground">
+          <Link href="/runs" className="text-sm text-muted-foreground hover:text-foreground">
             All runs
           </Link>
         }
@@ -137,7 +137,7 @@ export default async function RunPage({
                 href={`/runs/${run.id}?stage=${key}`}
                 aria-current={key === stage ? 'page' : undefined}
                 className={cn(
-                  '-mb-px shrink-0 border-b-2 border-transparent px-2 py-2 text-[13px] text-muted-foreground hover:text-foreground',
+                  '-mb-px shrink-0 border-b-2 border-transparent px-2 py-2 text-sm text-muted-foreground hover:text-foreground',
                   key === stage && 'border-brand font-medium text-foreground',
                 )}
               >

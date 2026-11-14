@@ -15,7 +15,7 @@ export default async function LoginPage({
     <main className="flex min-h-dvh items-center justify-center px-4">
       <div className="w-full max-w-xs">
         <h1 className="text-base font-semibold">{BRAND.name}</h1>
-        <p className="mt-1 mb-6 text-[13px] text-muted-foreground">
+        <p className="mt-1 mb-6 text-sm text-muted-foreground">
           This dashboard is protected by a password.
         </p>
         <LoginForm next={safeNextPath(next)} />

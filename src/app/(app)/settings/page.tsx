@@ -41,7 +41,7 @@ export default function SettingsPage() {
             <a
               key={id}
               href={`#${id}`}
-              className="rounded-md px-2 py-1 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               {label}
             </a>

@@ -3,22 +3,22 @@ import type { ComponentProps, ReactNode } from 'react';
 import { cn } from './utils';
 
 const control =
-  'w-full rounded-md border border-input bg-surface px-2.5 text-[13px] text-foreground placeholder:text-muted-foreground disabled:opacity-60 aria-invalid:border-danger-foreground';
+  'w-full rounded-lg border border-input bg-surface px-3 text-sm text-foreground shadow-card transition-colors placeholder:text-muted-foreground/80 hover:border-muted-foreground/40 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/20 disabled:opacity-60 aria-invalid:border-danger-foreground';
 
 export function Input({ className, ...props }: ComponentProps<'input'>) {
-  return <input className={cn(control, 'h-8', className)} {...props} />;
+  return <input className={cn(control, 'h-9', className)} {...props} />;
 }
 
 export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
-  return <textarea className={cn(control, 'min-h-20 py-2 leading-5', className)} {...props} />;
+  return <textarea className={cn(control, 'min-h-20 py-2 leading-6', className)} {...props} />;
 }
 
 export function Select({ className, ...props }: ComponentProps<'select'>) {
-  return <select className={cn(control, 'h-8 pr-7', className)} {...props} />;
+  return <select className={cn(control, 'select-chevron h-9 pr-8', className)} {...props} />;
 }
 
 export function Label({ className, ...props }: ComponentProps<'label'>) {
-  return <label className={cn('text-xs font-medium text-foreground', className)} {...props} />;
+  return <label className={cn('text-[13px] font-medium text-foreground', className)} {...props} />;
 }
 
 export function Field({
@@ -55,7 +55,7 @@ export function Checkbox({ className, ...props }: Omit<ComponentProps<'input'>, 
   return (
     <input
       type="checkbox"
-      className={cn('size-3.5 rounded border-input accent-[var(--brand)]', className)}
+      className={cn('size-4 rounded border-input accent-[var(--brand)]', className)}
       {...props}
     />
   );

@@ -61,7 +61,7 @@ export function RunFunnelCard({ run, counts }: { run: RunRow; counts: FunnelCoun
       <div className="border-t border-border px-4 py-2.5">
         <Link
           href={`/runs/${run.id}`}
-          className="text-[13px] font-medium text-brand-subtle-foreground hover:underline"
+          className="text-sm font-medium text-brand-subtle-foreground hover:underline"
         >
           See every post and reason
         </Link>

@@ -79,7 +79,7 @@ export function DraftEditor({
   return (
     <section aria-labelledby="draft-heading" className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
-        <h3 id="draft-heading" className="text-[13px] font-semibold">
+        <h3 id="draft-heading" className="text-sm font-semibold">
           Reply draft
         </h3>
         {review ? <Badge tone={review.tone}>{review.label}</Badge> : null}
@@ -100,7 +100,7 @@ export function DraftEditor({
               onTextChange(event.target.value);
             }}
             rows={9}
-            className="w-full rounded-md border border-input bg-surface px-3 py-2 text-[13px] leading-5"
+            className="w-full rounded-md border border-input bg-surface px-3 py-2 text-sm leading-5"
           />
           <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
             <span className="tabular">{wordCount(text)} words</span>
@@ -122,7 +122,7 @@ export function DraftEditor({
           ) : null}
         </>
       ) : (
-        <p className="rounded-md border border-dashed border-border px-3 py-4 text-[13px] text-muted-foreground">
+        <p className="rounded-md border border-dashed border-border px-3 py-4 text-sm text-muted-foreground">
           {detail.lead.draftError ??
             'No draft yet. Leads below the draft threshold are drafted on request.'}
         </p>

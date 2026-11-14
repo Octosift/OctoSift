@@ -195,7 +195,7 @@ export function RepliesForm({
             <option value="off">Off</option>
           </Select>
         </Field>
-        <label className="flex items-center gap-2 text-[13px] sm:col-span-2">
+        <label className="flex items-center gap-2 text-sm sm:col-span-2">
           <Checkbox
             checked={state.includeLinks}
             onChange={(event) => {

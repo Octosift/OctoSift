@@ -3,64 +3,67 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * One neutral scale and one accent. Everything else (warnings, errors) is
- * reserved for states that need attention, so colour carries meaning.
+ * A warm neutral scale and one accent, green. Everything else (warnings,
+ * errors) is reserved for states that need attention, so colour carries
+ * meaning. Surfaces are white cards on a slightly warm page.
  */
 :root {
-  --radius: 0.375rem;
-  --background: oklch(0.992 0.002 250);
-  --foreground: oklch(0.22 0.01 260);
+  --radius: 0.625rem;
+  --background: oklch(0.984 0.003 95);
+  --foreground: oklch(0.21 0.008 95);
   --surface: oklch(1 0 0);
-  --surface-raised: oklch(0.975 0.003 250);
-  --muted: oklch(0.955 0.004 250);
-  --muted-foreground: oklch(0.5 0.012 260);
-  --border: oklch(0.9 0.005 250);
-  --input: oklch(0.88 0.006 250);
-  --ring: oklch(0.55 0.1 185);
-  --primary: oklch(0.24 0.012 260);
-  --primary-foreground: oklch(0.985 0 0);
-  --brand: oklch(0.52 0.095 185);
-  --brand-foreground: oklch(0.99 0 0);
-  --brand-subtle: oklch(0.95 0.03 185);
-  --brand-subtle-foreground: oklch(0.38 0.08 185);
-  --warning: oklch(0.96 0.05 85);
-  --warning-foreground: oklch(0.42 0.09 65);
-  --warning-border: oklch(0.86 0.09 85);
-  --danger: oklch(0.96 0.03 25);
-  --danger-foreground: oklch(0.48 0.17 25);
-  --danger-border: oklch(0.85 0.08 25);
-  --selection: oklch(0.94 0.025 185);
+  --surface-raised: oklch(0.972 0.004 95);
+  --muted: oklch(0.955 0.005 95);
+  --muted-foreground: oklch(0.53 0.012 95);
+  --border: oklch(0.917 0.005 95);
+  --input: oklch(0.885 0.006 95);
+  --ring: oklch(0.6 0.13 158);
+  --primary: oklch(0.21 0.008 95);
+  --primary-foreground: oklch(0.985 0.002 95);
+  --brand: oklch(0.55 0.13 158);
+  --brand-foreground: oklch(0.99 0.01 158);
+  --brand-subtle: oklch(0.955 0.035 158);
+  --brand-subtle-foreground: oklch(0.38 0.09 158);
+  --warning: oklch(0.965 0.045 85);
+  --warning-foreground: oklch(0.43 0.09 65);
+  --warning-border: oklch(0.88 0.08 85);
+  --danger: oklch(0.965 0.025 25);
+  --danger-foreground: oklch(0.5 0.17 25);
+  --danger-border: oklch(0.87 0.07 25);
+  --selection: oklch(0.93 0.04 158);
+  --shadow: 0 1px 2px oklch(0.2 0.01 95 / 0.04), 0 1px 1px oklch(0.2 0.01 95 / 0.02);
 }
 
 .dark {
-  --background: oklch(0.17 0.006 260);
-  --foreground: oklch(0.93 0.004 260);
-  --surface: oklch(0.2 0.007 260);
-  --surface-raised: oklch(0.23 0.008 260);
-  --muted: oklch(0.25 0.008 260);
-  --muted-foreground: oklch(0.7 0.01 260);
-  --border: oklch(0.3 0.008 260);
-  --input: oklch(0.34 0.01 260);
-  --ring: oklch(0.7 0.1 185);
-  --primary: oklch(0.93 0.004 260);
-  --primary-foreground: oklch(0.2 0.007 260);
-  --brand: oklch(0.7 0.11 185);
-  --brand-foreground: oklch(0.17 0.02 185);
-  --brand-subtle: oklch(0.3 0.045 185);
-  --brand-subtle-foreground: oklch(0.86 0.07 185);
-  --warning: oklch(0.3 0.05 75);
+  --background: oklch(0.155 0.004 95);
+  --foreground: oklch(0.94 0.004 95);
+  --surface: oklch(0.19 0.005 95);
+  --surface-raised: oklch(0.215 0.006 95);
+  --muted: oklch(0.235 0.006 95);
+  --muted-foreground: oklch(0.7 0.01 95);
+  --border: oklch(0.27 0.006 95);
+  --input: oklch(0.32 0.008 95);
+  --ring: oklch(0.72 0.13 158);
+  --primary: oklch(0.94 0.004 95);
+  --primary-foreground: oklch(0.18 0.005 95);
+  --brand: oklch(0.72 0.14 158);
+  --brand-foreground: oklch(0.17 0.03 158);
+  --brand-subtle: oklch(0.28 0.05 158);
+  --brand-subtle-foreground: oklch(0.86 0.08 158);
+  --warning: oklch(0.28 0.05 75);
   --warning-foreground: oklch(0.88 0.1 85);
-  --warning-border: oklch(0.42 0.07 75);
-  --danger: oklch(0.3 0.06 25);
+  --warning-border: oklch(0.4 0.07 75);
+  --danger: oklch(0.28 0.06 25);
   --danger-foreground: oklch(0.85 0.1 25);
-  --danger-border: oklch(0.45 0.1 25);
-  --selection: oklch(0.29 0.04 185);
+  --danger-border: oklch(0.43 0.1 25);
+  --selection: oklch(0.3 0.05 158);
+  --shadow: 0 1px 2px oklch(0 0 0 / 0.3);
 }
 
 @theme inline {
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
@@ -83,9 +86,11 @@
   --color-danger-foreground: var(--danger-foreground);
   --color-danger-border: var(--danger-border);
   --color-selection: var(--selection);
-  --radius-sm: calc(var(--radius) * 0.7);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) * 1.5);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --shadow-card: var(--shadow);
 }
 
 @layer base {
@@ -99,8 +104,7 @@
     color-scheme: dark;
   }
   body {
-    @apply bg-background text-foreground font-sans text-[13px] leading-5 antialiased;
-    font-feature-settings: 'cv11', 'ss01';
+    @apply bg-background text-foreground font-sans text-sm antialiased;
   }
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-ring;
@@ -112,4 +116,20 @@
 
 @utility tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* Native selects lose their dated arrow; one neutral chevron reads in both themes. */
+@utility select-chevron {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b8b86' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 0.875rem;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

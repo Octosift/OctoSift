@@ -92,7 +92,7 @@ export function ProviderChoice({
             onChange(id);
           }}
           className={cn(
-            'rounded-md border border-border px-3 py-1.5 text-[13px] font-medium',
+            'rounded-md border border-border px-3 py-1.5 text-sm font-medium',
             value === id
               ? 'border-brand bg-brand-subtle/40 text-foreground'
               : 'text-muted-foreground hover:text-foreground',
@@ -146,14 +146,14 @@ export function PresetPicker({
                   onChange(option.id);
                 }}
               />
-              <span className="text-[13px] font-medium">{option.label}</span>
+              <span className="text-sm font-medium">{option.label}</span>
               {option.id === 'balanced' ? <Badge tone="outline">Recommended</Badge> : null}
             </span>
             <span className="text-xs text-muted-foreground">{option.hint}</span>
-            <span className="text-[13px] tabular">
+            <span className="text-sm tabular">
               {formatMonthly(option.monthlyUsd, option.subscription)}
             </span>
-            <span className="text-[11px] leading-relaxed text-muted-foreground">
+            <span className="text-xs leading-relaxed text-muted-foreground">
               {STAGES.map(({ stage, label }) => (
                 <span key={stage} className="block">
                   {label}: {option.models[stage]}
@@ -292,7 +292,7 @@ export function AiSection({ data }: { data: SettingsData }) {
         title="AI"
         description="Pick a provider, paste its key and choose a preset. Keys are encrypted and never shown again."
       />
-      <div className="flex flex-col gap-4 px-4 py-4 text-[13px]">
+      <div className="flex flex-col gap-4 px-4 py-4 text-sm">
         <ProviderChoice
           value={provider}
           cli={ai.cliProviders}
@@ -363,7 +363,7 @@ export function AiSection({ data }: { data: SettingsData }) {
           onClick={() => {
             setAdvanced(!advanced);
           }}
-          className="flex w-full items-center justify-between px-4 py-3 text-[13px] font-medium"
+          className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium"
         >
           Advanced: models per stage, local models, images
           <ChevronDown
@@ -436,7 +436,7 @@ function AdvancedModels({
           return (
             <div key={stage} className="flex flex-col gap-2 px-4 py-3">
               <div>
-                <p className="text-[13px] font-medium">{label}</p>
+                <p className="text-sm font-medium">{label}</p>
                 <p className="text-xs text-muted-foreground">{hint}</p>
               </div>
               <div className="grid gap-2 sm:grid-cols-[11rem_minmax(0,1fr)_auto] sm:items-center">
@@ -563,7 +563,7 @@ function AdvancedModels({
         ) : null}
       </div>
       <div className="border-t border-border px-4 py-3">
-        <label className="flex items-start gap-2 text-[13px]">
+        <label className="flex items-start gap-2 text-sm">
           <Checkbox
             className="mt-0.5"
             checked={form.values.images}

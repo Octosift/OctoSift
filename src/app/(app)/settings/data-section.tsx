@@ -19,7 +19,7 @@ export function DataSection() {
       />
       <div className="flex flex-col gap-4 px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[13px]">
+          <p className="text-sm">
             Download products, posts, leads, drafts, runs and settings as JSON. Keys are not
             included.
           </p>

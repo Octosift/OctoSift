@@ -89,7 +89,7 @@ function PasteDialog({
       description="For when a browser window cannot be opened here, for example in Docker."
     >
       <form
-        className="mt-3 flex flex-col gap-3 text-[13px]"
+        className="mt-3 flex flex-col gap-3 text-sm"
         onSubmit={(event) => {
           event.preventDefault();
           startTransition(async () => {
@@ -196,7 +196,7 @@ export function RedditConnect({
   const connected = account.status !== 'not_connected';
   return (
     <>
-      <div className="flex flex-col gap-3 text-[13px]">
+      <div className="flex flex-col gap-3 text-sm">
         <div className="flex">
           <StatusLine account={account} now={now} demo={demo} />
         </div>

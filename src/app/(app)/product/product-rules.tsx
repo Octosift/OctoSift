@@ -47,7 +47,7 @@ export function RulesForm({
     <Card id="rules">
       <CardHeader title="Thresholds and veto phrases" />
       <div className="flex flex-col gap-4 px-4 py-4">
-        <label className="flex items-center gap-2 text-[13px]">
+        <label className="flex items-center gap-2 text-sm">
           <Checkbox
             checked={own}
             onChange={(event) => {

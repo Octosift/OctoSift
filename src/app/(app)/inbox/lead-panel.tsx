@@ -169,7 +169,7 @@ export function LeadPanel({
             </Badge>
           ))}
         </div>
-        <p className="text-[13px]">{lead.reason}</p>
+        <p className="text-sm">{lead.reason}</p>
       </header>
 
       <StatusNote detail={detail} now={now} />
@@ -192,7 +192,7 @@ export function LeadPanel({
       ) : null}
 
       {isBrand ? (
-        <p className="text-[13px] text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           This post mentions {productName}. No pitch is drafted for brand mentions; if a reply
           helps, write it in your own words and say who you are.
         </p>
@@ -247,7 +247,7 @@ export function LeadPanel({
       </div>
 
       {detail.dm ? (
-        <details className="rounded-md border border-border px-3 py-2 text-[13px]">
+        <details className="rounded-md border border-border px-3 py-2 text-sm">
           <summary className="cursor-pointer text-xs font-medium">Private message draft</summary>
           <p className="mt-2 whitespace-pre-wrap">{detail.dm.text}</p>
         </details>

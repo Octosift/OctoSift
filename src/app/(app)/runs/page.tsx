@@ -68,8 +68,8 @@ export default async function RunsPage({
               now.
             </EmptyState>
           ) : (
-            <Card className="overflow-x-auto">
-              <table className="w-full min-w-[48rem] text-left text-[13px]">
+            <Card className="relative overflow-x-auto">
+              <table className="w-full min-w-[48rem] text-left text-sm">
                 <thead className="border-b border-border text-xs text-muted-foreground">
                   <tr>
                     <th scope="col" className="px-4 py-2 font-medium">
@@ -109,10 +109,7 @@ export default async function RunsPage({
                       <tr
                         key={run.id}
                         aria-selected={isSelected}
-                        className={cn(
-                          'hover:bg-muted/50',
-                          isSelected && 'bg-selection hover:bg-selection',
-                        )}
+                        className={cn('hover:bg-muted/50', isSelected && 'bg-muted hover:bg-muted')}
                       >
                         <td className="px-4 py-2">
                           <Link
@@ -194,7 +191,7 @@ function SubscriptionCard({ report }: { report: SubscriptionReport }) {
     <Card>
       <div className="flex flex-col gap-3 px-4 py-3">
         <div>
-          <p className="text-[13px] font-medium">Subscription scans, API equivalent</p>
+          <p className="text-sm font-medium">Subscription scans, API equivalent</p>
           <p className="text-xs text-muted-foreground">
             {report.scans} {report.scans === 1 ? 'scan' : 'scans'} and {report.postsRead} posts over
             the last {days} {days === 1 ? 'day' : 'days'}, priced at the API rates of the same

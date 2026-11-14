@@ -7,10 +7,10 @@ import { highlightQuote } from '../../lib/text';
 
 export function PostBody({ text, quote }: { text: string; quote: string }) {
   if (text.trim().length === 0) {
-    return <p className="text-[13px] text-muted-foreground italic">This post has no text.</p>;
+    return <p className="text-sm text-muted-foreground italic">This post has no text.</p>;
   }
   return (
-    <p className="text-[13px] leading-6 whitespace-pre-wrap">
+    <p className="text-sm leading-6 whitespace-pre-wrap">
       {highlightQuote(text, quote).map((segment, index) =>
         segment.highlight ? (
           <mark

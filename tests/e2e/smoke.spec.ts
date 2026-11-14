@@ -70,9 +70,9 @@ test('copy and open copies the draft, opens the thread and marks the lead replie
   await page.goto('/inbox');
   const draft = await page.getByRole('textbox', { name: 'Reply draft' }).inputValue();
   expect(draft.length).toBeGreaterThan(50);
-  const repliedBefore = Number(
+  const todoBefore = Number(
     await page
-      .getByRole('link', { name: /^Replied/ })
+      .getByRole('link', { name: /^To do/ })
       .locator('span')
       .innerText(),
   );
@@ -88,8 +88,8 @@ test('copy and open copies the draft, opens the thread and marks the lead replie
   await expect(dialog).toBeVisible();
   await dialog.getByRole('button', { name: 'Mark as replied' }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.getByRole('link', { name: /^Replied/ }).locator('span')).toHaveText(
-    String(repliedBefore + 1),
+  await expect(page.getByRole('link', { name: /^To do/ }).locator('span')).toHaveText(
+    String(todoBefore - 1),
   );
 });
 

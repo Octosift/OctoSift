@@ -62,7 +62,7 @@ export function RulesEditor({ rules }: { rules: FeedbackRule[] }) {
         description="The latest notes, without repeats, are added to every qualify call together with your five latest good and bad leads."
       />
       {rules.length === 0 ? (
-        <p className="px-4 py-4 text-[13px] text-muted-foreground">
+        <p className="px-4 py-4 text-sm text-muted-foreground">
           No rules yet. Mark leads as good or bad with a short note in the inbox, for example
           &ldquo;we don&apos;t serve students&rdquo;, and it appears here.
         </p>

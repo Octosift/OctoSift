@@ -33,7 +33,7 @@ export function DataSourceSection({ data }: { data: SettingsData }) {
         title="Data source"
         description="How posts are read. The preferred source is tried first; the other follows if it fails."
       />
-      <div className="flex flex-col gap-4 px-4 py-4 text-[13px]">
+      <div className="flex flex-col gap-4 px-4 py-4 text-sm">
         {data.demo ? (
           <p className="text-xs text-muted-foreground">
             Demo mode reads synthetic posts whatever is chosen here.
