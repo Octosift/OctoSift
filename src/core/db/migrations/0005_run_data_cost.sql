@@ -1,0 +1,1 @@
+ALTER TABLE `runs` ADD `data_cost_usd` real DEFAULT 0 NOT NULL;

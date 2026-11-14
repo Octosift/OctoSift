@@ -218,7 +218,10 @@ export const runs = sqliteTable(
     status: text('status').$type<RunStatus>().notNull(),
     dryRun: integer('dry_run', { mode: 'boolean' }).notNull().default(false),
     countsJson: text('counts_json', { mode: 'json' }).$type<unknown>().notNull(),
+    /** AI and data together. */
     costUsd: real('cost_usd').notNull().default(0),
+    /** The part of the cost spent on a paid Reddit data provider. */
+    dataCostUsd: real('data_cost_usd').notNull().default(0),
     /** True when at least one AI call had no known price. */
     costIncomplete: integer('cost_incomplete', { mode: 'boolean' }).notNull().default(false),
     error: text('error'),

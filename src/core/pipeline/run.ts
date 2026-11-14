@@ -20,7 +20,7 @@ import type { RunStatus, RunTrigger } from '../db/schema';
 import { newId } from '../ids';
 import type { Logger } from '../log';
 import type { ProductProfile } from '../profile/types';
-import type { RedditSource } from '../reddit/types';
+import type { RedditSource, SpendHooks } from '../reddit/types';
 import type { SettingsStore } from '../settings/store';
 import { guardAi } from './ai-guard';
 import { collectPosts } from './collect';
@@ -135,6 +135,22 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
     { maxFailureRatio: CONFIG.ai.maxFailureRatio, minCalls: CONFIG.ai.minCallsBeforeFailureCheck },
   );
   const state = { budgetStop: null as string | null, imagesFailed: false };
+  // Paid Reddit data counts against the same caps as AI.
+  const spend: SpendHooks = {
+    refuse: () => {
+      const check = ledger.check();
+      return check.ok ? null : check.message;
+    },
+    record: (costUsd, what) => {
+      ledger.recordData(costUsd, what);
+    },
+  };
+  // Sources that list previews only also fetch full posts, paid through the same hooks.
+  const fetchDetails = deps.source.fetchDetails
+    ? (ids: string[]) =>
+        deps.source.fetchDetails?.(ids, { spend }) ??
+        Promise.resolve({ ok: true as const, posts: [] })
+    : undefined;
   let unexpected: string | null = null;
 
   try {
@@ -157,11 +173,13 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
         log,
         now,
         defaultIntervalMinutes: settings.get('schedule.intervalMinutes'),
+        spend,
         ...(options.signal ? { signal: options.signal } : {}),
       },
       allNames,
       { ignoreSchedule: options.ignoreSchedule ?? false },
     );
+    if (collected.budgetStop) state.budgetStop ??= collected.budgetStop;
     const progress = () => {
       updateRunCounts(db, runId, counts);
     };
@@ -190,6 +208,7 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
           newLeads,
           onProgress: progress,
           state,
+          ...(fetchDetails ? { fetchDetails } : {}),
           ...(options.signal ? { signal: options.signal } : {}),
         },
         product,
@@ -213,6 +232,7 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
     status,
     counts,
     costUsd: usage.costUsd,
+    dataCostUsd: usage.dataCostUsd,
     costIncomplete: usage.incomplete,
     error,
   });

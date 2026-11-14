@@ -6,6 +6,7 @@ import type { Db } from '../db/client';
 import type { Product } from '../db/queries/products';
 import type { EvaluationStage, EvaluationVerdict } from '../db/schema';
 import type { Logger } from '../log';
+import type { DetailsResult } from '../reddit/types';
 import type { ProductProfile } from '../profile/types';
 import type { SettingsStore } from '../settings/store';
 import type { AiGuard } from './ai-guard';
@@ -57,6 +58,8 @@ export interface EvaluateContext {
   state: { budgetStop: string | null; imagesFailed: boolean };
   /** Aborted when the scan must stop, for example after losing the scan lock. */
   signal?: AbortSignal;
+  /** Full posts for previews, when the source lists previews only. */
+  fetchDetails?: (ids: string[]) => Promise<DetailsResult>;
 }
 
 /** AI work stops for the rest of the scan once the budget, the AI guard or a stop says so. */

@@ -44,7 +44,7 @@ describe('usage ledger', () => {
       inputTokens: 1_000_000,
       outputTokens: 250_000,
     });
-    expect(ledger.summary()).toEqual({ costUsd: 2, incomplete: false, calls: 1 });
+    expect(ledger.summary()).toEqual({ costUsd: 2, dataCostUsd: 0, incomplete: false, calls: 1 });
   });
 
   it('records an unknown price as unknown and marks the run total incomplete', () => {
@@ -53,7 +53,7 @@ describe('usage ledger', () => {
     const mystery = { provider: 'google' as const, model: 'mystery' };
     expect(ledger.record('qualify', mystery, { inputTokens: 10, outputTokens: 5 })).toBeNull();
     expect(db.select().from(usage).get()?.costUsd).toBeNull();
-    expect(ledger.summary()).toEqual({ costUsd: 0, incomplete: true, calls: 1 });
+    expect(ledger.summary()).toEqual({ costUsd: 0, dataCostUsd: 0, incomplete: true, calls: 1 });
   });
 
   it('stops a run once its budget is reached', () => {
@@ -94,5 +94,27 @@ describe('usage ledger', () => {
     make(null).record('qualify', small, { inputTokens: 3_000_000, outputTokens: 0 });
     clock.advance(24 * 3600 * 1000 + 1000);
     expect(make(null).check()).toEqual({ ok: true });
+  });
+
+  it('counts paid Reddit data with AI against the same caps and keeps it apart in the summary', () => {
+    const { db, make } = setup({ perRunUsd: 0.0025, perDayUsd: 100 });
+    const ledger = make(null);
+    ledger.recordData(0.001, 'vendor/feed');
+    ledger.recordData(0.001, 'vendor/details');
+    expect(ledger.check()).toEqual({ ok: true });
+    ledger.recordData(0.001, 'vendor/feed');
+    expect(ledger.check()).toMatchObject({ ok: false });
+    expect(ledger.summary()).toMatchObject({ costUsd: 0.003, dataCostUsd: 0.003, calls: 0 });
+    expect(
+      db
+        .select()
+        .from(usage)
+        .all()
+        .map((row) => [row.stage, row.provider, row.model, row.costUsd]),
+    ).toEqual([
+      ['reddit_data', 'vendor', 'vendor/feed', 0.001],
+      ['reddit_data', 'vendor', 'vendor/details', 0.001],
+      ['reddit_data', 'vendor', 'vendor/feed', 0.001],
+    ]);
   });
 });

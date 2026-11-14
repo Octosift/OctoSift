@@ -28,6 +28,8 @@ export interface ScanStore {
   insertDraft(draft: Parameters<typeof leadQueries.insertDraft>[1]): number;
   updateLead(id: string, changes: Parameters<typeof leadQueries.updateLead>[2], now: number): void;
   saveImageDescription(row: ImageDescriptionRow): void;
+  /** Replaces a stored preview with the full post. */
+  completePost(row: PostRow): void;
   /** Reads that must see this scan's own unsaved writes in a dry run. */
   imageDescription(url: string): string | null;
   getPosts(ids: string[]): PostRow[];
@@ -45,6 +47,7 @@ export function createDbStore(db: Db): ScanStore {
     insertDraft: (draft) => leadQueries.insertDraft(db, draft),
     updateLead: (id, changes, now) => leadQueries.updateLead(db, id, changes, now),
     saveImageDescription: (row) => imageQueries.saveImageDescription(db, row),
+    completePost: (row) => postQueries.completePost(db, row),
     imageDescription: (url) => imageQueries.getImageDescription(db, url)?.description ?? null,
     getPosts: (ids) => postQueries.getPosts(db, ids),
     stageRecords: (productId, ids) => evaluationQueries.stageRecords(db, productId, ids),
@@ -74,6 +77,9 @@ export function createDryRunStore(db: Db): ScanStore {
     updateLead: () => undefined,
     saveImageDescription: (row) => {
       images.set(row.url, row.description);
+    },
+    completePost: (row) => {
+      posts.set(row.id, { ...row, partial: false });
     },
     imageDescription: (url) =>
       images.get(url) ?? imageQueries.getImageDescription(db, url)?.description ?? null,

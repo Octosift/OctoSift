@@ -24,15 +24,23 @@ export interface BudgetCaps {
 }
 
 export interface UsageSummary {
+  /** AI and data together. */
   costUsd: number;
+  /** The part spent on a paid Reddit data provider. */
+  dataCostUsd: number;
   /** True when at least one call had no known price. */
   incomplete: boolean;
   calls: number;
 }
 
 export interface UsageLedger extends UsageRecorder {
+  /** Records one paid request to a Reddit data provider; it counts against the same caps. */
+  recordData(costUsd: number, what: string): void;
   summary(): UsageSummary;
 }
+
+/** The usage stage of paid Reddit data requests. */
+export const DATA_STAGE = 'reddit_data';
 
 export interface UsageLedgerOptions {
   db: Db;
@@ -64,7 +72,7 @@ function usd(amount: number): string {
 
 export function createUsageLedger(options: UsageLedgerOptions): UsageLedger {
   const { db, clock, runId, prices, caps, persist = true } = options;
-  const totals: UsageSummary = { costUsd: 0, incomplete: false, calls: 0 };
+  const totals: UsageSummary = { costUsd: 0, dataCostUsd: 0, incomplete: false, calls: 0 };
 
   return {
     check() {
@@ -79,7 +87,7 @@ export function createUsageLedger(options: UsageLedgerOptions): UsageLedger {
       if (lastDay >= perDayUsd) {
         return {
           ok: false,
-          message: `The daily AI budget of ${usd(perDayUsd)} is used up. Scans continue once spending from the last 24 hours drops below it.`,
+          message: `The daily budget of ${usd(perDayUsd)} is used up. Scans continue once spending from the last 24 hours drops below it.`,
         };
       }
       return { ok: true };
@@ -105,6 +113,24 @@ export function createUsageLedger(options: UsageLedgerOptions): UsageLedger {
       if (cost === null) totals.incomplete = true;
       else totals.costUsd += cost;
       return cost;
+    },
+
+    recordData(costUsd, what) {
+      if (persist) {
+        insertUsage(db, {
+          id: newId(),
+          runId,
+          stage: DATA_STAGE,
+          provider: what.split('/')[0] ?? what,
+          model: what,
+          inputTokens: 0,
+          outputTokens: 0,
+          costUsd,
+          createdAt: nowSeconds(clock),
+        });
+      }
+      totals.costUsd += costUsd;
+      totals.dataCostUsd += costUsd;
     },
 
     summary: () => ({ ...totals }),
