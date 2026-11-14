@@ -39,17 +39,15 @@ describe('normalizeCookieHeader', () => {
 });
 
 describe('connecting an account', () => {
-  it('checks the session, reads the account name and stores both', async () => {
+  it('checks the session with one request that also names the account, and stores both', async () => {
     const db = openMemoryDatabase();
     const secrets = createTestSecrets(db);
-    const reddit = client({
-      '/r/popular.json': { ok: true, json: { kind: 'Listing', data: { children: [] } } },
-      '/api/me.json': { ok: true, json: { name: 'demo_reader' } },
-    });
+    const reddit = client({ '/api/me.json': { ok: true, json: { name: 'demo_reader' } } });
     expect(await connectSession({ db, secrets, now: 100 }, COOKIE, reddit)).toEqual({
       ok: true,
       username: 'demo_reader',
     });
+    expect(reddit.paths).toEqual(['/api/me.json?raw_json=1']);
     expect(secrets.use('reddit_session_cookie')).toEqual({ ok: true, value: COOKIE });
     expect(sessionStatus(db, secrets)).toEqual({
       status: 'connected',
@@ -58,34 +56,37 @@ describe('connecting an account', () => {
     });
   });
 
-  it('still connects when the account name cannot be read', async () => {
+  it.each([
+    ['a refusal', { ok: false, kind: 'auth', message: 'refused' } as const],
+    ['a session that is not signed in', { ok: true, json: {} } as const],
+  ])('saves nothing after %s', async (_, answer) => {
+    const db = openMemoryDatabase();
+    const secrets = createTestSecrets(db);
+    const reddit = client({ '/api/me.json': answer });
+    expect(await connectSession({ db, secrets, now: 100 }, COOKIE, reddit)).toEqual({
+      ok: false,
+      message: 'Reddit did not accept this session. Sign in again and copy a fresh cookie.',
+    });
+    expect(sessionStatus(db, secrets)).toEqual({ status: 'not_connected' });
+    expect(reddit.paths).toHaveLength(1);
+  });
+
+  it('says when the check itself could not run', async () => {
     const db = openMemoryDatabase();
     const secrets = createTestSecrets(db);
     const reddit = client({
-      '/r/popular.json': { ok: true, json: { kind: 'Listing', data: { children: [] } } },
-      '/api/me.json': { ok: false, kind: 'auth', message: 'blocked' },
+      '/api/me.json': { ok: false, kind: 'network', message: 'Could not reach Reddit' },
     });
     expect(await connectSession({ db, secrets, now: 100 }, COOKIE, reddit)).toEqual({
-      ok: true,
-      username: null,
+      ok: false,
+      message: 'Could not check the session: Could not reach Reddit',
     });
-  });
-
-  it('saves nothing when Reddit refuses the session', async () => {
-    const db = openMemoryDatabase();
-    const secrets = createTestSecrets(db);
-    const reddit = client({ '/r/popular.json': { ok: false, kind: 'auth', message: 'refused' } });
-    const result = await connectSession({ db, secrets, now: 100 }, COOKIE, reddit);
-    expect(result).toMatchObject({ ok: false });
-    expect(sessionStatus(db, secrets)).toEqual({ status: 'not_connected' });
-    expect(reddit.paths).toHaveLength(1);
   });
 
   it('remembers when the session needs reconnecting, and forgets everything on disconnect', async () => {
     const db = openMemoryDatabase();
     const secrets = createTestSecrets(db);
     const reddit = client({
-      '/r/popular.json': { ok: true, json: { kind: 'Listing', data: { children: [] } } },
       '/api/me.json': { ok: true, json: { data: { name: 'demo_reader' } } },
     });
     await connectSession({ db, secrets, now: 100 }, COOKIE, reddit);

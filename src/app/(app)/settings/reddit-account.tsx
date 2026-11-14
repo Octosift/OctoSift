@@ -6,12 +6,11 @@ import { useEffect, useState, useTransition } from 'react';
 import { Button } from '../../components/ui/button';
 import { Dialog } from '../../components/ui/dialog';
 import { Badge, Banner, Card, CardHeader } from '../../components/ui/display';
-import { Input, Textarea } from '../../components/ui/fields';
+import { Textarea } from '../../components/ui/fields';
 import {
   browserSignInStatus,
   connectWithCookie,
   disconnectReddit,
-  setRedditAccountName,
   startBrowserSignIn,
 } from '../../lib/actions/reddit-account';
 import type { SettingsData } from '../../lib/data/settings';
@@ -130,48 +129,6 @@ function PasteDialog({
   );
 }
 
-function NameForm() {
-  const router = useRouter();
-  const [value, setValue] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-  return (
-    <form
-      className="flex flex-col gap-1"
-      onSubmit={(event) => {
-        event.preventDefault();
-        startTransition(async () => {
-          const result = await setRedditAccountName({ username: value });
-          setError(result.ok ? null : result.error);
-          if (result.ok) router.refresh();
-        });
-      }}
-    >
-      <label htmlFor="reddit-account-name" className="text-xs text-muted-foreground">
-        Reddit did not share the account name. Type it so the dashboard can show it.
-      </label>
-      <div className="flex max-w-sm gap-2">
-        <Input
-          id="reddit-account-name"
-          placeholder="without u/"
-          value={value}
-          onChange={(event) => {
-            setValue(event.target.value);
-          }}
-        />
-        <Button type="submit" size="sm" disabled={pending || value.trim() === ''}>
-          Save
-        </Button>
-      </div>
-      {error ? (
-        <p role="alert" className="text-xs text-danger-foreground">
-          {error}
-        </p>
-      ) : null}
-    </form>
-  );
-}
-
 export function RedditAccountCard({
   account,
   now,
@@ -225,7 +182,6 @@ export function RedditAccountCard({
           a separate account is safer. The session cookie is stored encrypted and only ever sent to
           www.reddit.com.
         </p>
-        {account.status === 'connected' && account.username === null ? <NameForm /> : null}
         <div className="flex flex-wrap gap-2">
           <Button
             variant={connected ? 'outline' : 'brand'}

@@ -6,7 +6,6 @@ import {
   connectSession,
   disconnectSession,
   normalizeCookieHeader,
-  setSessionUsername,
   type ConnectResult,
 } from '@/core/reddit/account';
 import { createRateLimiter } from '@/core/reddit/ratelimit';
@@ -66,25 +65,6 @@ export async function startBrowserSignIn(): Promise<AccountActionResult> {
 
 export async function browserSignInStatus(): Promise<SignInState> {
   return Promise.resolve(signInState());
-}
-
-export async function setRedditAccountName(input: {
-  username: string;
-}): Promise<AccountActionResult> {
-  const parsed = z
-    .object({
-      username: z
-        .string()
-        .trim()
-        .transform((name) => name.replace(/^\/?u\//i, ''))
-        .pipe(z.string().regex(/^[A-Za-z0-9_-]{3,20}$/, 'Reddit usernames are 3 to 20 characters')),
-    })
-    .safeParse(input);
-  if (!parsed.success)
-    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid username' };
-  setSessionUsername(getRuntime().db, parsed.data.username);
-  revalidatePath('/settings');
-  return Promise.resolve({ ok: true });
 }
 
 export async function disconnectReddit(): Promise<AccountActionResult> {
