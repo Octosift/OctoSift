@@ -3,7 +3,8 @@
 # One image for both processes: the dashboard and the worker.
 FROM node:24-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm \
-    NEXT_TELEMETRY_DISABLED=1
+    NEXT_TELEMETRY_DISABLED=1 \
+    IN_CONTAINER=1
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable
 WORKDIR /app

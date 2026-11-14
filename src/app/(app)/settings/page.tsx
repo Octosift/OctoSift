@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import { Banner, PageHeader } from '../../components/ui/display';
+import { nowSeconds } from '../../lib/runtime';
 import { loadSettings } from '../../lib/data/settings';
 import { ModelsSection } from './models-section';
 import { EvergreenSection, NotificationsSection, RedditSection } from './connection-sections';
 import { DataSection } from './data-section';
+import { RedditAccountCard } from './reddit-account';
 import { BudgetSection, FiltersSection, KeysSection, PricesSection } from './sections';
 
 export const dynamic = 'force-dynamic';
@@ -56,6 +58,7 @@ export default function SettingsPage() {
           <PricesSection data={data} />
           <BudgetSection data={data} />
           <FiltersSection data={data} />
+          <RedditAccountCard account={data.account} now={nowSeconds()} demo={data.demo} />
           <RedditSection data={data} />
           <NotificationsSection data={data} />
           <EvergreenSection data={data} />

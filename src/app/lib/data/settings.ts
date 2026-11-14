@@ -1,5 +1,8 @@
 import 'server-only';
+import { CONFIG } from '@/core/config';
+import { sessionStatus } from '@/core/reddit/account';
 import type { SecretDescription, SecretName } from '@/core/secrets/store';
+import { runsInContainer } from '../reddit-sign-in';
 import { getRuntime } from '../runtime';
 
 const SHOWN_SECRETS = [
@@ -16,13 +19,19 @@ const SHOWN_SECRETS = [
 export type ShownSecret = (typeof SHOWN_SECRETS)[number];
 
 export function loadSettings() {
-  const { settings, secrets, env } = getRuntime();
+  const { settings, secrets, env, db } = getRuntime();
   const described = Object.fromEntries(
     SHOWN_SECRETS.map((name) => [name, secrets.describe(name)]),
   ) as Record<ShownSecret, SecretDescription>;
   return {
     demo: env.DEMO_MODE,
     secrets: described,
+    account: {
+      ...sessionStatus(db, secrets),
+      cookieMask: secrets.describe('reddit_session_cookie').mask,
+      inContainer: runsInContainer(),
+      perHour: CONFIG.session.maxPerHour,
+    },
     values: {
       stages: settings.get('ai.stages'),
       compatibleBaseUrl: settings.get('ai.compatibleBaseUrl'),

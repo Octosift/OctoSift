@@ -13,11 +13,8 @@ export function RedditSection({ data }: { data: SettingsData }) {
     (v) => ({ 'reddit.userAgent': v.userAgent, 'reddit.ownUsername': v.username.trim() || null }),
   );
   return (
-    <Card id="reddit">
-      <CardHeader
-        title="Reddit"
-        description="Posts are read from public feeds without logging in, about one request a minute."
-      />
+    <Card id="reddit-reading">
+      <CardHeader title="Reading Reddit" description="Applies to every way of reading Reddit." />
       <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
         <Field
           label="Your Reddit username"
