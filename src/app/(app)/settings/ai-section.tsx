@@ -48,7 +48,7 @@ const ALL_PROVIDERS: { id: ProviderId; label: string }[] = [
   { id: 'openai', label: 'OpenAI' },
   { id: 'anthropic', label: 'Anthropic' },
   { id: 'openai_compatible', label: 'OpenAI-compatible' },
-  { id: 'codex_cli', label: 'Codex CLI (experimental)' },
+  { id: 'codex_cli', label: 'Codex CLI' },
 ];
 
 const CUSTOM = '__custom__';
