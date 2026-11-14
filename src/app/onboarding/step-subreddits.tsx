@@ -147,8 +147,8 @@ export function StepSubreddits({ productId, saved }: { productId: string; saved:
         </h2>
         <p className="mt-1 text-[13px] text-muted-foreground">
           Pick {minSelected} to {maxSelected}. Fewer, well-chosen subreddits give better leads and
-          cost less. Checking that they exist takes about a minute each, because Reddit limits
-          logged-out reads.
+          cost less. Without a connected Reddit account, checking that they exist takes about a
+          minute each, because Reddit limits logged-out reads.
         </p>
       </div>
       {loading ? <Banner>Suggesting subreddits…</Banner> : null}

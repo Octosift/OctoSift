@@ -45,8 +45,8 @@ export function StepScan({ productId, productName }: { productId: string; produc
         </h2>
         <p className="mt-1 text-[13px] text-muted-foreground">
           The first scan reads posts from the last two days in each subreddit. Reading is slow on
-          purpose (about one request a minute) so Reddit does not block you; the AI stages take a
-          few seconds per post.
+          purpose so Reddit does not block you: several seconds between requests with a connected
+          Reddit account, about a minute without one. The AI stages take a few seconds per post.
         </p>
       </div>
       <Card>
