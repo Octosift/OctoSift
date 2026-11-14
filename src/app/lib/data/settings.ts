@@ -26,6 +26,7 @@ export function loadSettings() {
     values: {
       stages: settings.get('ai.stages'),
       compatibleBaseUrl: settings.get('ai.compatibleBaseUrl'),
+      imageDescriptions: settings.get('ai.imageDescriptions'),
       prices: settings.get('ai.prices'),
       perRunUsd: settings.get('budget.perRunUsd'),
       perDayUsd: settings.get('budget.perDayUsd'),

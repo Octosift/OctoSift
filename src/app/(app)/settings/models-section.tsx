@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import type { AiStage, ProviderId } from '@/core/settings/registry';
 import { Button } from '../../components/ui/button';
 import { Card, CardHeader } from '../../components/ui/display';
-import { Field, Input, Select } from '../../components/ui/fields';
+import { Checkbox, Field, Input, Select } from '../../components/ui/fields';
 import {
   loadModelSuggestions,
   testStageConnection,
@@ -74,12 +74,17 @@ export function ModelsSection({ data }: { data: SettingsData }) {
     review: data.values.stages.review ?? { provider: 'openai', model: '' },
   };
   const form = useSettingsForm(
-    { ...initial, baseUrl: data.values.compatibleBaseUrl ?? '' },
+    {
+      ...initial,
+      baseUrl: data.values.compatibleBaseUrl ?? '',
+      images: data.values.imageDescriptions,
+    },
     (values) => ({
       'ai.stages': Object.fromEntries(
         STAGES.map(({ stage }) => [stage, values[stage].model.trim() ? values[stage] : null]),
       ),
       'ai.compatibleBaseUrl': values.baseUrl.trim() || null,
+      'ai.imageDescriptions': values.images,
     }),
   );
   const [suggestions, setSuggestions] = useState<Partial<Record<ProviderId, string[]>>>({});
@@ -202,6 +207,25 @@ export function ModelsSection({ data }: { data: SettingsData }) {
           </Field>
         </div>
       ) : null}
+      <div className="border-t border-border px-4 py-3">
+        <label className="flex items-start gap-2 text-[13px]">
+          <Checkbox
+            className="mt-0.5"
+            checked={form.values.images}
+            onChange={(event) => {
+              form.set('images', event.target.checked);
+            }}
+          />
+          <span>
+            <span className="font-medium">Describe images in posts</span>
+            <span className="block text-xs text-muted-foreground">
+              The Qualify model describes each image hosted on Reddit once, in up to 150 words, and
+              the description is read with the post. Use it only if that model accepts images; it
+              adds one call per new image.
+            </span>
+          </span>
+        </label>
+      </div>
       {notice ? <p className="px-4 pb-2 text-xs text-muted-foreground">{notice}</p> : null}
       {form.errorFor('ai.stages') ? (
         <p role="alert" className="px-4 pb-2 text-xs text-danger-foreground">
