@@ -6,7 +6,12 @@ import { suggestOnce } from '@/core/profile/suggestion-cache';
 import { webUrl } from '@/core/urls';
 import { profileWire, type ExtractedProfile } from '@/core/ai/schemas';
 import { CONFIG } from '@/core/config';
-import { insertProduct, getProduct, watchSubreddit } from '@/core/db/queries/products';
+import {
+  insertProduct,
+  getProduct,
+  watchSubreddit,
+  watchedSubreddits,
+} from '@/core/db/queries/products';
 import { recentRuns } from '@/core/db/queries/runs';
 import { loadSampleProducts } from '@/core/demo/sample-products';
 import { newId } from '@/core/ids';
@@ -14,7 +19,10 @@ import type { FunnelCounts } from '@/core/pipeline/funnel';
 import { crawlProduct } from '@/core/profile/crawl';
 import { extractProfile, mergeInterview } from '@/core/profile/extract';
 import { suggestSubreddits } from '@/core/profile/subreddits';
+import { getSubreddits } from '@/core/db/queries/subreddits';
+import { sessionStatus } from '@/core/reddit/account';
 import { requestScan } from '@/core/scan-lock';
+import { readWorkerStatus, type WorkerState } from '@/core/worker-status';
 import { getRuntime, nowSeconds } from '../runtime';
 
 const pageSchema = z.object({
@@ -184,19 +192,33 @@ export async function startFirstScan(productId: string): Promise<{ requestedAt: 
   return Promise.resolve({ requestedAt });
 }
 
-export interface ScanProgress {
-  status: string;
-  counts: FunnelCounts | null;
-  error: string | null;
+export interface ScanStatus {
+  /** The scan started after the request, once the worker has picked it up. */
+  run: { status: string; counts: FunnelCounts | null; error: string | null } | null;
+  /** The worker's own report; null when it has not reported recently, so it is not running. */
+  worker: WorkerState | null;
+  /** Reads are much faster with a connected Reddit account. */
+  accountConnected: boolean;
+  /** Saved subreddits the scan found missing, private or banned. */
+  missing: string[];
 }
 
-export async function firstScanProgress(since: number): Promise<ScanProgress | null> {
-  const run = recentRuns(getRuntime().db, 1)[0];
-  if (!run || run.startedAt < since) return Promise.resolve(null);
+export async function scanStatus(productId: string, since: number): Promise<ScanStatus> {
+  const runtime = getRuntime();
+  const { db } = runtime;
+  const run = recentRuns(db, 1)[0];
+  const names = watchedSubreddits(db, productId).map((entry) => entry.subreddit);
+  const missing = getSubreddits(db, names)
+    .filter((row) => row.status === 'gone')
+    .map((row) => row.name);
   return Promise.resolve({
-    status: run.status,
-    counts: run.countsJson as FunnelCounts,
-    error: run.error,
+    run:
+      run && run.startedAt >= since
+        ? { status: run.status, counts: run.countsJson as FunnelCounts, error: run.error }
+        : null,
+    worker: readWorkerStatus(db, runtime.clock.nowMs()),
+    accountConnected: sessionStatus(db, runtime.secrets).status === 'connected',
+    missing,
   });
 }
 

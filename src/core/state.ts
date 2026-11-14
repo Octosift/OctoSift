@@ -51,6 +51,15 @@ const STATE = {
       }),
     ),
   }),
+  /** What the worker is doing, with a heartbeat, so the dashboard can tell busy from stopped. */
+  'state.worker': z.object({
+    owner: z.string(),
+    heartbeatAt: z.number(),
+    activity: z.enum(['idle', 'checking', 'reading', 'judging']),
+    detail: z.string().nullable(),
+    done: z.number().nullable(),
+    total: z.number().nullable(),
+  }),
   'state.scanRequest': z.object({ requestedAt: z.number(), productId: z.string().nullable() }),
   'state.validationRequest': z.object({ requestedAt: z.number(), names: z.array(z.string()) }),
   'state.validationProgress': z.object({

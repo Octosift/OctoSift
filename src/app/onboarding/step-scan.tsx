@@ -1,5 +1,6 @@
 'use client';
 
+import { LoaderCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
@@ -9,10 +10,75 @@ import { Button } from '../components/ui/button';
 import { Banner, Card, CardHeader } from '../components/ui/display';
 import {
   completeOnboarding,
-  firstScanProgress,
+  scanStatus,
   startFirstScan,
-  type ScanProgress,
+  type ScanStatus,
 } from '../lib/actions/onboarding';
+import { stepHref } from './steps';
+
+/** Rough minutes per subreddit read: one feed a minute logged out, a few pages with an account. */
+const MINUTES_PER_READ = { account: 0.5, loggedOut: 1 };
+
+function minutes(count: number): string {
+  const rounded = Math.max(1, Math.round(count));
+  return `${String(rounded)} ${rounded === 1 ? 'minute' : 'minutes'}`;
+}
+
+/** One line saying what is happening, from the worker's own report. */
+function describe(
+  status: ScanStatus | null,
+  waitedS: number,
+): { text: string; tone: 'info' | 'warning'; pace?: boolean } {
+  if (status === null) return { text: 'Sending the scan to the worker…', tone: 'info' };
+  const { run, worker } = status;
+  if (run === null) {
+    if (worker === null) {
+      return waitedS >= 6
+        ? {
+            text: 'The worker is not running, so the scan cannot start. Start the app with pnpm dev, pnpm start or Docker; this page carries on by itself.',
+            tone: 'warning',
+          }
+        : { text: 'Sending the scan to the worker…', tone: 'info' };
+    }
+    if (worker.activity === 'checking') {
+      const progress = worker.total
+        ? ` (${String(worker.done ?? 0)} of ${String(worker.total)})`
+        : '';
+      return {
+        text: `The worker is finishing a subreddit check${progress}. Your scan starts right after.`,
+        tone: 'info',
+      };
+    }
+    if (worker.activity !== 'idle') {
+      return {
+        text: 'The worker is finishing another scan. Yours starts right after.',
+        tone: 'info',
+      };
+    }
+    return { text: 'Starting the scan…', tone: 'info' };
+  }
+  if (worker?.activity === 'reading') {
+    const where = worker.detail ? `Reading ${worker.detail}` : 'Reading subreddits';
+    const count =
+      worker.total && worker.done !== null
+        ? ` (${String(Math.min(worker.done + 1, worker.total))} of ${String(worker.total)})`
+        : '';
+    return { text: `${where}${count}…`, tone: 'info', pace: true };
+  }
+  if (worker?.activity === 'judging') {
+    return { text: 'Judging the new posts with your AI model…', tone: 'info' };
+  }
+  return { text: 'Scanning…', tone: 'info' };
+}
+
+function missingNote(names: string[]): string {
+  const one = names.length === 1;
+  return `${names.map((name) => `r/${name}`).join(', ')} ${one ? 'does' : 'do'} not exist or ${
+    one ? 'is' : 'are'
+  } private, so ${one ? 'it was' : 'they were'} skipped. You can remove ${
+    one ? 'it' : 'them'
+  } on the Subreddits page.`;
+}
 
 export function StepScan({
   productId,
@@ -25,25 +91,30 @@ export function StepScan({
 }) {
   const router = useRouter();
   const [since, setSince] = useState<number | null>(null);
-  const [progress, setProgress] = useState<ScanProgress | null>(null);
+  const [status, setStatus] = useState<ScanStatus | null>(null);
   const [waitedS, setWaitedS] = useState(0);
   const [pending, startTransition] = useTransition();
-  const running =
-    since !== null && progress?.status !== undefined
-      ? progress.status === 'running'
-      : since !== null;
-  const finished = progress !== null && progress.status !== 'running';
+  const run = status?.run ?? null;
+  const finished = run !== null && run.status !== 'running';
 
   useEffect(() => {
     if (since === null || finished) return;
     const timer = setInterval(() => {
       setWaitedS((seconds) => seconds + 2);
-      void firstScanProgress(since).then(setProgress);
+      void scanStatus(productId, since).then(setStatus);
     }, 2_000);
     return () => {
       clearInterval(timer);
     };
-  }, [since, finished]);
+  }, [productId, since, finished]);
+
+  const line = since !== null && !finished ? describe(status, waitedS) : null;
+  const worker = status?.worker ?? null;
+  const left =
+    worker?.activity === 'reading' && worker.total !== null && worker.done !== null
+      ? (worker.total - worker.done) *
+        (status?.accountConnected ? MINUTES_PER_READ.account : MINUTES_PER_READ.loggedOut)
+      : null;
 
   return (
     <section aria-labelledby="step-scan" className="flex flex-col gap-4">
@@ -54,7 +125,7 @@ export function StepScan({
         <p className="mt-1 text-[13px] text-muted-foreground">
           {subredditCount === 0
             ? 'No subreddits are saved yet, so there is nothing to read. Add them on the Subreddits page later.'
-            : 'Reads the last two days of posts. Reading is slow on purpose, so this takes a few minutes.'}
+            : 'Reads the last two days of posts, then the AI judges them. Reading is slow on purpose so Reddit does not block you.'}
         </p>
       </div>
       <Card>
@@ -62,7 +133,7 @@ export function StepScan({
           title={
             finished
               ? 'First scan finished'
-              : running
+              : since !== null
                 ? 'Scanning…'
                 : `Ready to scan for ${productName}`
           }
@@ -84,38 +155,63 @@ export function StepScan({
           }
         />
         <div className="px-4 py-4">
-          <Funnel counts={progress?.counts ?? emptyCounts()} />
+          <Funnel counts={run?.counts ?? emptyCounts()} />
         </div>
       </Card>
-      {since !== null && progress === null && waitedS >= 20 ? (
-        <Banner tone="warning">
-          Waiting for the worker to start the scan. It runs alongside the dashboard when you start
-          with pnpm dev, pnpm start or Docker.
+      {line ? (
+        <Banner tone={line.tone} role="status">
+          {line.tone === 'info' ? (
+            <LoaderCircle className="mt-0.5 size-4 shrink-0 animate-spin" aria-hidden />
+          ) : null}
+          <span>
+            {line.text}
+            {line.pace && left !== null ? ` About ${minutes(left)} left.` : null}
+            {line.pace && status && !status.accountConnected ? (
+              <>
+                {' '}
+                Without a Reddit account, Reddit allows about one read a minute.{' '}
+                <Link className="underline underline-offset-2" href={stepHref('account')}>
+                  Connect an account
+                </Link>{' '}
+                to make reading several times faster.
+              </>
+            ) : null}
+          </span>
         </Banner>
       ) : null}
-      {finished && progress.error ? (
-        <Banner tone={progress.status === 'failed' ? 'danger' : 'warning'}>
-          {progress.error}{' '}
+      {finished && status && status.missing.length > 0 ? (
+        <Banner tone="warning">{missingNote(status.missing)}</Banner>
+      ) : null}
+      {finished && run.error ? (
+        <Banner tone={run.status === 'failed' ? 'danger' : 'warning'}>
+          {run.error}{' '}
           <Link className="underline underline-offset-2" href="/settings">
             Open Settings
           </Link>
         </Banner>
       ) : null}
-      <div className="flex justify-end gap-2">
-        {finished || since === null ? (
-          <Button
-            variant={finished ? 'primary' : 'ghost'}
-            disabled={pending}
-            onClick={() => {
-              startTransition(async () => {
-                await completeOnboarding();
-                router.push('/inbox');
-              });
-            }}
-          >
-            {finished ? 'Open the inbox' : 'Skip and open the inbox'}
-          </Button>
+      <div className="flex items-center justify-end gap-3">
+        {since !== null && !finished ? (
+          <p className="text-xs text-muted-foreground">
+            The scan keeps going in the background; leads appear in the inbox as they are found.
+          </p>
         ) : null}
+        <Button
+          variant={finished ? 'primary' : 'ghost'}
+          disabled={pending}
+          onClick={() => {
+            startTransition(async () => {
+              await completeOnboarding();
+              router.push('/inbox');
+            });
+          }}
+        >
+          {finished
+            ? 'Open the inbox'
+            : since !== null
+              ? 'Open the inbox now'
+              : 'Skip and open the inbox'}
+        </Button>
       </div>
     </section>
   );

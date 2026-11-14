@@ -27,6 +27,7 @@ import type { SerpFetcher } from '../core/serp/dataforseo';
 import { evergreenDue, runEvergreenForProduct } from '../core/serp/evergreen';
 import type { SettingsStore } from '../core/settings/store';
 import { hasValidationRequest, runValidationRequest } from '../core/validation-queue';
+import { createWorkerStatus, IDLE, subredditList } from '../core/worker-status';
 
 export interface SchedulerDeps {
   db: Db;
@@ -115,10 +116,28 @@ export function createScheduler(deps: SchedulerDeps) {
     }
   }
 
+  const status = createWorkerStatus(db, owner, () => clock.nowMs());
+
   /** Subreddit checks requested by the dashboard read Reddit too, so they share the lock. */
   function validate(): Promise<TickOutcome> {
     return withLock(async () => {
-      await runValidationRequest(db, deps.scanDeps().source, nowSeconds(clock));
+      try {
+        await runValidationRequest(
+          db,
+          deps.scanDeps().source,
+          nowSeconds(clock),
+          (done, total, name) => {
+            status.set({
+              activity: 'checking',
+              detail: name ? subredditList([name]) : null,
+              done,
+              total,
+            });
+          },
+        );
+      } finally {
+        status.set(IDLE);
+      }
       return { kind: 'validated' };
     });
   }
@@ -130,13 +149,36 @@ export function createScheduler(deps: SchedulerDeps) {
     if (!due) return { kind: 'idle' };
     return withLock(async (signal) => {
       const request = takeScanRequest(db);
-      const report = await runScan(deps.scanDeps(), {
-        trigger: request ? 'manual' : 'schedule',
-        ignoreSchedule: request !== null,
-        signal,
-        ...(request?.productId ? { productId: request.productId } : {}),
-      });
-      return { kind: 'scanned', report };
+      status.set({ activity: 'reading', detail: null, done: null, total: null });
+      try {
+        const report = await runScan(
+          {
+            ...deps.scanDeps(),
+            onProgress: (progress) => {
+              status.set(
+                progress.phase === 'reading'
+                  ? {
+                      activity: 'reading',
+                      detail:
+                        progress.subreddits.length > 0 ? subredditList(progress.subreddits) : null,
+                      done: progress.done,
+                      total: progress.total,
+                    }
+                  : { activity: 'judging', detail: null, done: null, total: null },
+              );
+            },
+          },
+          {
+            trigger: request ? 'manual' : 'schedule',
+            ignoreSchedule: request !== null,
+            signal,
+            ...(request?.productId ? { productId: request.productId } : {}),
+          },
+        );
+        return { kind: 'scanned', report };
+      } finally {
+        status.set(IDLE);
+      }
     });
   }
 
@@ -162,6 +204,17 @@ export function createScheduler(deps: SchedulerDeps) {
   async function run(signal: AbortSignal): Promise<void> {
     let lastScheduleCheck = Number.NEGATIVE_INFINITY;
     log.info('Worker started', { owner });
+    // A heartbeat of its own, so a long scan does not look like a stopped worker.
+    status.set(IDLE);
+    const heartbeat = setInterval(status.beat, CONFIG.schedule.workerHeartbeatMs);
+    heartbeat.unref();
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearInterval(heartbeat);
+      },
+      { once: true },
+    );
     while (!signal.aborted) {
       const now = clock.nowMs();
       const checkSchedule = now - lastScheduleCheck >= CONFIG.schedule.workerTickMs;

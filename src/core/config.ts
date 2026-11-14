@@ -63,6 +63,8 @@ export const CONFIG = deepFreeze({
     workerTickMs: 60_000,
     /** How often the worker checks for "scan now" requests between ticks. */
     scanRequestPollMs: 3_000,
+    /** How often the worker reports that it is alive, even in the middle of a scan. */
+    workerHeartbeatMs: 5_000,
     /** A scan lock whose heartbeat is older than this is considered abandoned. */
     lockStaleAfterMs: 5 * 60 * 1000,
     lockHeartbeatMs: 30_000,

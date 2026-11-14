@@ -40,6 +40,7 @@ export async function runValidationRequest(
   db: Db,
   source: RedditSource,
   now: number,
+  onProgress?: (done: number, total: number, name: string | null) => void,
 ): Promise<boolean> {
   const request = readState(db, 'state.validationRequest');
   if (!request) return false;
@@ -53,9 +54,11 @@ export async function runValidationRequest(
     });
   };
   const live: ValidationProgress['results'] = [];
-  const checks = await validateSubreddits(source, request.names, now, (_done, _total, check) => {
+  onProgress?.(0, request.names.length, request.names[0] ?? null);
+  const checks = await validateSubreddits(source, request.names, now, (done, total, check) => {
     live.push(toProgressResult(check));
     save([...live], false);
+    onProgress?.(done, total, request.names[done] ?? null);
   });
   // The final write also covers names skipped after Reddit paused reads.
   save(checks.map(toProgressResult), true);

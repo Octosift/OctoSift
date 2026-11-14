@@ -42,7 +42,12 @@ export interface ScanDeps {
   feedbackFor?: (productId: string) => FeedbackContext;
   notify?: (notice: LeadNotice) => Promise<boolean>;
   detectLanguage?: (text: string) => string | null;
+  /** Told what the scan is doing, so the worker can report it. */
+  onProgress?: (progress: ScanProgress) => void;
 }
+
+export type ScanProgress =
+  { phase: 'reading'; done: number; total: number; subreddits: string[] } | { phase: 'judging' };
 
 export interface ScanOptions {
   trigger: RunTrigger;
@@ -148,6 +153,9 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
       ]),
     );
     const allNames = [...new Set([...watched.values()].flat())];
+    const progress = () => {
+      updateRunCounts(db, runId, counts);
+    };
     const collected = await collectPosts(
       {
         db,
@@ -157,15 +165,18 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
         log,
         now,
         defaultIntervalMinutes: settings.get('schedule.intervalMinutes'),
+        // Counts are written as reads go, so the dashboard shows posts coming in.
+        onRead: (read) => {
+          progress();
+          deps.onProgress?.({ phase: 'reading', ...read });
+        },
         ...(options.signal ? { signal: options.signal } : {}),
       },
       allNames,
       { ignoreSchedule: options.ignoreSchedule ?? false },
     );
-    const progress = () => {
-      updateRunCounts(db, runId, counts);
-    };
     progress();
+    deps.onProgress?.({ phase: 'judging' });
     const since = now - settings.get('prefilter.maxPostAgeHours') * 3600;
     for (const product of products) {
       if (options.signal?.aborted) break;

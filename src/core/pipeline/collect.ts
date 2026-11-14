@@ -35,6 +35,8 @@ export interface CollectContext {
   defaultIntervalMinutes: number;
   /** Aborted when the scan must stop reading, for example after losing the scan lock. */
   signal?: AbortSignal;
+  /** Told before each request and once at the end, so progress can be shown. */
+  onRead?: (progress: { done: number; total: number; subreddits: string[] }) => void;
 }
 
 export interface CollectResult {
@@ -130,6 +132,7 @@ export async function collectPosts(
   for (let index = 0; index < queue.length; index += 1) {
     if (ctx.signal?.aborted) break;
     const request = queue[index] ?? [];
+    ctx.onRead?.({ done: index, total: queue.length, subreddits: request });
     const result = await ctx.source.fetchNewPosts(request, {
       limit: CONFIG.reddit.feedLimit,
       knownIds: (ids) => knownPostIds(ctx.db, ids),
@@ -181,5 +184,6 @@ export async function collectPosts(
     ctx.counts.new += selected.length;
     recordPolls(ctx, requestStates, result.posts, result.truncated === true);
   }
+  ctx.onRead?.({ done: queue.length, total: queue.length, subreddits: [] });
   return { newPostIds, blockedUntil: null };
 }

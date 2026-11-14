@@ -55,6 +55,27 @@ describe.each(SAMPLE_PRODUCT_SLUGS)('a first scan for %s', (slug) => {
     expect(calls('qualify').every((call) => (call.subject.postIds?.length ?? 0) <= 5)).toBe(true);
   });
 
+  it('reports each read and then the judging, with counts written as it goes', async () => {
+    const harness = createScanHarness(slug);
+    const seen: string[] = [];
+    await runScan(
+      {
+        ...harness.deps,
+        onProgress: (progress) => {
+          seen.push(
+            progress.phase === 'reading'
+              ? `reading ${String(progress.done)}/${String(progress.total)}`
+              : 'judging',
+          );
+        },
+      },
+      { trigger: 'cli' },
+    );
+    expect(seen.at(-1)).toBe('judging');
+    expect(seen.filter((entry) => entry.startsWith('reading')).length).toBeGreaterThan(1);
+    expect(seen.at(-2)).toMatch(/^reading (\d+)\/\1$/);
+  });
+
   it('leaves every post at the outcome its label expects', async () => {
     const harness = createScanHarness(slug);
     await runScan(harness.deps, { trigger: 'cli' });

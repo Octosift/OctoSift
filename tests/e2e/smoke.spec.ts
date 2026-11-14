@@ -33,15 +33,15 @@ test('onboarding in demo mode ends in an inbox with leads', async () => {
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
   await expect(page.getByText('r/sidehustle_demo')).toBeVisible();
-  await page.getByRole('button', { name: 'Check these exist' }).click();
-  await expect(page.getByText('Not found')).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
   await page.getByRole('button', { name: 'Start the first scan' }).click();
-  await expect(page.getByRole('button', { name: 'Open the inbox' })).toBeVisible({
+  await expect(page.getByRole('button', { name: 'Open the inbox', exact: true })).toBeVisible({
     timeout: 60_000,
   });
-  await page.getByRole('button', { name: 'Open the inbox' }).click();
+  // The scan itself finds the suggested subreddit that does not exist.
+  await expect(page.getByText(/r\/not_a_real_demo does not exist/)).toBeVisible();
+  await page.getByRole('button', { name: 'Open the inbox', exact: true }).click();
   await expect(page).toHaveURL(/\/inbox/);
   await expect(page.getByRole('list', { name: 'Leads' }).getByRole('link')).not.toHaveCount(0);
 });
