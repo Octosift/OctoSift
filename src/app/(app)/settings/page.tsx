@@ -5,6 +5,7 @@ import { loadSettings } from '../../lib/data/settings';
 import { ModelsSection } from './models-section';
 import { EvergreenSection, NotificationsSection, RedditSection } from './connection-sections';
 import { DataSection } from './data-section';
+import { DataSourceSection } from './data-source';
 import { RedditAccountCard } from './reddit-account';
 import { BudgetSection, FiltersSection, KeysSection, PricesSection } from './sections';
 
@@ -18,6 +19,7 @@ const SECTIONS = [
   ['budget', 'Budget'],
   ['filters', 'Filters'],
   ['reddit', 'Reddit'],
+  ['data-source', 'Data source'],
   ['notifications', 'Notifications'],
   ['evergreen', 'Evergreen'],
   ['data', 'Data'],
@@ -59,6 +61,7 @@ export default function SettingsPage() {
           <BudgetSection data={data} />
           <FiltersSection data={data} />
           <RedditAccountCard account={data.account} now={nowSeconds()} demo={data.demo} />
+          <DataSourceSection data={data} />
           <RedditSection data={data} />
           <NotificationsSection data={data} />
           <EvergreenSection data={data} />

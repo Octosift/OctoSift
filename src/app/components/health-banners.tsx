@@ -31,7 +31,12 @@ export function HealthBanners({ issues }: { issues: HealthIssue[] }) {
             {issue.kind === 'session_reauth' || issue.kind === 'source_failover' ? (
               <p className="mt-0.5">
                 {issue.reason}.{' '}
-                <Link className="underline underline-offset-2" href="/settings#reddit">
+                <Link
+                  className="underline underline-offset-2"
+                  href={
+                    issue.kind === 'session_reauth' ? '/settings#reddit' : '/settings#data-source'
+                  }
+                >
                   {issue.kind === 'session_reauth'
                     ? 'Reconnect it or choose another data source in Settings'
                     : 'Check the data source in Settings'}
