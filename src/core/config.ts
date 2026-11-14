@@ -218,6 +218,18 @@ export const CONFIG = deepFreeze({
     pageHints: ['pricing', 'price', 'plans', 'features', 'about', 'docs', 'faq', 'how-it-works'],
   },
 
+  /** Reading with the user's connected Reddit account (JSON listings). */
+  session: {
+    hotPages: 3,
+    topPages: 2,
+    minSpacingMs: 8_000,
+    maxJitterMs: 3_000,
+    maxPerHour: 120,
+    timeoutMs: 20_000,
+    /** The sign-in window closes itself after this long. */
+    signInTimeoutMs: 5 * 60_000,
+  },
+
   /** Threads that rank on Google, from DataForSEO (optional). */
   serp: {
     locationCode: 2840, // United States

@@ -109,4 +109,26 @@ describe('rate limiter', () => {
     await expect(limiter.run(() => Promise.reject(new Error('boom')))).rejects.toThrow('boom');
     expect((await request()).status).toBe('ran');
   });
+
+  it('reports a pause once the hourly cap is reached, until the oldest request ages out', async () => {
+    const clock = createFakeClock();
+    const limiter = createRateLimiter({
+      clock,
+      random: () => 0,
+      minSpacingMs: 1_000,
+      maxJitterMs: 0,
+      maxWaitMs: 60_000,
+      maxPerHour: 3,
+    });
+    const start = clock.nowMs();
+    for (let index = 0; index < 3; index += 1) {
+      expect((await limiter.run(() => Promise.resolve(index))).status).toBe('ran');
+    }
+    expect(await limiter.run(() => Promise.resolve(3))).toEqual({
+      status: 'paused',
+      untilMs: start + 3_600_000,
+    });
+    clock.advance(3_600_000);
+    expect((await limiter.run(() => Promise.resolve(4))).status).toBe('ran');
+  });
 });

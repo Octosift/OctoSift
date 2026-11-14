@@ -55,7 +55,8 @@ export interface RateInfo {
   resetS: number | null;
 }
 
-export type FetchFailureKind = 'blocked' | 'rate_limited' | 'gone' | 'network';
+/** "auth": the source's account or key no longer works and needs the user's attention. */
+export type FetchFailureKind = 'blocked' | 'rate_limited' | 'gone' | 'network' | 'auth';
 
 export type FetchResult =
   | { ok: true; posts: RedditPost[]; rate: RateInfo }
@@ -63,9 +64,17 @@ export type FetchResult =
 
 export type UserVisibility = 'visible' | 'suspended' | 'missing' | 'unknown';
 
-/** A way of reading Reddit. Atom feeds are the default; other sources can be added. */
+export interface FetchOptions {
+  limit: number;
+  /** Which of these post ids are already stored, so paging can stop early. */
+  knownIds?: (ids: string[]) => Set<string>;
+}
+
+/** A way of reading Reddit: Atom feeds, a connected session or a data provider. */
 export interface RedditSource {
-  fetchNewPosts(subreddits: string[], opts: { limit: number }): Promise<FetchResult>;
+  /** How many subreddits one request may combine; the configured default when absent. */
+  maxSubredditsPerRequest?: number;
+  fetchNewPosts(subreddits: string[], opts: FetchOptions): Promise<FetchResult>;
   fetchPostWithComments?(subreddit: string, postId: string): Promise<PostThread | null>;
   fetchRules?(subreddit: string): Promise<SubredditRules | null>;
   checkUser?(username: string): Promise<UserVisibility>;

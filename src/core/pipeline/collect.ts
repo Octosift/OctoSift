@@ -116,13 +116,19 @@ export async function collectPosts(
           state.status === 'active' && (state.blockUntil === null || state.blockUntil <= ctx.now),
       )
     : dueSubreddits(states, { now: ctx.now, defaultIntervalMinutes: ctx.defaultIntervalMinutes });
-  const queue = planRequests(due, CONFIG.reddit.maxSubredditsPerRequest);
+  const queue = planRequests(
+    due,
+    ctx.source.maxSubredditsPerRequest ?? CONFIG.reddit.maxSubredditsPerRequest,
+  );
   const newPostIds: string[] = [];
 
   for (let index = 0; index < queue.length; index += 1) {
     if (ctx.signal?.aborted) break;
     const request = queue[index] ?? [];
-    const result = await ctx.source.fetchNewPosts(request, { limit: CONFIG.reddit.feedLimit });
+    const result = await ctx.source.fetchNewPosts(request, {
+      limit: CONFIG.reddit.feedLimit,
+      knownIds: (ids) => knownPostIds(ctx.db, ids),
+    });
     if (!result.ok) {
       if (result.kind === 'blocked' || result.kind === 'rate_limited') {
         const until = ctx.now + (result.retryAfterS ?? CONFIG.reddit.blockPauseMs / 1000);
@@ -131,6 +137,12 @@ export async function collectPosts(
         ctx.counts.blocked = true;
         ctx.log.warn('Reddit reads paused during scan', { until, unread: unread.length });
         return { newPostIds, blockedUntil: until };
+      }
+      if (result.kind === 'auth') {
+        // The account or key stopped working; every further request would fail the same way.
+        ctx.counts.redditErrors += 1;
+        ctx.log.warn('Reddit source needs attention; reads stopped', { reason: result.message });
+        return { newPostIds, blockedUntil: null };
       }
       if (result.kind === 'gone') {
         if (request.length === 1 && request[0] !== undefined) {

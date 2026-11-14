@@ -28,13 +28,17 @@ export interface RateLimiterOptions {
   maxJitterMs: number;
   /** Waits longer than this are reported as a pause instead of slept through. */
   maxWaitMs: number;
+  /** At most this many requests in any hour; more are reported as a pause. */
+  maxPerHour?: number;
 }
 
 /** Small margin after a reported reset, so the next request lands in the new window. */
 const RESET_MARGIN_MS = 1_000;
+const HOUR_MS = 3_600_000;
 
 export function createRateLimiter(options: RateLimiterOptions): RateLimiter {
-  const { clock, random, minSpacingMs, maxJitterMs, maxWaitMs } = options;
+  const { clock, random, minSpacingMs, maxJitterMs, maxWaitMs, maxPerHour } = options;
+  const recent: number[] = [];
   let nextAllowedAt = 0;
   let pausedUntilMs = 0;
   let queue: Promise<unknown> = Promise.resolve();
@@ -44,10 +48,17 @@ export function createRateLimiter(options: RateLimiterOptions): RateLimiter {
   async function takeTurn<T>(task: () => Promise<T>): Promise<LimitedResult<T>> {
     const now = clock.nowMs();
     if (pausedUntilMs > now) return { status: 'paused', untilMs: pausedUntilMs };
+    if (maxPerHour !== undefined) {
+      while (recent.length > 0 && (recent[0] ?? 0) <= now - HOUR_MS) recent.shift();
+      if (recent.length >= maxPerHour) {
+        return { status: 'paused', untilMs: (recent[0] ?? now) + HOUR_MS };
+      }
+    }
     const wait = nextAllowedAt - now;
     if (wait > maxWaitMs) return { status: 'paused', untilMs: nextAllowedAt };
     if (wait > 0) await clock.sleep(wait);
     nextAllowedAt = clock.nowMs() + minSpacingMs + jitter();
+    recent.push(clock.nowMs());
     return { status: 'ran', value: await task() };
   }
 

@@ -19,6 +19,7 @@ const networkModules = [
   'src/core/profile/crawl.ts',
   'src/core/notify/webhook.ts',
   'src/core/serp/dataforseo.ts',
+  'src/core/reddit/session-client.ts',
 ];
 
 export default tseslint.config(
