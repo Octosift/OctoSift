@@ -17,7 +17,9 @@ export type HealthIssue =
   | { kind: 'ai_stopped'; severity: 'error'; message: string }
   | { kind: 'budget'; severity: 'warning'; message: string }
   | { kind: 'no_leads'; severity: 'warning'; message: string; causes: string[] }
-  | { kind: 'no_fetch'; severity: 'warning'; message: string; causes: string[] };
+  | { kind: 'no_fetch'; severity: 'warning'; message: string; causes: string[] }
+  | { kind: 'session_reauth'; severity: 'error'; message: string; reason: string }
+  | { kind: 'source_failover'; severity: 'warning'; message: string; reason: string };
 
 const countsSchema = z.object({
   fetched: z.number().catch(0),
@@ -43,7 +45,17 @@ export interface HealthInput {
   redditPausedUntil: number | null;
   hasSubreddits: boolean;
   now: number;
+  /** Why the connected Reddit account needs reconnecting, when it does. */
+  sessionProblem?: string | null;
+  /** The last switch away from the preferred source, if it has not recovered since. */
+  failover?: { from: string; to: string | null; reason: string } | null;
 }
+
+const SOURCE_NAMES: Readonly<Record<string, string>> = {
+  session: 'your Reddit account',
+  provider: 'the data provider',
+  rss: 'public RSS feeds',
+};
 
 function likelyCausesOfNoLeads(counts: RunCounts[]): string[] {
   const total = counts.reduce(
@@ -82,6 +94,27 @@ export function computeHealth(input: HealthInput): HealthIssue[] {
   const issues: HealthIssue[] = [];
   const runs = input.runs.filter((run) => !run.dryRun && run.status !== 'running');
   const latest = runs[0];
+
+  if (input.sessionProblem) {
+    issues.push({
+      kind: 'session_reauth',
+      severity: 'error',
+      message: 'Reconnect your Reddit account.',
+      reason: input.sessionProblem,
+    });
+  }
+  if (input.failover) {
+    const from = SOURCE_NAMES[input.failover.from] ?? input.failover.from;
+    const to = input.failover.to ? (SOURCE_NAMES[input.failover.to] ?? input.failover.to) : null;
+    issues.push({
+      kind: 'source_failover',
+      severity: 'warning',
+      message: to
+        ? `Reading Reddit through ${to}, because ${from} stopped working.`
+        : `Reddit could not be read: ${from} stopped working and no other source is set up.`,
+      reason: input.failover.reason,
+    });
+  }
 
   if (input.redditPausedUntil !== null && input.redditPausedUntil > input.now) {
     issues.push({
@@ -127,7 +160,7 @@ export function computeHealth(input: HealthInput): HealthIssue[] {
         message: `No posts have been read from Reddit for ${Math.floor(hours)} hours.`,
         causes: [
           'Check that the worker is running (pnpm start or docker compose up).',
-          'Reddit may be blocking reads from this network; a proxy or Reddit app credentials can help.',
+          'Reddit may be blocking reads: connect a Reddit account or choose another data source in Settings.',
         ],
       });
     }
@@ -136,10 +169,14 @@ export function computeHealth(input: HealthInput): HealthIssue[] {
 }
 
 export function loadHealth(db: Db, now: number): HealthIssue[] {
+  const session = readState(db, 'state.redditSession');
   return computeHealth({
     runs: recentRuns(db, 10),
     redditPausedUntil: readState(db, 'state.redditPausedUntil'),
     hasSubreddits: enabledSubredditNames(db).length > 0,
     now,
+    sessionProblem:
+      session?.status === 'needs_reauth' ? (session.reason ?? 'Reddit refused it') : null,
+    failover: readState(db, 'state.sourceFailover'),
   });
 }

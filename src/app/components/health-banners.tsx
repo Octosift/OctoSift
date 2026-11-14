@@ -28,6 +28,17 @@ export function HealthBanners({ issues }: { issues: HealthIssue[] }) {
                 .
               </p>
             ) : null}
+            {issue.kind === 'session_reauth' || issue.kind === 'source_failover' ? (
+              <p className="mt-0.5">
+                {issue.reason}.{' '}
+                <Link className="underline underline-offset-2" href="/settings#reddit">
+                  {issue.kind === 'session_reauth'
+                    ? 'Reconnect it or choose another data source in Settings'
+                    : 'Check the data source in Settings'}
+                </Link>
+                .
+              </p>
+            ) : null}
             {issue.kind === 'ai_stopped' || issue.kind === 'budget' ? (
               <p className="mt-0.5">
                 See{' '}

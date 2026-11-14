@@ -11,6 +11,20 @@ import { deleteSetting, readSetting, writeSetting } from './db/queries/settings'
 const STATE = {
   'state.redditPausedUntil': z.number(),
   'state.scanLock': z.object({ owner: z.string(), heartbeatAt: z.number() }),
+  /** The last time a scan had to leave the preferred source, and why. */
+  'state.sourceFailover': z.object({
+    from: z.string(),
+    to: z.string().nullable(),
+    reason: z.string(),
+    at: z.number(),
+  }),
+  /** The connected Reddit account: whose it is, and whether Reddit still accepts it. */
+  'state.redditSession': z.object({
+    status: z.enum(['connected', 'needs_reauth']),
+    username: z.string().nullable(),
+    at: z.number(),
+    reason: z.string().nullable(),
+  }),
   'state.scanRequest': z.object({ requestedAt: z.number(), productId: z.string().nullable() }),
   'state.validationRequest': z.object({ requestedAt: z.number(), names: z.array(z.string()) }),
   'state.validationProgress': z.object({

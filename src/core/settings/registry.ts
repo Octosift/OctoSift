@@ -91,6 +91,9 @@ export const SETTINGS = {
     }),
     { includeLinks: true, dmDrafts: null },
   ),
+  /** The preferred way of reading Reddit; others are tried after it when failover is on. */
+  'reddit.source': setting(z.enum(['session', 'provider', 'rss']), 'session'),
+  'reddit.failover': setting(z.boolean(), true),
   'reddit.userAgent': setting(z.string().trim().min(10).max(400), CONFIG.reddit.defaultUserAgent),
   'reddit.ownUsername': setting(
     z

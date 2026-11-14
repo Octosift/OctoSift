@@ -40,6 +40,32 @@ function health(input: Partial<HealthInput>) {
 }
 
 describe('computeHealth', () => {
+  it('asks to reconnect a Reddit account that stopped working', () => {
+    expect(health({ sessionProblem: 'Reddit asked to sign in again' })).toEqual([
+      {
+        kind: 'session_reauth',
+        severity: 'error',
+        message: 'Reconnect your Reddit account.',
+        reason: 'Reddit asked to sign in again',
+      },
+    ]);
+  });
+
+  it('explains a switch to another source, or that none was left', () => {
+    expect(
+      health({ failover: { from: 'session', to: 'rss', reason: 'Reddit refused the session' } }),
+    ).toMatchObject([
+      {
+        kind: 'source_failover',
+        message:
+          'Reading Reddit through public RSS feeds, because your Reddit account stopped working.',
+      },
+    ]);
+    expect(health({ failover: { from: 'rss', to: null, reason: 'Blocked' } })[0]?.message).toBe(
+      'Reddit could not be read: public RSS feeds stopped working and no other source is set up.',
+    );
+  });
+
   it('reports nothing when scans are finding leads', () => {
     expect(health({ runs: [run(1, productive), run(2, productive), run(3, productive)] })).toEqual(
       [],

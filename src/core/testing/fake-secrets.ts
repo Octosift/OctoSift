@@ -1,3 +1,7 @@
+import type { Db } from '../db/client';
+import { createRedactor } from '../secrets/redact';
+import { createSecretStore, type SecretStore } from '../secrets/store';
+
 /**
  * Key-shaped strings for tests, assembled at runtime so the source files
  * never contain anything the leak check would flag.
@@ -10,3 +14,14 @@ export const FAKE_KEYS = {
   slack: 'xo' + 'xb-' + '000000000000-T3stOnlyN0tReal',
   aws: 'AK' + 'IA' + 'T3STONLYN0TREAL0',
 };
+
+/** A real secret store with a fixed test key and no environment overrides. */
+export function createTestSecrets(db: Db): SecretStore {
+  return createSecretStore({
+    db,
+    key: Buffer.alloc(32, 7),
+    env: {},
+    redactor: createRedactor(),
+    now: () => 1_700_000_000,
+  });
+}

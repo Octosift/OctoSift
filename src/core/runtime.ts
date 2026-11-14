@@ -13,7 +13,7 @@ import {
 import { createSdkGenerator } from './ai/provider';
 import type { AiStage, Generator } from './ai/types';
 import { createUsageLedger } from './ai/usage';
-import { systemClock, type Clock, type Random } from './clock';
+import { nowSeconds, systemClock, type Clock, type Random } from './clock';
 import { CONFIG } from './config';
 import { openDatabase, type Db } from './db/client';
 import { feedbackContext } from './db/queries/feedback';
@@ -23,6 +23,10 @@ import { sendWebhook } from './notify/webhook';
 import type { ScanDeps } from './pipeline/run';
 import { createRedditClient } from './reddit/client';
 import { createRateLimiter } from './reddit/ratelimit';
+import { markSessionNeedsReauth, sessionStatus } from './reddit/account';
+import { createSourceChain, sourceOrder, type SourceCandidate } from './reddit/chain';
+import { createSessionSource } from './reddit/session';
+import { createSessionClient } from './reddit/session-client';
 import { createAtomSource } from './reddit/source';
 import type { RedditSource } from './reddit/types';
 import { loadMasterKey } from './secrets/crypto';
@@ -30,7 +34,7 @@ import { createRedactor, type Redactor } from './secrets/redact';
 import { createSecretStore, type SecretStore } from './secrets/store';
 import { createDataForSeoFetcher, type SerpFetcher } from './serp/dataforseo';
 import { createSettingsStore, type SettingsStore } from './settings/store';
-import { readState, writeState } from './state';
+import { clearState, readState, writeState } from './state';
 
 export interface Runtime {
   env: AppEnv;
@@ -119,7 +123,65 @@ export function createRuntime(options: RuntimeOptions): Runtime {
     },
   });
 
-  const source = options.overrides?.source ?? createAtomSource({ client, clock });
+  const rssSource = createAtomSource({ client, clock });
+  // One limiter for the session for the life of the process, so pacing holds across scans.
+  const sessionLimiter = createRateLimiter({
+    clock,
+    random,
+    minSpacingMs: CONFIG.session.minSpacingMs,
+    maxJitterMs: CONFIG.session.maxJitterMs,
+    maxWaitMs: 120_000,
+    maxPerHour: CONFIG.session.maxPerHour,
+  });
+
+  /** The sources that are set up, in the order the user prefers. */
+  function candidates(): SourceCandidate[] {
+    const available: SourceCandidate[] = [];
+    for (const id of sourceOrder(settings.get('reddit.source'))) {
+      if (id === 'rss') available.push({ id, source: rssSource });
+      if (id === 'session' && sessionStatus(db, secrets).status === 'connected') {
+        const sessionClient = createSessionClient({
+          cookie: () => {
+            const cookie = secrets.use('reddit_session_cookie');
+            return cookie.ok ? cookie.value : null;
+          },
+          userAgent: () => settings.get('reddit.userAgent'),
+          limiter: sessionLimiter,
+          clock,
+          onInvalid: (reason) => {
+            markSessionNeedsReauth(db, reason, nowSeconds(clock));
+            log.warn('Reddit session needs reconnecting', { reason });
+          },
+        });
+        available.push({
+          id,
+          source: createSessionSource({
+            client: sessionClient,
+            clock,
+            maxPostAgeHours: () => settings.get('prefilter.maxPostAgeHours'),
+          }),
+        });
+      }
+    }
+    return available;
+  }
+
+  /** A fresh chain: each scan starts again from the preferred source. */
+  function buildSource(): RedditSource {
+    if (options.overrides?.source) return options.overrides.source;
+    return createSourceChain(candidates(), {
+      failover: settings.get('reddit.failover'),
+      onFailover: (from, to, reason) => {
+        writeState(db, 'state.sourceFailover', { from, to, reason, at: nowSeconds(clock) });
+        log.warn('Reddit source failed; trying the next one', { from, to, reason });
+      },
+      onPreferredWorks: () => {
+        if (readState(db, 'state.sourceFailover')) clearState(db, 'state.sourceFailover');
+      },
+    });
+  }
+
+  const source = buildSource();
   const generator = options.overrides?.generator ?? createSdkGenerator();
   const resolveModel = options.overrides?.resolveModel ?? createModelResolver(settings, secrets);
 
@@ -163,7 +225,7 @@ export function createRuntime(options: RuntimeOptions): Runtime {
     scanDeps: () => {
       const deps: ScanDeps = {
         db,
-        source,
+        source: buildSource(),
         generator,
         resolveModel,
         settings,
