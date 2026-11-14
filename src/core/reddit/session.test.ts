@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { createFakeClock } from '../testing/fake-clock';
 import { createRateLimiter } from './ratelimit';
 import { createSessionSource, parseListing } from './session';
-import { createSessionClient } from './session-client';
+import { createSessionClient, type SessionClientOptions } from './session-client';
 
 const NOW = 1_800_000_000;
 const COOKIE = 'reddit_session=synthetic-session-value; token_v2=synthetic-token';
@@ -28,7 +28,11 @@ function http(routes: Record<string, () => Response>) {
 const ok = (body: unknown) => () =>
   new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
 
-function setup(routes: Record<string, () => Response>, cookie: string | null = COOKIE) {
+function setup(
+  routes: Record<string, () => Response>,
+  cookie: string | null = COOKIE,
+  extra: Partial<SessionClientOptions> = {},
+) {
   const clock = createFakeClock(NOW * 1000);
   const { requests, fetchImpl } = http(routes);
   const invalid: string[] = [];
@@ -46,6 +50,7 @@ function setup(routes: Record<string, () => Response>, cookie: string | null = C
     clock,
     onInvalid: (reason) => invalid.push(reason),
     fetchImpl,
+    ...extra,
   });
   const source = createSessionSource({ client, clock, maxPostAgeHours: () => 48 });
   return { clock, requests, invalid, client, source };
@@ -215,7 +220,52 @@ describe('session client', () => {
       ok: false,
       kind: 'rate_limited',
       message: 'Reddit asked to slow down',
+      status: 429,
       retryAfterS: 120,
     });
+  });
+
+  it.each(['private', 'banned', 'quarantined'])(
+    'treats a 403 for a %s subreddit as that subreddit gone, not as a broken session',
+    async (reason) => {
+      const { client, invalid } = setup({
+        '/r/a_demo.json': () =>
+          new Response(JSON.stringify({ reason, message: 'Forbidden', error: 403 }), {
+            status: 403,
+          }),
+      });
+      expect(await client.getJson('/r/a_demo.json')).toMatchObject({
+        ok: false,
+        kind: 'gone',
+        status: 403,
+      });
+      expect(invalid).toEqual([]);
+    },
+  );
+
+  it('can leave the session alone when a check gets a web page instead of data', async () => {
+    const { client, invalid } = setup(
+      {
+        '/user/demo_reader/about.json': () =>
+          new Response(fixture('blocked.html'), { headers: { 'content-type': 'text/html' } }),
+      },
+      COOKIE,
+      { webPageMeansSignedOut: false },
+    );
+    expect(await client.getJson('/user/demo_reader/about.json')).toMatchObject({
+      ok: false,
+      kind: 'network',
+    });
+    expect(invalid).toEqual([]);
+  });
+
+  it('still marks the session on a refusal when web pages are tolerated', async () => {
+    const { client, invalid } = setup(
+      { '/user/demo_reader/about.json': () => new Response('', { status: 401 }) },
+      COOKIE,
+      { webPageMeansSignedOut: false },
+    );
+    expect(await client.getJson('/user/demo_reader/about.json')).toMatchObject({ kind: 'auth' });
+    expect(invalid).toHaveLength(1);
   });
 });

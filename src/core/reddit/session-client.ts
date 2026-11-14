@@ -4,8 +4,10 @@
  * The Cookie header is a secret: it is sent only to www.reddit.com, never
  * logged, and passed in for every request rather than kept here. Requests go
  * one at a time through the session's own limiter. A 401 or 403, a redirect
- * to the login page or a body that is not JSON means the session no longer
- * works: the client reports it once and makes no further requests.
+ * to the login page or (for listing reads) a body that is not JSON means the
+ * session no longer works: the client reports it once and makes no further
+ * requests. A 403 that names a private or banned subreddit is about that
+ * subreddit, not the session.
  */
 import type { Clock } from '../clock';
 import { CONFIG } from '../config';
@@ -17,7 +19,14 @@ export type SessionFailureKind = 'auth' | 'gone' | 'rate_limited' | 'network';
 
 export type SessionResponse =
   | { ok: true; json: unknown }
-  | { ok: false; kind: SessionFailureKind; message: string; retryAfterS?: number };
+  | {
+      ok: false;
+      kind: SessionFailureKind;
+      message: string;
+      retryAfterS?: number;
+      /** The HTTP status, when Reddit answered with one. */
+      status?: number;
+    };
 
 export interface SessionClient {
   getJson(path: string): Promise<SessionResponse>;
@@ -31,6 +40,12 @@ export interface SessionClientOptions {
   clock: Clock;
   /** Called once when the session stops working, so the app can ask to reconnect. */
   onInvalid: (reason: string) => void;
+  /**
+   * Whether a web page instead of JSON means the session stopped working. True
+   * for listing reads; checks of single threads and profiles pass false, so only
+   * a refusal or a sign-in redirect marks the session.
+   */
+  webPageMeansSignedOut?: boolean;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
 }
@@ -39,8 +54,24 @@ function invalid(message: string): SessionResponse {
   return { ok: false, kind: 'auth', message };
 }
 
+/** Reasons Reddit gives in a 403 for a subreddit the account may not see. */
+const COMMUNITY_REFUSALS = new Set(['private', 'banned', 'quarantined', 'gold_only', 'gated']);
+
+/** The subreddit-level reason of a 403, or null when the refusal is about the session. */
+async function communityRefusal(response: Response): Promise<string | null> {
+  try {
+    const body = JSON.parse(await response.text()) as unknown;
+    const reason =
+      typeof body === 'object' && body !== null && 'reason' in body ? body.reason : null;
+    return typeof reason === 'string' && COMMUNITY_REFUSALS.has(reason) ? reason : null;
+  } catch {
+    // Not JSON: an HTML block page, which is about the session.
+    return null;
+  }
+}
+
 export function createSessionClient(options: SessionClientOptions): SessionClient {
-  const { limiter, clock, onInvalid, fetchImpl = fetch } = options;
+  const { limiter, clock, onInvalid, fetchImpl = fetch, webPageMeansSignedOut = true } = options;
   const timeoutMs = options.timeoutMs ?? CONFIG.session.timeoutMs;
   let broken: string | null = null;
 
@@ -78,15 +109,22 @@ export function createSessionClient(options: SessionClientOptions): SessionClien
         return markBroken('Reddit asked to sign in again');
       }
       // Reddit redirects listings of subreddits that do not exist to a search page.
-      return { ok: false, kind: 'gone', message: `Redirected (HTTP ${String(status)})` };
+      return { ok: false, kind: 'gone', status, message: `Redirected (HTTP ${String(status)})` };
     }
-    if (status === 401 || status === 403) {
+    if (status === 403) {
+      const reason = await communityRefusal(response);
+      if (reason) {
+        return { ok: false, kind: 'gone', status, message: `The subreddit is ${reason}` };
+      }
+      return markBroken('Reddit refused the session (HTTP 403)');
+    }
+    if (status === 401) {
       await response.body?.cancel();
-      return markBroken(`Reddit refused the session (HTTP ${String(status)})`);
+      return markBroken('Reddit refused the session (HTTP 401)');
     }
     if (status === 404) {
       await response.body?.cancel();
-      return { ok: false, kind: 'gone', message: 'Not found' };
+      return { ok: false, kind: 'gone', status, message: 'Not found' };
     }
     if (status === 429) {
       await response.body?.cancel();
@@ -95,19 +133,28 @@ export function createSessionClient(options: SessionClientOptions): SessionClien
         ok: false,
         kind: 'rate_limited',
         message: 'Reddit asked to slow down',
+        status,
         ...(Number.isFinite(retry) && retry > 0 ? { retryAfterS: retry } : {}),
       };
     }
     if (!response.ok) {
       await response.body?.cancel();
-      return { ok: false, kind: 'network', message: `Reddit answered HTTP ${String(status)}` };
+      return {
+        ok: false,
+        kind: 'network',
+        status,
+        message: `Reddit answered HTTP ${String(status)}`,
+      };
     }
     const text = await response.text();
     try {
       return { ok: true, json: JSON.parse(text) as unknown };
     } catch {
       // An HTML block or sign-in page instead of JSON.
-      return markBroken('Reddit sent a web page instead of data');
+      const message = 'Reddit sent a web page instead of data';
+      return webPageMeansSignedOut
+        ? markBroken(message)
+        : { ok: false, kind: 'network', status, message };
     }
   }
 
