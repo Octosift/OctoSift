@@ -50,6 +50,7 @@ export function guardAi(
     ai: {
       object: async (call) => (reason ? stopped() : observe(await ai.object(call))),
       text: async (call) => (reason ? stopped() : observe(await ai.text(call))),
+      ...(ai.batchSize ? { batchSize: ai.batchSize.bind(ai) } : {}),
     },
     tripped: () => reason,
     stats: () => ({ calls, failures }),

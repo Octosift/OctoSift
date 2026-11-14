@@ -47,6 +47,17 @@ export interface AiCall {
 export interface AiClient {
   object<T>(call: AiCall & { schema: z.ZodType<T> }): Promise<AiResult<T>>;
   text(call: AiCall): Promise<AiResult<string>>;
+  /**
+   * How many posts one call should carry for a batched stage. The CLI
+   * provider pays a large fixed cost per call, so it batches far more.
+   */
+  batchSize?(task: 'triage' | 'qualify'): number;
+}
+
+/** Posts per call for a batched stage on a provider. */
+export function batchSizeFor(task: 'triage' | 'qualify', provider: ProviderId | null): number {
+  if (provider === 'codex_cli') return CONFIG.ai.cliBatch[task];
+  return task === 'triage' ? CONFIG.triage.batchSize : 1;
 }
 
 export interface AiClientOptions {
@@ -122,6 +133,10 @@ export function createAiClient(options: AiClientOptions): AiClient {
     object: <T>(call: AiCall & { schema: z.ZodType<T> }) =>
       run(call, call.schema) as Promise<AiResult<T>>,
     text: (call) => run(call, null) as Promise<AiResult<string>>,
+    batchSize: (task) => {
+      const resolution = resolveModel(TASK_STAGE[task]);
+      return batchSizeFor(task, resolution.ok ? resolution.model.provider : null);
+    },
   };
 }
 

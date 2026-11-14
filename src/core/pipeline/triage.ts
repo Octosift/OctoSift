@@ -79,6 +79,12 @@ async function askBatch(
   return { ok: true, answers };
 }
 
+/**
+ * With small batches (the API providers) a failed or incomplete batch is
+ * retried one post at a time. With large ones (the CLI provider, where each
+ * call carries a large fixed cost) the posts left out are asked again once,
+ * together, and a batch that fails is left for the next scan.
+ */
 export async function triagePosts(
   ai: AiClient,
   profile: ProductProfile,
@@ -86,7 +92,14 @@ export async function triagePosts(
   batchSize: number = CONFIG.triage.batchSize,
 ): Promise<TriageRun> {
   const outcomes = new Map<string, StageOutcome>();
+  const retrySingly = batchSize <= CONFIG.triage.batchSize;
   let budgetStop: Extract<StageOutcome, { verdict: 'error' }> | null = null;
+  const unanswered = (model: string | null): StageOutcome => ({
+    verdict: 'error',
+    reason: 'The model did not answer for this post',
+    model,
+    budget: false,
+  });
 
   for (let start = 0; start < posts.length; start += batchSize) {
     const batch = posts.slice(start, start + batchSize);
@@ -98,6 +111,21 @@ export async function triagePosts(
     if (!answer.ok && answer.outcome.budget) {
       budgetStop = answer.outcome;
       for (const post of batch) outcomes.set(post.id, budgetStop);
+      continue;
+    }
+    if (!retrySingly) {
+      if (!answer.ok) {
+        for (const post of batch) outcomes.set(post.id, answer.outcome);
+        continue;
+      }
+      const missing = batch.filter((post) => !answer.answers.has(post.id));
+      const again = missing.length > 0 ? await askBatch(ai, profile, missing) : null;
+      if (again && !again.ok && again.outcome.budget) budgetStop = again.outcome;
+      for (const post of batch) {
+        const found =
+          answer.answers.get(post.id) ?? (again?.ok ? again.answers.get(post.id) : null);
+        outcomes.set(post.id, found ?? (again && !again.ok ? again.outcome : unanswered(null)));
+      }
       continue;
     }
     for (const post of batch) {
@@ -112,12 +140,7 @@ export async function triagePosts(
       }
       const single = await askBatch(ai, profile, [post]);
       const outcome = single.ok
-        ? (single.answers.get(post.id) ?? {
-            verdict: 'error' as const,
-            reason: 'The model did not answer for this post',
-            model: null,
-            budget: false,
-          })
+        ? (single.answers.get(post.id) ?? unanswered(null))
         : single.outcome;
       if (outcome.verdict === 'error' && outcome.budget) budgetStop = outcome;
       outcomes.set(post.id, outcome);

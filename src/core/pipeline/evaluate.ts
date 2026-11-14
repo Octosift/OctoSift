@@ -21,7 +21,7 @@ import {
   type ReadyProduct,
 } from './evaluate-context';
 import { prefilter, type PrefilterContext } from './prefilter';
-import { qualifyPost } from './qualify';
+import { qualifyPost, qualifyPosts, type QualifyContext, type QualifyOutcome } from './qualify';
 import { recordBrandMention, recordLead } from './record-lead';
 import { finalScore } from './score';
 import { triagePosts } from './triage';
@@ -120,6 +120,7 @@ async function triageStep(
       title: post.title,
       bodyText: post.bodyText,
     })),
+    ctx.ai.batchSize?.('triage') ?? CONFIG.triage.batchSize,
   );
   const kept: PostRow[] = [];
   for (const [postId, outcome] of run.outcomes) {
@@ -134,32 +135,76 @@ async function triageStep(
   return kept;
 }
 
+function qualifyContext(
+  ctx: EvaluateContext,
+  product: ReadyProduct,
+  subreddit: SubredditRow | null,
+): QualifyContext {
+  const rules = rulesSummaryOf(subreddit);
+  return {
+    profile: product.profile,
+    rulesSummary: rules ? `Promotion: ${rules.promotion}. Links: ${rules.links}.` : null,
+    feedback: ctx.feedbackFor(product.id),
+    now: ctx.now,
+  };
+}
+
+function qualifyCandidate(post: PostRow) {
+  return {
+    id: post.id,
+    subreddit: post.subreddit,
+    title: post.title,
+    bodyText: post.bodyText,
+    createdAt: post.createdAt,
+    score: post.score,
+    commentCount: post.commentCount,
+  };
+}
+
+/**
+ * For providers that charge per call, judges posts several at a time, one
+ * subreddit per call since its rules are part of the prompt.
+ */
+async function qualifyInBatches(
+  ctx: EvaluateContext,
+  product: ReadyProduct,
+  posts: PostRow[],
+  subreddits: Map<string, SubredditRow>,
+  size: number,
+): Promise<Map<string, QualifyOutcome>> {
+  const outcomes = new Map<string, QualifyOutcome>();
+  const bySubreddit = new Map<string, PostRow[]>();
+  for (const post of posts) {
+    bySubreddit.set(post.subreddit, [...(bySubreddit.get(post.subreddit) ?? []), post]);
+  }
+  for (const [name, group] of bySubreddit) {
+    const context = qualifyContext(ctx, product, subreddits.get(name) ?? null);
+    for (let start = 0; start < group.length; start += size) {
+      if (!aiAvailable(ctx)) return outcomes;
+      const chunk = group.slice(start, start + size);
+      const answers = await qualifyPosts(ctx.ai, chunk.map(qualifyCandidate), context);
+      for (const [id, outcome] of answers) outcomes.set(id, outcome);
+      const budget = [...answers.values()].find(
+        (outcome) => !outcome.ok && outcome.kind === 'budget',
+      );
+      if (budget && !budget.ok) ctx.state.budgetStop ??= budget.message;
+    }
+  }
+  return outcomes;
+}
+
 /** Qualifies one post, applies the veto rules and the score, and records a lead when it passes. */
 async function judgePost(
   ctx: EvaluateContext,
   product: ReadyProduct,
   post: PostRow,
   subreddit: SubredditRow | null,
+  given?: QualifyOutcome,
 ): Promise<void> {
   const rules = rulesSummaryOf(subreddit);
-  const outcome = await qualifyPost(
-    ctx.ai,
-    {
-      id: post.id,
-      subreddit: post.subreddit,
-      title: post.title,
-      bodyText: post.bodyText,
-      createdAt: post.createdAt,
-      score: post.score,
-      commentCount: post.commentCount,
-    },
-    {
-      profile: product.profile,
-      rulesSummary: rules ? `Promotion: ${rules.promotion}. Links: ${rules.links}.` : null,
-      feedback: ctx.feedbackFor(product.id),
-      now: ctx.now,
-    },
-  );
+  const outcome =
+    given ??
+    (await qualifyPost(ctx.ai, qualifyCandidate(post), qualifyContext(ctx, product, subreddit)));
   if (!outcome.ok) {
     saveVerdict(ctx, product.id, post.id, 'qualify', 'error', outcome.message, {
       model: outcome.model,
@@ -236,8 +281,16 @@ export async function evaluateProduct(
   ctx.onProgress();
 
   const subreddits = new Map(getSubreddits(ctx.db, [...watched]).map((row) => [row.name, row]));
-  for (const post of [...resuming.map(read), ...kept]) {
-    if (!aiAvailable(ctx)) break;
-    await judgePost(ctx, product, post, subreddits.get(post.subreddit) ?? null);
+  const toJudge = [...resuming.map(read), ...kept];
+  const size = ctx.ai.batchSize?.('qualify') ?? 1;
+  const judged =
+    size > 1
+      ? await qualifyInBatches(ctx, product, toJudge, subreddits, size)
+      : new Map<string, QualifyOutcome>();
+  for (const post of toJudge) {
+    // A batched answer is recorded even after a stop, so no paid work is thrown away.
+    const given = judged.get(post.id);
+    if (!given && !aiAvailable(ctx)) break;
+    await judgePost(ctx, product, post, subreddits.get(post.subreddit) ?? null, given);
   }
 }

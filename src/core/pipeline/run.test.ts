@@ -35,6 +35,26 @@ describe.each(SAMPLE_PRODUCT_SLUGS)('a first scan for %s', (slug) => {
     expect(report.leads).toHaveLength(16);
   });
 
+  it('batches triage and qualify on the CLI provider and finds the same leads', async () => {
+    const cli = createScanHarness(slug, {
+      resolveModel: (stage) => ({
+        ok: true,
+        model: { provider: 'codex_cli', model: `fake-${stage}` },
+        credentials: { apiKey: '', baseUrl: null },
+      }),
+    });
+    const report = await runScan(cli.deps, { trigger: 'cli' });
+    const api = await runScan(createScanHarness(slug).deps, { trigger: 'cli' });
+    expect(report.counts).toEqual(api.counts);
+    const calls = (task: string) => cli.generator.calls.filter((call) => call.task === task);
+    // 24 posts reach triage in one call; 20 reach qualify, at most five per call per subreddit.
+    expect(calls('triage')).toHaveLength(1);
+    expect(calls('qualify').length).toBeLessThanOrEqual(
+      cli.golden.subreddits.length + Math.ceil(20 / 5),
+    );
+    expect(calls('qualify').every((call) => (call.subject.postIds?.length ?? 0) <= 5)).toBe(true);
+  });
+
   it('leaves every post at the outcome its label expects', async () => {
     const harness = createScanHarness(slug);
     await runScan(harness.deps, { trigger: 'cli' });

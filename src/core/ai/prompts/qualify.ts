@@ -42,10 +42,14 @@ function examples(items: FeedbackExample[]): string {
   );
 }
 
-export function buildQualifyPrompt(input: QualifyInput): PromptParts {
-  const { profile, rulesSummary, feedback, post } = input;
-  const system = [
-    'You help a founder decide whether to reply to a Reddit post.',
+type QualifyPost = QualifyInput['post'];
+
+function qualifySystem(input: Omit<QualifyInput, 'post'>, batch: boolean): string {
+  const { profile, rulesSummary, feedback } = input;
+  return [
+    batch
+      ? 'You help a founder decide whether to reply to each of several Reddit posts.'
+      : 'You help a founder decide whether to reply to a Reddit post.',
     `PRODUCT PROFILE\n${profileText(profile)}`,
     `THE PRODUCT DOES NOT HELP WITH\n${notForText(profile)}`,
     `SUBREDDIT RULES\n${rulesSummary ?? 'Unknown. Assume the subreddit dislikes promotion.'}`,
@@ -56,7 +60,7 @@ export function buildQualifyPrompt(input: QualifyInput): PromptParts {
       `Leads the founder marked as bad:\n${examples(feedback.bad)}`,
     ].join('\n'),
     [
-      'Decide:',
+      batch ? 'Decide for each post on its own:' : 'Decide:',
       '- fit: "direct" when the author asks for, or clearly needs, what the product does.',
       '  "soft" when the product is related and a helpful reply could mention it naturally.',
       '  "none" when the product would not help with what the author actually wants.',
@@ -74,11 +78,15 @@ export function buildQualifyPrompt(input: QualifyInput): PromptParts {
       '- reason: under 240 characters, written for the founder.',
       '',
       'Judge what the author wants, not which keywords appear. When unsure, choose the lower score.',
+      ...(batch ? ['Return exactly one result per post, with the post id exactly as given.'] : []),
     ].join('\n'),
-    untrustedNotice('post', 'a Reddit user'),
+    untrustedNotice('post', batch ? 'Reddit users' : 'a Reddit user'),
   ].join('\n\n');
+}
 
-  const prompt = fence('post', `Title: ${post.title}\nBody: ${post.body || '(no text)'}`, {
+function postBlock(post: QualifyPost, id?: string): string {
+  return fence('post', `Title: ${post.title}\nBody: ${post.body || '(no text)'}`, {
+    ...(id ? { id } : {}),
     subreddit: `r/${post.subreddit}`,
     age: describeAge(post.ageSeconds),
     ...(post.score !== undefined &&
@@ -88,6 +96,18 @@ export function buildQualifyPrompt(input: QualifyInput): PromptParts {
       ? { engagement: `${String(post.score)} points, ${String(post.commentCount)} comments` }
       : {}),
   });
+}
 
-  return { system, prompt };
+export function buildQualifyPrompt(input: QualifyInput): PromptParts {
+  return { system: qualifySystem(input, false), prompt: postBlock(input.post) };
+}
+
+/** Several posts from one subreddit in one call, for providers that charge per call. */
+export function buildQualifyBatchPrompt(
+  input: Omit<QualifyInput, 'post'> & { posts: (QualifyPost & { id: string })[] },
+): PromptParts {
+  return {
+    system: qualifySystem(input, true),
+    prompt: input.posts.map((post) => postBlock(post, post.id)).join('\n\n'),
+  };
 }

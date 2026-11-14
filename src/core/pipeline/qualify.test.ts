@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { fakeAiClient } from '../testing/fake-ai';
 import { loadSampleProduct } from '../demo/sample-products';
-import { qualifyPost, quoteAppearsIn, type QualifyCandidate, type QualifyContext } from './qualify';
+import {
+  qualifyPost,
+  qualifyPosts,
+  quoteAppearsIn,
+  type QualifyCandidate,
+  type QualifyContext,
+} from './qualify';
 
 const NOW = 1_800_000_000;
 
@@ -112,5 +118,46 @@ describe('quoteAppearsIn', () => {
 
   it('rejects a paraphrase', () => {
     expect(quoteAppearsIn('Is there an app for payment reminders?', text)).toBe(false);
+  });
+});
+
+describe('qualifyPosts', () => {
+  const second: QualifyCandidate = {
+    ...candidate,
+    id: 't3_q2',
+    title: 'Coffee meme',
+    bodyText: 'Monday again.',
+  };
+  const third: QualifyCandidate = { ...candidate, id: 't3_q3' };
+
+  it('judges several posts in one call, each with its own result and id', async () => {
+    const { ai, generator } = fakeAiClient(() => ({
+      output: {
+        results: [
+          { id: 't3_q1', ...answer().output },
+          {
+            id: 't3_q2',
+            ...answer({ fit: 'none', score: 5, evidence_quote: 'not in the post' }).output,
+          },
+        ],
+      },
+    }));
+    const outcomes = await qualifyPosts(ai, [candidate, second, third], context);
+    expect(generator.calls).toHaveLength(1);
+    expect(generator.calls[0]?.prompt).toContain('id="t3_q2"');
+    expect(generator.calls[0]?.system).toContain('Return exactly one result per post');
+    expect(outcomes.get('t3_q1')).toMatchObject({ ok: true, internalFlags: [] });
+    expect(outcomes.get('t3_q2')).toMatchObject({ ok: true, internalFlags: ['unverified_quote'] });
+    expect(outcomes.get('t3_q3')).toMatchObject({
+      ok: false,
+      kind: 'invalid_output',
+      message: 'The model did not answer for this post',
+    });
+  });
+
+  it('gives every post the failure when the call fails', async () => {
+    const { ai } = fakeAiClient(() => ({ fail: 'provider_error', message: 'down' }));
+    const outcomes = await qualifyPosts(ai, [candidate, second], context);
+    expect([...outcomes.values()].every((outcome) => !outcome.ok)).toBe(true);
   });
 });

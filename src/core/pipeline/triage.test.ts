@@ -114,4 +114,27 @@ describe('triagePosts', () => {
     expect(run.outcomes.get('t3_t10')).toMatchObject({ verdict: 'error', budget: true });
     expect(run.outcomes.size).toBe(15);
   });
+
+  it('in large batches asks the posts left out again together, without single retries', async () => {
+    const { ai, generator } = fakeAiClient((request) => {
+      const ids = request.subject.postIds ?? [];
+      // The first answer skips two posts; the second ask answers them.
+      const answered = ids.length > 2 ? ids.filter((id) => id !== 't3_t3' && id !== 't3_t7') : ids;
+      return answerAll({ ...request, subject: { postIds: answered } });
+    });
+    const run = await triagePosts(ai, profile, candidates(30), 25);
+    expect(generator.calls.map((call) => call.subject.postIds?.length)).toEqual([25, 2, 5]);
+    expect(run.outcomes.get('t3_t3')?.verdict).toBe('skip');
+    expect(run.outcomes.size).toBe(30);
+  });
+
+  it('in large batches leaves a failed batch for the next scan', async () => {
+    const { ai, generator } = fakeAiClient(() => ({
+      fail: 'provider_error',
+      message: 'Codex did not answer within 180 seconds.',
+    }));
+    const run = await triagePosts(ai, profile, candidates(25), 25);
+    expect(generator.calls).toHaveLength(1);
+    expect(run.outcomes.get('t3_t0')).toMatchObject({ verdict: 'error', budget: false });
+  });
 });

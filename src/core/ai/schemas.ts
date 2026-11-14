@@ -89,6 +89,11 @@ export const qualifyWire = z.object({
   alternatives_mentioned: z.array(z.string()),
 });
 
+/** Several posts judged in one call: one result per post, keyed by its id. */
+export const qualifyBatchWire = z.object({
+  results: z.array(qualifyWire.extend({ id: z.string() })),
+});
+
 export interface QualifyResult {
   fit: Fit;
   intent: Intent;

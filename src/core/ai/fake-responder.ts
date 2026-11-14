@@ -10,7 +10,7 @@ import type { GoldenLabel } from '../eval/golden';
 import { labelScore } from '../eval/golden';
 import type { ProductProfile } from '../profile/types';
 import type { FakeReply } from './fake';
-import type { ExtractedProfile } from './schemas';
+import { qualifyBatchWire, type ExtractedProfile } from './schemas';
 import type { GenerateRequest } from './types';
 
 /** A hand-written answer for one post: what a good model would say about it. */
@@ -161,10 +161,10 @@ export function createFixtureResponder(options: FixtureResponderOptions) {
           },
         };
       case 'qualify': {
-        const label = labels.get(ids[0] ?? '');
-        if (!label) {
-          return {
-            output: {
+        const answer = (id: string) => {
+          const label = labels.get(id);
+          if (!label) {
+            return {
               fit: 'none',
               intent: 'other',
               score: 10,
@@ -175,12 +175,10 @@ export function createFixtureResponder(options: FixtureResponderOptions) {
               suggested_angle: '',
               risk_flags: [],
               alternatives_mentioned: [],
-            },
-          };
-        }
-        const script = scripted.get(ids[0] ?? '');
-        return {
-          output: {
+            };
+          }
+          const script = scripted.get(id);
+          return {
             fit: label.fit,
             intent: label.intent,
             score: script?.score ?? labelScore(label),
@@ -192,8 +190,13 @@ export function createFixtureResponder(options: FixtureResponderOptions) {
               script?.angle ?? 'Answer the question first, then share what worked for others.',
             risk_flags: label.riskFlags,
             alternatives_mentioned: [],
-          },
+          };
         };
+        // Batched calls (for providers that charge per call) answer every post at once.
+        if (request.schema === qualifyBatchWire) {
+          return { output: { results: ids.map((id) => ({ id, ...answer(id) })) } };
+        }
+        return { output: answer(ids[0] ?? '') };
       }
       case 'draft': {
         const script = scripted.get(ids[0] ?? '');
