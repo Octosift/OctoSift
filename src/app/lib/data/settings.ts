@@ -13,7 +13,6 @@ const SHOWN_SECRETS = [
   'openai_compatible_api_key',
   'reddit_proxy_url',
   'webhook_url',
-  'vendor_api_key',
   'dataforseo_login',
   'dataforseo_password',
 ] as const satisfies readonly SecretName[];
@@ -51,8 +50,6 @@ export function loadSettings() {
       ownUsername: settings.get('reddit.ownUsername'),
       notifyFormat: settings.get('notify.format'),
       source: settings.get('reddit.source'),
-      provider: settings.get('reddit.provider'),
-      providerPriceUsd: settings.get('reddit.providerPriceUsd'),
       failover: settings.get('reddit.failover'),
     },
   };

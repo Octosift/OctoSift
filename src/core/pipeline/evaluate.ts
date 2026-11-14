@@ -13,7 +13,6 @@ import { watchedSubreddits } from '../db/queries/products';
 import { getSubreddits, rulesSummaryOf, type SubredditRow } from '../db/queries/subreddits';
 import type { RedditPost } from '../reddit/types';
 import { resumeStage } from './dedup';
-import { completePosts } from './complete';
 import { describeImages, withImage, withoutImage } from './images';
 import {
   aiAvailable,
@@ -102,35 +101,6 @@ function prefilterStep(ctx: EvaluateContext, product: ReadyProduct, posts: PostR
     passed.push(post);
   }
   return passed;
-}
-
-/**
- * Posts that were previews are checked again once their full text is in,
- * since locked, NSFW and brand-mentioning posts may only show then. Counts
- * are corrected only for posts filtered earlier in this same scan.
- */
-function recheckCompleted(
-  ctx: EvaluateContext,
-  product: ReadyProduct,
-  post: PostRow,
-  countedNow: boolean,
-): boolean {
-  const context = prefilterContext(ctx, product);
-  const verdict = prefilter(toRedditPost(post, ctx.now), context);
-  if (verdict.verdict === 'pass' && !verdict.brandMention) return true;
-  if (verdict.verdict === 'skip') {
-    saveVerdict(ctx, product.id, post.id, 'prefilter', 'skip', verdict.reason, {
-      data: { detail: verdict.detail },
-    });
-    if (countedNow) {
-      ctx.counts.prefilter.pass -= 1;
-      ctx.counts.prefilter.skip += 1;
-    }
-    return false;
-  }
-  saveVerdict(ctx, product.id, post.id, 'prefilter', 'pass', 'brand_mention');
-  recordBrandMention(ctx, product, post, [...context.brandTerms]);
-  return false;
 }
 
 /** Screens posts with the triage model; returns those it kept. */
@@ -253,24 +223,8 @@ export async function evaluateProduct(
 
   const fresh = prefilterStep(ctx, product, at('prefilter'));
   ctx.onProgress();
-  const freshIds = new Set(fresh.map((post) => post.id));
-  const wasPartial = new Set(
-    [...at('triage'), ...fresh, ...at('qualify')].filter((p) => p.partial).map((p) => p.id),
-  );
-  const completed = new Map(
-    (await completePosts(ctx, [...at('triage'), ...fresh, ...at('qualify')])).map((post) => [
-      post.id,
-      post,
-    ]),
-  );
-  const settle = (post: PostRow): PostRow | null => {
-    const latest = completed.get(post.id) ?? post;
-    if (!wasPartial.has(post.id) || latest.partial) return latest;
-    return recheckCompleted(ctx, product, latest, freshIds.has(post.id)) ? latest : null;
-  };
-  const present = (post: PostRow | null): post is PostRow => post !== null;
-  const waiting = [...at('triage'), ...fresh].map(settle).filter(present);
-  const resuming = at('qualify').map(settle).filter(present);
+  const waiting = [...at('triage'), ...fresh];
+  const resuming = at('qualify');
   const images = aiAvailable(ctx)
     ? await describeImages(ctx, [...waiting, ...resuming])
     : new Map<string, string>();

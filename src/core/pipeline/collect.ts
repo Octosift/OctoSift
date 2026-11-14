@@ -19,7 +19,7 @@ import {
   selectNewPosts,
   type SubredditPollState,
 } from '../reddit/polling';
-import type { RedditPost, RedditSource, SpendHooks } from '../reddit/types';
+import type { RedditPost, RedditSource } from '../reddit/types';
 import { contentHash, findCrossposts } from './dedup';
 import type { FunnelCounts } from './funnel';
 import type { ScanStore } from './store';
@@ -35,16 +35,12 @@ export interface CollectContext {
   defaultIntervalMinutes: number;
   /** Aborted when the scan must stop reading, for example after losing the scan lock. */
   signal?: AbortSignal;
-  /** For paid sources: the budget check and the spend record. */
-  spend?: SpendHooks;
 }
 
 export interface CollectResult {
   newPostIds: string[];
   /** Epoch seconds when Reddit reads may resume, if a block happened. */
   blockedUntil: number | null;
-  /** Set when a paid source stopped because the budget is spent. */
-  budgetStop?: string;
 }
 
 function storePosts(ctx: CollectContext, selected: RedditPost[]): string[] {
@@ -80,7 +76,7 @@ function storePosts(ctx: CollectContext, selected: RedditPost[]): string[] {
     nsfw: post.nsfw ?? false,
     locked: post.locked ?? false,
     removed: post.removed ?? false,
-    partial: post.partial ?? false,
+    partial: false,
   }));
   ctx.store.insertPosts(rows);
   return rows.map((row) => row.id);
@@ -138,7 +134,6 @@ export async function collectPosts(
     const result = await ctx.source.fetchNewPosts(request, {
       limit: CONFIG.reddit.feedLimit,
       knownIds: (ids) => knownPostIds(ctx.db, ids),
-      ...(ctx.spend ? { spend: ctx.spend } : {}),
     });
     if (!result.ok) {
       if (result.kind === 'blocked' || result.kind === 'rate_limited') {
@@ -149,12 +144,8 @@ export async function collectPosts(
         ctx.log.warn('Reddit reads paused during scan', { until, unread: unread.length });
         return { newPostIds, blockedUntil: until };
       }
-      if (result.kind === 'budget') {
-        ctx.log.info('Paid reads stopped at the budget', { reason: result.message });
-        return { newPostIds, blockedUntil: null, budgetStop: result.message ?? 'Budget reached' };
-      }
       if (result.kind === 'auth') {
-        // The account or key stopped working; every further request would fail the same way.
+        // The account stopped working; every further request would fail the same way.
         ctx.counts.redditErrors += 1;
         ctx.log.warn('Reddit source needs attention; reads stopped', { reason: result.message });
         return { newPostIds, blockedUntil: null };

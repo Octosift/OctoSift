@@ -20,7 +20,6 @@ const networkModules = [
   'src/core/notify/webhook.ts',
   'src/core/serp/dataforseo.ts',
   'src/core/reddit/session-client.ts',
-  'src/core/reddit/provider/vendor.ts',
 ];
 
 export default tseslint.config(

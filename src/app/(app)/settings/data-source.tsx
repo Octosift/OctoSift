@@ -1,11 +1,10 @@
 'use client';
 
 import { Card, CardHeader } from '../../components/ui/display';
-import { Checkbox, Field, Input, Select } from '../../components/ui/fields';
+import { Checkbox } from '../../components/ui/fields';
 import { cn } from '../../components/ui/utils';
 import type { SettingsData } from '../../lib/data/settings';
 import { SaveBar } from './models-section';
-import { SecretField } from './secret-field';
 import { useSettingsForm } from './use-settings-form';
 
 type SourceId = SettingsData['values']['source'];
@@ -14,12 +13,7 @@ const SOURCES: { id: SourceId; title: string; body: string }[] = [
   {
     id: 'session',
     title: 'Reddit account',
-    body: 'Free. Reads subreddit listings with the account connected above.',
-  },
-  {
-    id: 'provider',
-    title: 'Data provider',
-    body: 'Paid per request. For people who would rather not connect an account.',
+    body: 'Reads subreddit listings with the account connected above.',
   },
   {
     id: 'rss',
@@ -30,18 +24,8 @@ const SOURCES: { id: SourceId; title: string; body: string }[] = [
 
 export function DataSourceSection({ data }: { data: SettingsData }) {
   const form = useSettingsForm(
-    {
-      source: data.values.source,
-      provider: data.values.provider,
-      price: String(data.values.providerPriceUsd),
-      failover: data.values.failover,
-    },
-    (values) => ({
-      'reddit.source': values.source,
-      'reddit.provider': values.provider,
-      'reddit.providerPriceUsd': Number(values.price),
-      'reddit.failover': values.failover,
-    }),
+    { source: data.values.source, failover: data.values.failover },
+    (values) => ({ 'reddit.source': values.source, 'reddit.failover': values.failover }),
   );
   return (
     <Card id="data-source">
@@ -82,47 +66,6 @@ export function DataSourceSection({ data }: { data: SettingsData }) {
           ))}
         </fieldset>
 
-        <div className="flex flex-col gap-3 rounded-md border border-border px-3 py-3">
-          <p className="text-xs font-medium">Data provider</p>
-          <div className="grid gap-3 sm:grid-cols-[12rem_minmax(0,1fr)_9rem]">
-            <Field label="Adapter" htmlFor="provider-adapter">
-              <Select
-                id="provider-adapter"
-                value={form.values.provider}
-                onChange={(event) => {
-                  form.set('provider', event.target.value as typeof form.values.provider);
-                }}
-              >
-                <option value="vendor">Vendor</option>
-              </Select>
-            </Field>
-            <SecretField
-              name="vendor_api_key"
-              label="API key"
-              description={data.secrets.vendor_api_key}
-            />
-            <Field
-              label="Price per request (USD)"
-              htmlFor="provider-price"
-              error={form.errorFor('reddit.providerPriceUsd')}
-            >
-              <Input
-                id="provider-price"
-                inputMode="decimal"
-                value={form.values.price}
-                onChange={(event) => {
-                  form.set('price', event.target.value);
-                }}
-              />
-            </Field>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            A scan reads one or two pages per subreddit and fetches full posts only for those that
-            pass the free filters. Data spend counts against the same budget caps as AI and is shown
-            separately on the Runs screen.
-          </p>
-        </div>
-
         <label className="flex items-start gap-2">
           <Checkbox
             className="mt-0.5"
@@ -135,7 +78,7 @@ export function DataSourceSection({ data }: { data: SettingsData }) {
             <span className="font-medium">Fall back to the next source</span>
             <span className="block text-xs text-muted-foreground">
               When the preferred source stops working during a scan (an expired session, a blocked
-              feed), the rest of the scan uses the next one in the list above that is set up.
+              feed), the rest of the scan uses the other one, if it is set up.
             </span>
           </span>
         </label>

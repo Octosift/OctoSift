@@ -2,14 +2,14 @@
  * Chooses which way of reading Reddit a scan uses, and falls back.
  *
  * The user's preferred source comes first, then the others in a fixed order:
- * the connected session, a data provider, then public RSS. Sources that are
- * not set up are left out. With failover on, a source whose account or key
- * stops working, or that Reddit blocks, hands the rest of the scan to the
- * next one, and the switch is reported so the dashboard can explain it.
+ * the connected session, then public RSS. Sources that are not set up are
+ * left out. With failover on, a source whose account stops working, or that
+ * Reddit blocks, hands the rest of the scan to the next one, and the switch
+ * is reported so the dashboard can explain it.
  */
 import type { FetchOptions, FetchResult, RedditSource } from './types';
 
-export const SOURCE_IDS = ['session', 'provider', 'rss'] as const;
+export const SOURCE_IDS = ['session', 'rss'] as const;
 export type SourceId = (typeof SOURCE_IDS)[number] | 'demo';
 
 export interface SourceCandidate {

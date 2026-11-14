@@ -23,9 +23,8 @@ function source(results: FetchResult[], perRequest?: number) {
 
 describe('source chain', () => {
   it('orders the preferred source first and the rest in the default order', () => {
-    expect(sourceOrder('session')).toEqual(['session', 'provider', 'rss']);
-    expect(sourceOrder('rss')).toEqual(['rss', 'session', 'provider']);
-    expect(sourceOrder('provider')).toEqual(['provider', 'session', 'rss']);
+    expect(sourceOrder('session')).toEqual(['session', 'rss']);
+    expect(sourceOrder('rss')).toEqual(['rss', 'session']);
   });
 
   it('uses the first source while it works', async () => {

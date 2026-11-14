@@ -41,26 +41,6 @@ export function getPost(db: Db, id: string): PostRow | null {
   return db.select().from(posts).where(eq(posts.id, id)).get() ?? null;
 }
 
-/** Replaces a preview with the full post once a source has fetched it. */
-export function completePost(db: Db, row: PostRow): void {
-  db.update(posts)
-    .set({
-      author: row.author,
-      bodyText: row.bodyText,
-      bodyLinksJson: row.bodyLinksJson,
-      imageUrl: row.imageUrl,
-      createdAt: row.createdAt,
-      score: row.score,
-      commentCount: row.commentCount,
-      nsfw: row.nsfw,
-      locked: row.locked,
-      removed: row.removed,
-      partial: false,
-    })
-    .where(eq(posts.id, row.id))
-    .run();
-}
-
 export function getPosts(db: Db, ids: string[]): PostRow[] {
   if (ids.length === 0) return [];
   return db.select().from(posts).where(inArray(posts.id, ids)).all();

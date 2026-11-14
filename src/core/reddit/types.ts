@@ -26,8 +26,6 @@ export interface RedditPost {
   locked?: boolean;
   /** Removed by moderators or Reddit, even if the text is still there. */
   removed?: boolean;
-  /** The body is a preview; the full post is fetched after the free filters. */
-  partial?: boolean;
 }
 
 export interface RedditComment {
@@ -50,18 +48,8 @@ export interface RateInfo {
   resetS: number | null;
 }
 
-/**
- * "auth": the source's account or key no longer works and needs the user's attention.
- * "budget": a paid source stopped because the budget is spent.
- */
-export type FetchFailureKind = 'blocked' | 'rate_limited' | 'gone' | 'network' | 'auth' | 'budget';
-
-/** How a paid source asks permission to spend and reports what it spent. */
-export interface SpendHooks {
-  /** Null when another paid request may start, otherwise why not. */
-  refuse(): string | null;
-  record(costUsd: number, what: string): void;
-}
+/** "auth": the source's account no longer works and needs the user's attention. */
+export type FetchFailureKind = 'blocked' | 'rate_limited' | 'gone' | 'network' | 'auth';
 
 export type FetchResult =
   | {
@@ -79,21 +67,15 @@ export interface FetchOptions {
   limit: number;
   /** Which of these post ids are already stored, so paging can stop early. */
   knownIds?: (ids: string[]) => Set<string>;
-  spend?: SpendHooks;
   /** Read at most this many pages per subreddit, for a quick check of a source. */
   maxPages?: number;
 }
 
-export type DetailsResult =
-  { ok: true; posts: RedditPost[] } | { ok: false; kind: FetchFailureKind; message: string };
-
-/** A way of reading Reddit: Atom feeds, a connected session or a data provider. */
+/** A way of reading Reddit: Atom feeds or a connected session. New sources implement this. */
 export interface RedditSource {
   /** How many subreddits one request may combine; the configured default when absent. */
   maxSubredditsPerRequest?: number;
   fetchNewPosts(subreddits: string[], opts: FetchOptions): Promise<FetchResult>;
-  /** Full posts for ids whose listing only had a preview; for sources that mark posts partial. */
-  fetchDetails?(ids: string[], opts: { spend?: SpendHooks }): Promise<DetailsResult>;
   fetchPostWithComments?(subreddit: string, postId: string): Promise<PostThread | null>;
   checkUser?(username: string): Promise<UserVisibility>;
 }

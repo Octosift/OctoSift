@@ -188,7 +188,7 @@ function moveLeadsThroughTheirLife(db: Db, now: number): void {
       updatedAt: now - daysAgo * DAY,
     });
   };
-  /** A synthetic comment link and the visibility checks a data provider would have run. */
+  /** A synthetic comment link and the visibility checks the connected account would have run. */
   const checked = (postId: string, results: ('visible' | 'removed' | null)[]) => {
     const [lead] = byPost([postId]);
     const row = db.select().from(leads).where(eq(leads.postId, postId)).get();

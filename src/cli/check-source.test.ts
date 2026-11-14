@@ -36,14 +36,14 @@ describe('check-source', () => {
       posts: [post(12), post(40)],
       rate: { used: null, remaining: null, resetS: null },
     });
-    const chain = createSourceChain([{ id: 'provider', source: ok.value }], { failover: true });
+    const chain = createSourceChain([{ id: 'session', source: ok.value }], { failover: true });
     const result = await runCheckSource(
       { source: chain, watched: ['freelance_demo'], now: NOW },
       null,
     );
     expect(result).toEqual({
       code: 0,
-      output: 'Source: data provider\nr/freelance_demo: ok, 2 posts, newest 12 minutes old\n',
+      output: 'Source: Reddit account\nr/freelance_demo: ok, 2 posts, newest 12 minutes old\n',
     });
     expect(ok.calls).toEqual([{ names: ['freelance_demo'], opts: { limit: 25, maxPages: 1 } }]);
   });
@@ -69,13 +69,13 @@ describe('check-source', () => {
   });
 
   it('reports a failure with its reason and a non-zero exit code', async () => {
-    const failing = source({ ok: false, kind: 'auth', message: 'No data provider key is set' });
-    const chain = createSourceChain([{ id: 'provider', source: failing.value }], {
+    const failing = source({ ok: false, kind: 'auth', message: 'Reddit asked to sign in again' });
+    const chain = createSourceChain([{ id: 'session', source: failing.value }], {
       failover: false,
     });
     expect(await runCheckSource({ source: chain, watched: ['a_demo'], now: NOW }, null)).toEqual({
       code: 1,
-      output: 'Source: data provider\nr/a_demo: failed (auth): No data provider key is set\n',
+      output: 'Source: Reddit account\nr/a_demo: failed (auth): Reddit asked to sign in again\n',
     });
   });
 

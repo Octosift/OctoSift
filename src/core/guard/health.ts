@@ -61,7 +61,6 @@ export interface HealthInput {
 
 const SOURCE_NAMES: Readonly<Record<string, string>> = {
   session: 'your Reddit account',
-  provider: 'the data provider',
   rss: 'public RSS feeds',
 };
 

@@ -78,11 +78,10 @@ describe('createRuntime', () => {
 
   it('reads through the preferred source when it is set up, and otherwise through RSS', () => {
     const runtime = createRuntime({ env: env(databasePath()), rawEnv: {} });
-    runtime.settings.set('reddit.source', 'provider');
     const active = () => (runtime.scanDeps().source as SourceChain).active();
     expect(active()).toBe('rss');
-    runtime.secrets.set('vendor_api_key', 'synthetic-provider-key-0000');
-    expect(active()).toBe('provider');
+    runtime.secrets.set('reddit_session_cookie', 'reddit_session=synthetic-session-value');
+    expect(active()).toBe('session');
     runtime.settings.set('reddit.source', 'rss');
     expect(active()).toBe('rss');
     runtime.close();

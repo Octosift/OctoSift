@@ -13,7 +13,6 @@ export const CHECK_SOURCE_USAGE = `check-source [subreddit]
 
 const NAMES: Readonly<Record<string, string>> = {
   session: 'Reddit account',
-  provider: 'data provider',
   rss: 'public RSS feeds',
   demo: 'demo source',
 };
