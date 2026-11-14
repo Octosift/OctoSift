@@ -255,7 +255,10 @@ function ScannerCard({ data }: { data: HomeData }) {
         {!data.accountConnected ? (
           <p className="text-[13px] text-muted-foreground">
             Logged out, Reddit allows about one read a minute.{' '}
-            <Link className="text-foreground underline underline-offset-2" href="/settings#reddit">
+            <Link
+              className="text-foreground underline underline-offset-2"
+              href="/settings?tab=reddit"
+            >
               Connect an account
             </Link>{' '}
             to read several times faster.

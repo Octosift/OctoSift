@@ -22,7 +22,7 @@ export function HealthBanners({ issues }: { issues: HealthIssue[] }) {
               <p className="mt-0.5">
                 Reading resumes at {formatClock(issue.resumesAt)}. If this keeps happening, set a
                 proxy in{' '}
-                <Link className="underline underline-offset-2" href="/settings#reddit">
+                <Link className="underline underline-offset-2" href="/settings?tab=reddit">
                   Settings
                 </Link>
                 .
@@ -33,12 +33,7 @@ export function HealthBanners({ issues }: { issues: HealthIssue[] }) {
             issue.kind === 'source_failover' ? (
               <p className="mt-0.5">
                 {issue.reason}.{' '}
-                <Link
-                  className="underline underline-offset-2"
-                  href={
-                    issue.kind === 'source_failover' ? '/settings#data-source' : '/settings#reddit'
-                  }
-                >
+                <Link className="underline underline-offset-2" href="/settings?tab=reddit">
                   {issue.kind === 'session_reauth'
                     ? 'Reconnect it or choose another data source in Settings'
                     : issue.kind === 'account_hidden'
@@ -56,7 +51,7 @@ export function HealthBanners({ issues }: { issues: HealthIssue[] }) {
                   Runs
                 </Link>{' '}
                 for details, or check{' '}
-                <Link className="underline underline-offset-2" href="/settings#ai">
+                <Link className="underline underline-offset-2" href="/settings">
                   Settings
                 </Link>
                 .

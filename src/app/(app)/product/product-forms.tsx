@@ -117,6 +117,7 @@ export function ProfileForm({
         </Banner>
       ) : null}
       <SaveBar
+        sticky
         pending={form.pending}
         saved={form.saved}
         hasErrors={Object.keys(form.errors).length > 0}

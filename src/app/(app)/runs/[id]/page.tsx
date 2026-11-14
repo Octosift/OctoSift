@@ -129,7 +129,7 @@ export default async function RunPage({
         <Card className="min-w-0">
           <nav
             aria-label="Stages"
-            className="flex gap-1 overflow-x-auto border-b border-border px-3"
+            className="no-scrollbar flex gap-5 overflow-x-auto border-b border-border px-4"
           >
             {(Object.keys(STAGES) as Stage[]).map((key) => (
               <Link
@@ -137,8 +137,8 @@ export default async function RunPage({
                 href={`/runs/${run.id}?stage=${key}`}
                 aria-current={key === stage ? 'page' : undefined}
                 className={cn(
-                  '-mb-px shrink-0 border-b-2 border-transparent px-2 py-2 text-sm text-muted-foreground hover:text-foreground',
-                  key === stage && 'border-brand font-medium text-foreground',
+                  '-mb-px shrink-0 border-b-2 border-transparent py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground',
+                  key === stage && 'border-foreground font-medium text-foreground',
                 )}
               >
                 {STAGES[key]}
