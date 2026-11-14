@@ -18,6 +18,7 @@ const networkModules = [
   'src/core/ai/provider.ts',
   'src/core/profile/crawl.ts',
   'src/core/notify/webhook.ts',
+  'src/core/serp/dataforseo.ts',
 ];
 
 export default tseslint.config(

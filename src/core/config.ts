@@ -215,6 +215,19 @@ export const CONFIG = deepFreeze({
     pageHints: ['pricing', 'price', 'plans', 'features', 'about', 'docs', 'faq', 'how-it-works'],
   },
 
+  /** Threads that rank on Google, from DataForSEO (optional). */
+  serp: {
+    locationCode: 2840, // United States
+    languageCode: 'en',
+    depth: 20,
+    maxKeywords: 20,
+    concurrency: 4,
+    intervalDays: 7,
+    timeoutMs: 60_000,
+    /** A run still marked running after this long is treated as abandoned. */
+    staleRunS: 15 * 60,
+  },
+
   subreddits: {
     maxSuggestions: 15,
     minSelected: 3,
