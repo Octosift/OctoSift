@@ -9,6 +9,8 @@ const SHOWN_SECRETS = [
   'openai_compatible_api_key',
   'reddit_proxy_url',
   'webhook_url',
+  'dataforseo_login',
+  'dataforseo_password',
 ] as const satisfies readonly SecretName[];
 
 export type ShownSecret = (typeof SHOWN_SECRETS)[number];

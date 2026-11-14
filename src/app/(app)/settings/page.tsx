@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Banner, PageHeader } from '../../components/ui/display';
 import { loadSettings } from '../../lib/data/settings';
 import { ModelsSection } from './models-section';
-import { NotificationsSection, RedditSection } from './connection-sections';
+import { EvergreenSection, NotificationsSection, RedditSection } from './connection-sections';
 import { DataSection } from './data-section';
 import { BudgetSection, FiltersSection, KeysSection, PricesSection } from './sections';
 
@@ -17,6 +17,7 @@ const SECTIONS = [
   ['filters', 'Filters'],
   ['reddit', 'Reddit'],
   ['notifications', 'Notifications'],
+  ['evergreen', 'Evergreen'],
   ['data', 'Data'],
 ] as const;
 
@@ -46,8 +47,8 @@ export default function SettingsPage() {
         <div className="flex max-w-3xl min-w-0 flex-1 flex-col gap-6">
           {data.demo ? (
             <Banner>
-              Demo mode: the AI provider and Reddit are simulated, so no key is needed. Changes here
-              are saved to the demo database only.
+              Demo mode: the AI provider, Reddit and DataForSEO are simulated, so no key is needed.
+              Changes here are saved to the demo database only.
             </Banner>
           ) : null}
           <KeysSection data={data} />
@@ -57,6 +58,7 @@ export default function SettingsPage() {
           <FiltersSection data={data} />
           <RedditSection data={data} />
           <NotificationsSection data={data} />
+          <EvergreenSection data={data} />
           <DataSection />
         </div>
       </div>

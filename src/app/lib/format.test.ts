@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { formatAge, formatAgo, formatUsd, plural } from './format';
+import { formatAge, formatAgo, formatExactUsd, formatUsd, plural } from './format';
+
+describe('formatExactUsd', () => {
+  it.each([
+    [0.084, '$0.084'],
+    [0.08, '$0.08'],
+    [0.0006, '$0.0006'],
+    [0, '$0.00'],
+    [1.5, '$1.50'],
+  ])('shows %f as %s', (amount, text) => {
+    expect(formatExactUsd(amount)).toBe(text);
+  });
+});
 
 describe('formatAge', () => {
   it.each([

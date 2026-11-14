@@ -102,6 +102,15 @@ test('copy and open stays disabled until a lead has a draft', async () => {
   await expect(page.getByText('Write a draft first.')).toBeVisible();
 });
 
+test('the evergreen tab checks the buyer phrases and shows the cost', async () => {
+  await page.goto('/inbox?tab=evergreen');
+  await expect(page.getByRole('heading', { name: 'Threads that rank on Google' })).toBeVisible();
+  await page.getByRole('button', { name: 'Check now' }).click();
+  await expect(page.getByText(/Found 13 threads for \$0\.024/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('Polite way to chase an unpaid invoice?')).toBeVisible();
+  await expect(page.getByText('Archived, replies closed').first()).toBeVisible();
+});
+
 test('a saved API key is only ever shown as a mask', async () => {
   // Assembled at runtime so the source contains nothing key-shaped.
   const key = ['sk', 'proj', 'e2eOnlyNotARealKey000000wxyz'].join('-');

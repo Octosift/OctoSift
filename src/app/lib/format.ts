@@ -25,6 +25,12 @@ export function formatUsd(amount: number, incomplete = false): string {
   return `$${amount.toFixed(digits)}${incomplete ? '+' : ''}`;
 }
 
+/** A charge exactly as an API reported it: up to six decimals, trailing zeros trimmed. */
+export function formatExactUsd(amount: number): string {
+  const [whole = '0', fraction = ''] = amount.toFixed(6).split('.');
+  return `$${whole}.${fraction.replace(/0+$/, '').padEnd(2, '0')}`;
+}
+
 /** Local time of day for an epoch-seconds timestamp, for "resumes at" messages. */
 export function formatClock(epochSeconds: number): string {
   return new Date(epochSeconds * 1000).toLocaleTimeString(undefined, {

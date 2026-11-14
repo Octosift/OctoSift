@@ -22,7 +22,8 @@ export function SecretField({
   label: string;
   description: SecretDescription;
   placeholder?: string;
-  type?: 'password' | 'url';
+  /** "text" for values that are private but not secret-looking, such as a login. */
+  type?: 'password' | 'url' | 'text';
 }) {
   const [editing, setEditing] = useState(!description.configured);
   const [value, setValue] = useState('');
@@ -67,7 +68,7 @@ export function SecretField({
         >
           <Input
             id={id}
-            type={type === 'url' ? 'url' : 'password'}
+            type={type}
             autoComplete="off"
             spellCheck={false}
             placeholder={placeholder}

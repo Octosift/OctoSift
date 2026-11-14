@@ -9,10 +9,12 @@ import {
   leadDetail,
   listLeads,
   type InboxFilters,
+  type InboxTab,
 } from '@/core/db/queries/inbox';
 import { listProducts } from '@/core/db/queries/products';
 import { pacingWarnings, PACING_REASON, recentReplies } from '@/core/guard/pacing';
 import { getRuntime, nowSeconds } from '../runtime';
+import { evergreenCount } from './evergreen';
 
 const optionalText = z
   .string()
@@ -23,7 +25,7 @@ const optionalText = z
 const optionalNumber = z.coerce.number().int().min(0).max(100_000).optional().catch(undefined);
 
 export const inboxParamsSchema = z.object({
-  tab: z.enum(INBOX_TABS).catch('todo'),
+  tab: z.enum([...INBOX_TABS, 'evergreen']).catch('todo'),
   lead: optionalText.catch(undefined),
   product: optionalText.catch(undefined),
   subreddit: optionalText.catch(undefined),
@@ -41,7 +43,8 @@ export function parseInboxParams(raw: Record<string, string | string[] | undefin
   return inboxParamsSchema.parse(flat);
 }
 
-export function loadInbox(params: InboxParams) {
+/** The lead tabs; the Evergreen tab has its own loader. */
+export function loadInbox(params: InboxParams & { tab: InboxTab }) {
   const { db } = getRuntime();
   const now = nowSeconds();
   const filters: InboxFilters = {
@@ -77,6 +80,7 @@ export function loadInbox(params: InboxParams) {
     total: list.total,
     pageSize,
     counts: countByTab(db, params.product),
+    evergreen: evergreenCount(params.product),
     products: listProducts(db).map((product) => ({ id: product.id, name: product.name })),
     subreddits: inboxSubreddits(db, params.product),
     detail,

@@ -125,7 +125,7 @@ export function InboxView({ data }: { data: InboxData }) {
           explicitSelection && 'hidden lg:flex',
         )}
       >
-        <InboxTabs active={data.params.tab} counts={data.counts} />
+        <InboxTabs active={data.params.tab} counts={data.counts} evergreen={data.evergreen} />
         <InboxFilters
           products={data.products}
           subreddits={data.subreddits}
