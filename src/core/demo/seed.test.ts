@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { openMemoryDatabase } from '../db/client';
 import { countByTab } from '../db/queries/inbox';
 import { recentRuns } from '../db/queries/runs';
+import { lastCompletedSerpRun, recentSerpRuns, threadsForRun } from '../db/queries/serp';
 import { drafts, feedback, leads, usage } from '../db/schema';
 import { seedDemo } from './seed';
 
@@ -19,6 +20,14 @@ describe('seedDemo', () => {
       192, 157, 41, 134,
     ]);
     expect(db.select().from(feedback).all()).toHaveLength(4);
+    // Two weekly evergreen checks of the six buyer phrases.
+    expect(recentSerpRuns(db, 'demo-acme-invoices', 5).map((run) => run.costUsd)).toEqual([
+      0.024, 0.024,
+    ]);
+    const latest = lastCompletedSerpRun(db, 'demo-acme-invoices');
+    const threads = latest ? threadsForRun(db, latest.id) : [];
+    expect(threads.length).toBe(13);
+    expect(threads.filter((thread) => thread.archived).length).toBe(3);
     // Hand-written content: no two drafts alike, and scores spread out.
     const replies = db
       .select()

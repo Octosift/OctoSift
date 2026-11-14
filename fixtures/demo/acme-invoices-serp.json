@@ -1,0 +1,122 @@
+{
+  "note": "Synthetic Google results for the Acme Invoices buyer phrases, used by demo mode in place of DataForSEO. Ages are in days before the check; null means Google shows no date.",
+  "costPerKeywordUsd": 0.004,
+  "results": {
+    "client is late paying": [
+      {
+        "rank": 2,
+        "subreddit": "freelance_demo",
+        "id": "evg001",
+        "slug": "client_is_60_days_late_on_a_big_invoice",
+        "title": "Client is 60 days late on a big invoice, what are my options?",
+        "ageDays": 96
+      },
+      {
+        "rank": 5,
+        "subreddit": "smallbiz_demo",
+        "id": "evg002",
+        "slug": "how_do_you_handle_clients_who_always_pay_late",
+        "title": "How do you handle clients who always pay late?",
+        "ageDays": 41
+      },
+      {
+        "rank": 9,
+        "subreddit": "freelance_demo",
+        "id": "evg003",
+        "slug": "late_payers_megathread",
+        "title": "Late payers megathread: share what worked",
+        "ageDays": 412
+      }
+    ],
+    "how do I chase an unpaid invoice": [
+      {
+        "rank": 1,
+        "subreddit": "smallbiz_demo",
+        "id": "evg004",
+        "slug": "polite_way_to_chase_an_unpaid_invoice",
+        "title": "Polite way to chase an unpaid invoice?",
+        "ageDays": 128
+      },
+      {
+        "rank": 4,
+        "subreddit": "freelance_demo",
+        "id": "evg005",
+        "slug": "chasing_unpaid_invoices_without_losing_the_client",
+        "title": "Chasing unpaid invoices without losing the client",
+        "ageDays": null
+      }
+    ],
+    "best way to send invoices as a freelancer": [
+      {
+        "rank": 3,
+        "subreddit": "freelance_demo",
+        "id": "evg006",
+        "slug": "what_do_you_use_to_send_invoices",
+        "title": "What do you use to send invoices? Spreadsheet feels wrong",
+        "ageDays": 63
+      },
+      {
+        "rank": 7,
+        "subreddit": "freelance_demo",
+        "id": "evg007",
+        "slug": "invoicing_setup_for_a_new_freelancer",
+        "title": "Invoicing setup for a brand new freelancer",
+        "ageDays": 155
+      },
+      {
+        "rank": 12,
+        "subreddit": "smallbiz_demo",
+        "id": "evg008",
+        "slug": "best_invoicing_app_2024",
+        "title": "Best invoicing app for a one person business?",
+        "ageDays": 640
+      }
+    ],
+    "invoice template": [
+      {
+        "rank": 6,
+        "subreddit": "smallbiz_demo",
+        "id": "evg009",
+        "slug": "simple_invoice_template_that_looks_professional",
+        "title": "Simple invoice template that still looks professional",
+        "ageDays": 22
+      }
+    ],
+    "payment reminder email": [
+      {
+        "rank": 2,
+        "subreddit": "freelance_demo",
+        "id": "evg010",
+        "slug": "share_your_payment_reminder_email",
+        "title": "Share your payment reminder email wording",
+        "ageDays": 74
+      },
+      {
+        "rank": 8,
+        "subreddit": "smallbiz_demo",
+        "id": "evg011",
+        "slug": "reminder_email_before_or_after_due_date",
+        "title": "Do you send the reminder email before or after the due date?",
+        "ageDays": 230
+      }
+    ],
+    "client ghosted after delivery": [
+      {
+        "rank": 3,
+        "subreddit": "freelance_demo",
+        "id": "evg012",
+        "slug": "client_ghosted_after_i_delivered_the_files",
+        "title": "Client ghosted after I delivered the files",
+        "ageDays": 15
+      },
+      {
+        "rank": 10,
+        "subreddit": "freelance_demo",
+        "id": "evg013",
+        "slug": "what_to_do_when_a_client_disappears",
+        "title": "What to do when a client disappears with an unpaid invoice",
+        "ageDays": 118
+      }
+    ]
+  }
+}

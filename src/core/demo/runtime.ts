@@ -16,6 +16,7 @@ import { createAtomSource } from '../reddit/source';
 import type { RedditPost } from '../reddit/types';
 import type { RuntimeOptions } from '../runtime';
 import { loadScriptedLeads } from './lead-content';
+import { createDemoSerpFetcher } from './serp';
 import { loadSampleProducts, SAMPLE_PRODUCT_SLUGS } from './sample-products';
 
 export const DEMO_PRODUCT_SLUG = 'acme-invoices';
@@ -89,6 +90,7 @@ export function demoRuntimeOverrides(
     }),
   );
   const generator: Generator = (request) => pause(latency.modelMs).then(() => fake(request));
+  const serp = createDemoSerpFetcher(clock, { latencyMs: latency.redditMs });
   const resolveModel = (stage: string): ModelResolution => ({
     ok: true,
     model: { provider: 'openai_compatible', model: `demo-${stage}` },
@@ -97,6 +99,7 @@ export function demoRuntimeOverrides(
   return {
     source: createAtomSource({ client, clock }),
     generator,
+    serp,
     resolveModel,
   };
 }

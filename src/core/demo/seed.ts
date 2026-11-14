@@ -9,7 +9,7 @@ import { createFakeGenerator } from '../ai/fake';
 import { createFixtureResponder } from '../ai/fake-responder';
 import { frozenClock, seededRandom } from '../clock';
 import type { Db } from '../db/client';
-import { insertProduct, watchSubreddit } from '../db/queries/products';
+import { getProduct, insertProduct, watchSubreddit } from '../db/queries/products';
 import { feedback, leads, posts, runs } from '../db/schema';
 import { goldenToRedditPost, loadGoldenSet, type GoldenPost } from '../eval/golden';
 import { newId } from '../ids';
@@ -19,8 +19,10 @@ import { createFixtureClient } from '../reddit/fixture';
 import { createAtomSource } from '../reddit/source';
 import type { RedditSource } from '../reddit/types';
 import { createSettingsStore } from '../settings/store';
+import { runEvergreenForProduct } from '../serp/evergreen';
 import { loadScriptedLeads } from './lead-content';
 import { loadSampleProducts } from './sample-products';
+import { createDemoSerpFetcher } from './serp';
 
 export const DEMO_PRODUCT_ID = 'demo-acme-invoices';
 const HOUR = 3600;
@@ -138,6 +140,24 @@ export async function seedDemo(db: Db, nowMs: number): Promise<SeedSummary> {
   await scanAt(now - 2 * DAY, secondScan, 157);
   // Recent enough that the demo worker does not rescan the moment it starts.
   await scanAt(now - 25 * 60, golden.posts, 192);
+
+  // Two weekly evergreen checks, so the tab shows threads and a cost history.
+  const product = getProduct(db, DEMO_PRODUCT_ID);
+  if (product) {
+    for (const atS of [now - 8 * DAY, now - DAY]) {
+      await runEvergreenForProduct(
+        {
+          db,
+          fetchSerp: createDemoSerpFetcher(frozenClock(atS * 1000)),
+          log: silentLogger(),
+          now: atS,
+          settings,
+        },
+        product,
+        'schedule',
+      );
+    }
+  }
 
   moveLeadsThroughTheirLife(db, now);
   return {
