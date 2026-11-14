@@ -22,6 +22,14 @@ detection on short text is unreliable).
 Posts that mention the product by name or domain are kept as **brand mentions** and shown in
 their own inbox tab, without a drafted pitch.
 
+### Image posts (optional)
+
+With **Describe images in posts** on (Settings, Models), the qualify model describes the image
+of each post hosted on Reddit once, in up to 150 words. The description is added to the text
+the later stages read, as `[IMAGE] …`, and cached by image address. A failure is skipped
+silently and no more images are tried in that scan, so a model that does not accept images
+costs one call. Evidence quotes are still checked against the author's own words.
+
 ## 3. Triage (cheap model)
 
 Up to ten posts per call, each as its title and the first 600 characters. The model sees the

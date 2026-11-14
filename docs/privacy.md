@@ -20,6 +20,8 @@ Everything stays on the machine that runs Octosift.
 - **Your actions**: replied, snoozed and dismissed leads, the links to comments you posted if
   you added them, and your good or bad marks with notes.
 - **Scan history and AI usage**: counts per stage, token counts and costs.
+- **Image descriptions**, if you turn them on: the description of each post image, by its
+  address.
 - **Evergreen threads**, if you set up DataForSEO: the keywords you check, the Reddit threads
   that ranked for them (address, title, rank and date) and the cost of each check.
 - **Settings and keys**: settings in plain JSON; API keys, the DataForSEO login and password,
@@ -33,7 +35,7 @@ anything shaped like a key.
 
 - **Reddit**: read-only requests for public feeds.
 - **Your AI provider**: post text, your product profile and drafts, to the provider and models
-  you configure.
+  you configure, and the addresses of post images if you turn on image descriptions.
 - **Your product's website**: read once when you build a profile.
 - **DataForSEO**, if you set it up: your keywords, once a week or when you press Check now.
 - **Your webhook**, if you set one: the title, subreddit, score and reason of strong leads, with

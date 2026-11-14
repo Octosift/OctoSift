@@ -49,6 +49,14 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
   busy has its interval doubled back towards the default once a poll brings in fewer
   than a quarter of a full feed.
 
+## Image posts
+
+- **Only images hosted by Reddit are described.** Other image hosts would mean contacting a site
+  outside Reddit and the AI provider, directly or through the AI SDK.
+- **One failure stops image descriptions for the scan.** The setting cannot know whether the
+  model accepts images; stopping after the first failure keeps a wrong guess to one call and
+  keeps it from tripping the AI failure guard.
+
 ## Evergreen threads
 
 - **DataForSEO's live endpoint, not the task queue.** The queue costs less per search but needs

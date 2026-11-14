@@ -168,8 +168,8 @@ Settings live in the dashboard and are stored in a local SQLite file. Environmen
 | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`                                                          | none                         | Optional: finds Reddit threads that rank on Google for your keywords |
 
 In the dashboard you also set the model for each stage, prices, budget caps, the scan
-interval, score thresholds, filters, your Reddit username (to skip your own posts) and the
-User-Agent.
+interval, score thresholds, filters, your Reddit username (to skip your own posts), the
+User-Agent and whether images in posts are described for the models (off by default).
 
 **Evergreen threads (optional).** With DataForSEO credentials (in Settings or the environment),
 an Evergreen tab lists the Reddit threads that rank on Google for your buyer keywords, checked
