@@ -16,8 +16,8 @@ your voice that you copy and post by hand.
    questions to sharpen it.
 2. **Suggests subreddits.** You confirm three to ten communities where your customers ask
    questions.
-3. **Reads new posts on a schedule.** Every hour by default, one feed request per group of
-   subreddits.
+3. **Reads new posts on a schedule.** Every hour by default, through a Reddit account you
+   connect, a paid data provider or public feeds, slowly and one request at a time.
 4. **Filters, judges and scores every post.** Free checks first, then a cheap model, then a
    strong model, then deterministic rules. Each post gets a verdict and a reason you can
    inspect.
@@ -26,7 +26,7 @@ your voice that you copy and post by hand.
    the thread and post it yourself.
 
 ```
-feed entries
+new posts
   -> filters (free: age, removed posts, bots, spam links, language, your blocklist)
   -> triage (cheap model, ten posts per call, title and start of the body)
   -> qualify (strong model, one post per call, full text)
@@ -37,8 +37,8 @@ feed entries
 
 ## What it does not do
 
-- **It does not post, comment, vote or send messages.** There is no browser extension and no
-  Reddit login. You post every reply yourself.
+- **It does not post, comment, vote or send messages.** A connected Reddit account is only used
+  to read subreddit listings. You post every reply yourself.
 - **It does not monitor all of Reddit by keyword.** It reads the short list of subreddits
   you chose.
 - **It does not hide who is speaking.** Drafts are written in your own voice and say that you
@@ -93,21 +93,33 @@ pnpm scan --once --dry-run    # fetch and classify, save nothing but the run
 pnpm scan --once --json       # the full report as JSON
 ```
 
-## How it reads Reddit, and why it is slow on purpose
+## How it reads Reddit
 
-Octosift reads public Atom feeds (`/r/<subreddit>/new/.rss`) without logging in. One
-request returns up to 100 new posts with their full text, so each scan needs only one
-request per subreddit, and quiet subreddits share a single combined request.
+In late 2026 Reddit ended support for its public RSS feeds and began closing its public data
+API to new apps. Octosift therefore reads Reddit in one of three ways and falls back
+between them:
 
-Logged-out reads have a tight rate limit, roughly one request a minute. Octosift follows
-Reddit's rate-limit headers, sends one request at a time, and when Reddit pushes back
-(HTTP 429, 403 or a block page) it stops reading for at least ten minutes instead of
-retrying. Reading slowly is what keeps your network from being blocked. A dashboard banner
-tells you when reads will resume; a proxy setting and, later, your own Reddit app
-credentials are available if blocks keep happening.
+1. **A Reddit account you connect** (the default, free). Subreddit listings are read with
+   that account's session: one request at a time, at least eight seconds apart and at most
+   120 an hour. Use a separate account, not your main one; the app only reads, but automated
+   reading can still get an account limited. Connect it in Settings by signing in through a
+   browser window the app opens (the app never sees your password), or by pasting the
+   session cookie when the app runs in Docker. The cookie is stored encrypted and only ever
+   sent to www.reddit.com.
+2. **A paid data provider** (charged per request), for people who would rather not connect an
+   account. A scan reads one to three feed pages per subreddit, filters the previews for free
+   and fetches full posts only for the ones that pass. The supported adapters are listed in
+   [docs/sources.md](docs/sources.md).
+3. **Public RSS feeds** (free, logged out, best effort). They may stop working at any time.
 
-Subreddits that are busy enough to overflow a feed between scans are read on their own and
-more often, down to every fifteen minutes.
+The source you prefer is tried first. If it stops working during a scan, for example when a
+session expires, the rest of the scan uses the next one that is set up, and a banner says
+what happened. `pnpm cli check-source` makes one request with the configured source, so you
+can test a session or a key before relying on it.
+
+Whatever the source, reading is slow on purpose: one request at a time, rate limits followed,
+and a pause instead of retries when Reddit pushes back. Busy subreddits are read more often,
+down to every fifteen minutes.
 
 ## Cost
 
@@ -135,6 +147,27 @@ $0.15/$0.60 and a strong model at $3/$15 per million input/output tokens:
 Your numbers will differ: every run's actual cost is shown on the Runs screen, from a price
 table you can edit in Settings. Budget caps stop a scan cleanly (default $0.50 per scan and
 $3 per 24 hours) and leave the remaining posts for the next scan.
+
+### A worked example: ten subreddits every hour
+
+Reading costs nothing with a connected account or public feeds. With a data provider at
+$0.001 a request, each hourly scan reads one feed page per subreddit (up to three for busy
+ones) and fetches the survivors' full posts in one batch:
+
+| Source           | Requests a scan | Requests a day | Data cost a month |
+| ---------------- | --------------: | -------------: | ----------------: |
+| Reddit account   |        10 to 30 |     240 to 720 |              free |
+| Data provider    |        11 to 17 |     260 to 400 |   about $8 to $12 |
+| Public RSS feeds |         2 to 10 |      50 to 240 |              free |
+
+A provider's feed page holds only six to eight posts, so a subreddit with more than about
+twenty new posts an hour is read every fifteen minutes instead, which adds requests.
+
+AI comes on top, from your own provider. With the models in the table above and about 40 new
+posts an hour across the ten subreddits, a day of hourly scans costs about 24 × $0.11, roughly
+$2.60, or about $80 a month; the default caps hold it near there. Cheaper strong models, fewer
+subreddits or a stricter profile bring it down. Data and AI spend count against the same caps
+and are shown separately on the Runs screen.
 
 ## Responsible use
 
@@ -166,6 +199,7 @@ Settings live in the dashboard and are stored in a local SQLite file. Environmen
 | `REDDIT_PROXY_URL`                                                                                 | none                         | Proxy for Reddit reads                                               |
 | `WEBHOOK_URL`                                                                                      | none                         | Webhook for strong leads (Slack-style or Discord-style)              |
 | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`                                                          | none                         | Optional: finds Reddit threads that rank on Google for your keywords |
+| `REDDIT_SESSION_COOKIE`                                                                            | none                         | The Cookie header of a connected Reddit account, instead of Settings |
 
 In the dashboard you also set the model for each stage, prices, budget caps, the scan
 interval, score thresholds, filters, your Reddit username (to skip your own posts), the
@@ -197,14 +231,13 @@ the next scans follow. `pnpm eval --yes-spend` measures precision and recall of 
 models on a labelled set of sample posts. It costs a little, explains what it will send
 before it starts, and stops at a cap (one dollar by default).
 
-**Why is the first scan slow?** Reddit allows about one logged-out request a minute. The
-AI stages are quick.
+**Why is the first scan slow?** Reads are spaced out on purpose, several seconds apart with an
+account and about a minute apart logged out. The AI stages are quick.
 
 <!-- TODO(owner): decide whether to compare with other kinds of tools here (keyword alert bots, paid lead tools) and whether to mention a hosted version. -->
 
 ## Roadmap
 
-- Checks that your posted replies are visible to logged-out readers.
 - A browser extension for one-click copy on Reddit itself.
 - More sources besides Reddit.
 - An MCP server, so assistants can query your leads.
@@ -215,6 +248,7 @@ AI stages are quick.
 - [The pipeline and its prompts](docs/pipeline.md)
 - [Adding a new source](docs/adding-a-source.md)
 - [Privacy: what is stored and where](docs/privacy.md)
+- [Data sources and provider adapters](docs/sources.md)
 - [How logged-out Reddit reads behave](docs/reddit-reads.md)
 - [Decisions](docs/decisions.md)
 

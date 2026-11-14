@@ -19,7 +19,8 @@ The dashboard and the worker are separate processes that share one SQLite file i
 - **The worker is the only process that reads Reddit** (the CLI does too, under the same
   lock). That keeps every Reddit request behind one rate limiter. When the dashboard needs a
   subreddit checked or a scan started, it leaves a request in the database and the worker
-  picks it up within a few seconds.
+  picks it up within a few seconds. The one exception is connecting a Reddit account: the
+  dashboard checks the new session with one listing request before saving it.
 - **Only one scan runs at a time.** A lock row with a heartbeat in the settings table is
   taken in an immediate SQLite transaction; a lock whose heartbeat stopped is taken over.
 - **The dashboard calls the AI provider directly** for interactive work: building a profile
@@ -32,27 +33,28 @@ Reddit source, the AI generator, the clock and the random source. There are no h
 globals; `src/core/runtime.ts` is the one place that wires real implementations together, and
 demo mode and tests replace parts of it.
 
-| Folder      | Job                                                                                                                                  |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `reddit/`   | Atom parsing, the HTTP client with block detection and retries, the global rate limiter, polling plans, the `RedditSource` interface |
-| `ai/`       | Provider adapters (AI SDK), the AI client with budgets and usage records, output schemas, prompt templates, the fake generator       |
-| `profile/`  | Website crawling, profile extraction, subreddit suggestions and validation                                                           |
-| `pipeline/` | Prefilter, dedup, triage, qualify, veto, score, draft, review and the scan orchestration                                             |
-| `guard/`    | Health warnings and pacing warnings                                                                                                  |
-| `notify/`   | The webhook                                                                                                                          |
-| `serp/`     | Optional: the DataForSEO client and the weekly check for Reddit threads that rank on Google                                          |
-| `db/`       | Schema, migrations and small query modules; nothing else touches the database                                                        |
-| `secrets/`  | Encryption, the secret store and redaction                                                                                           |
-| `settings/` | Typed settings with defaults and validation                                                                                          |
-| `eval/`     | The golden set and the evaluation                                                                                                    |
-| `demo/`     | Sample products, the demo seed and demo-mode replacements                                                                            |
+| Folder      | Job                                                                                                                                                                                     |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `reddit/`   | The `RedditSource` interface and its sources (connected session, data provider adapters, Atom feeds), the chain that picks and falls back between them, rate limiters and polling plans |
+| `ai/`       | Provider adapters (AI SDK), the AI client with budgets and usage records, output schemas, prompt templates, the fake generator                                                          |
+| `profile/`  | Website crawling, profile extraction, subreddit suggestions and validation                                                                                                              |
+| `pipeline/` | Prefilter, dedup, triage, qualify, veto, score, draft, review and the scan orchestration                                                                                                |
+| `guard/`    | Health warnings and pacing warnings                                                                                                                                                     |
+| `notify/`   | The webhook                                                                                                                                                                             |
+| `serp/`     | Optional: the DataForSEO client and the weekly check for Reddit threads that rank on Google                                                                                             |
+| `db/`       | Schema, migrations and small query modules; nothing else touches the database                                                                                                           |
+| `secrets/`  | Encryption, the secret store and redaction                                                                                                                                              |
+| `settings/` | Typed settings with defaults and validation                                                                                                                                             |
+| `eval/`     | The golden set and the evaluation                                                                                                                                                       |
+| `demo/`     | Sample products, the demo seed and demo-mode replacements                                                                                                                               |
 
 ## Boundaries
 
 - Input is validated with Zod where it enters: environment variables, settings, server
   action arguments, feed entries, AI output and stored JSON.
-- Only `reddit/client.ts`, `ai/provider.ts`, `profile/crawl.ts`, `notify/webhook.ts` and
-  `serp/dataforseo.ts` call `fetch`; a lint rule enforces it. The crawler, the webhook and
+- Only `reddit/client.ts`, `reddit/session-client.ts`, `reddit/provider/vendor.ts`,
+  `ai/provider.ts`, `profile/crawl.ts`, `notify/webhook.ts` and `serp/dataforseo.ts` call
+  `fetch`; a lint rule enforces it. The crawler, the webhook and
   DataForSEO reach the network by design (your product site, your webhook and, when you set it
   up, Google results), in addition to Reddit and the AI provider.
 - Expected failures are values (`{ ok: false, kind, message }`), not exceptions. A scan

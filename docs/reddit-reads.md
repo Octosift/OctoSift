@@ -1,5 +1,8 @@
 # How logged-out Reddit reads behave
 
+These notes cover the public RSS feeds, now the best-effort fallback source: Reddit ended RSS
+support in late 2026. The default is a connected Reddit account; see [sources.md](sources.md).
+
 Checked on 2026-11-13 from a residential connection without logging in, using a
 desktop browser User-Agent and `Accept: application/atom+xml`. Eight requests in
 total. Only status codes, headers and element names were recorded; no post

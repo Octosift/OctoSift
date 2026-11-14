@@ -40,11 +40,33 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
   the remaining budget drops below one. See `reddit-reads.md`.
 - **Reddit is read by one process at a time.** The worker and the CLI scan (which
   takes the same scan lock) are the only readers, so one in-process limiter is enough.
-- **No Reddit app credentials.** Reddit closed self-service API access in November 2025 and
-  stopped accepting new access requests at the end of October 2026, so new users cannot get
-  credentials for an app-only source. Subreddit rules are pasted by the user instead and
-  summarised once; the summary sets the promotion policy only while the user has not chosen
-  one.
+- **No Reddit app credentials.** Reddit closed self-service API access in late 2025 and
+  stopped accepting new access requests in late 2026, so new users cannot get credentials for
+  an app-only source. Subreddit rules are pasted by the user instead and summarised once; the
+  summary sets the promotion policy only while the user has not chosen one.
+- **Three sources, tried in order.** Reddit ended RSS support in late 2026 and is closing its
+  public data API, so RSS is kept only as a best-effort fallback. The default is a Reddit
+  account the user connects; a paid data provider is the alternative for people who would
+  rather not. The preferred source goes first and, with failover on, a source whose account or
+  key stops working hands the rest of the scan to the next one. See `sources.md`.
+- **The session reads the hot listing.** Reddit refuses the newest-first listing to signed-in
+  sessions too. Paging stops after a page that reaches a post older than the age limit or one
+  already stored, rather than at the first such post, because hot pages are not in time order.
+- **Signing in happens in a real browser window.** The user signs in on Reddit's own page and
+  the app only takes the cookies afterwards, so it never handles the password. A pasted cookie
+  is the fallback where no window can open. Either is checked with one request before saving.
+- **Provider previews are completed after the free filters.** Feed pages carry previews only;
+  full posts are fetched in batches for the survivors, which keeps a scan to one or two paid
+  requests per subreddit. Posts are filtered again once complete, since locked or NSFW status
+  may only show then.
+- **Data spend shares the AI budget.** Paid requests are recorded in the usage ledger as their
+  own stage and count against the same per-scan and daily caps; runs store the data part
+  separately so the Runs screen can show both.
+- **A source that runs out of pages counts as busy.** Busy subreddits are read more often when a
+  read stops at its page limit before reaching older posts, not only when a feed is full.
+- **Reply checks use the provider, and only comments.** Visibility checks read a post's comments
+  through the provider's own limiter, so they never pause scanning. The provider's documentation
+  does not say how suspended and missing accounts differ, so there is no profile check.
 - **Busy subreddits calm down again.** A subreddit polled more often because it was
   busy has its interval doubled back towards the default once a poll brings in fewer
   than a quarter of a full feed.

@@ -5,9 +5,10 @@ The pipeline reads posts through one small interface, `RedditSource` in
 
 ```ts
 interface RedditSource {
-  fetchNewPosts(subreddits: string[], opts: { limit: number }): Promise<FetchResult>;
+  maxSubredditsPerRequest?: number;
+  fetchNewPosts(subreddits: string[], opts: FetchOptions): Promise<FetchResult>;
+  fetchDetails?(ids: string[], opts: { spend?: SpendHooks }): Promise<DetailsResult>;
   fetchPostWithComments?(subreddit: string, postId: string): Promise<PostThread | null>;
-  fetchRules?(subreddit: string): Promise<SubredditRules | null>;
   checkUser?(username: string): Promise<'visible' | 'suspended' | 'missing' | 'unknown'>;
 }
 ```
@@ -16,15 +17,28 @@ Only `fetchNewPosts` is required. It returns posts newest first, or a typed fail
 
 ```ts
 type FetchResult =
-  | { ok: true; posts: RedditPost[]; rate: RateInfo }
-  | { ok: false; kind: 'blocked' | 'rate_limited' | 'gone' | 'network'; retryAfterS?: number };
+  | { ok: true; posts: RedditPost[]; rate: RateInfo; truncated?: boolean }
+  | {
+      ok: false;
+      kind: 'blocked' | 'rate_limited' | 'gone' | 'network' | 'auth' | 'budget';
+      retryAfterS?: number;
+      message?: string;
+    };
 ```
+
+`FetchOptions` carries `knownIds`, to stop paging at posts already stored, `spend`, for paid
+sources to ask the budget before a request and report its cost, and `maxPages`, used by
+`pnpm cli check-source`. A source that lists previews marks posts `partial` and implements
+`fetchDetails`; the scan completes the posts that pass the free filters. Set `truncated` when
+paging stopped at a limit before reaching older or stored posts, so busy subreddits get read
+more often.
 
 ## Rules for a source
 
 - **Never throw.** Network problems, blocks and missing communities are values. The scan
   decides what to do with them: `blocked` and `rate_limited` pause reading, `gone` marks the
-  community as missing, `network` is retried on the next scan.
+  community as missing, `network` is retried on the next scan, `auth` (an account or key that
+  stopped working) hands the scan to the next source, and `budget` stops paid reads.
 - **Return what the feed has.** Fill `RedditPost` completely: an id that is stable across
   reads, the community name in lower case, plain text with paragraph breaks, the links found in
   the body (the spam filter uses them), the creation time in epoch seconds, and `archived` when
@@ -38,9 +52,11 @@ type FetchResult =
 
 ## Wiring it in
 
-`src/core/runtime.ts` builds the source used by the worker and the CLI. Replace the Atom source
-there (or choose between sources from a setting). Demo mode shows the pattern: it swaps the
-source for one that serves fixtures, without touching the pipeline.
+`src/core/runtime.ts` builds the chain of sources used by the worker and the CLI
+(`reddit/chain.ts`): the preferred source from settings first, then the others that are set up.
+Add a new source there as another candidate. Demo mode shows the simplest pattern: it swaps the
+whole source for one that serves fixtures, without touching the pipeline. Paid data providers
+plug in as adapters instead; see [sources.md](sources.md).
 
 ## Testing it
 
