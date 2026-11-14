@@ -25,10 +25,11 @@ Everything stays on the machine that runs Octosift.
 - **Evergreen threads**, if you set up DataForSEO: the keywords you check, the Reddit threads
   that ranked for them (address, title, rank and date) and the cost of each check.
 - **Settings and keys**: settings in plain JSON; API keys, a connected Reddit account's session
-  cookie, the data provider key, the DataForSEO login and password, the webhook URL and the
-  proxy URL encrypted with AES-256-GCM.
-- **Reply checks**, if a data provider is set up: whether each reply you linked was visible an
-  hour and a day after you posted it.
+  cookie, the DataForSEO login and password, the webhook URL and the proxy URL encrypted with
+  AES-256-GCM.
+- **Reply and account checks**, if a Reddit account is connected: whether each reply you linked
+  could still be seen an hour and a day after you posted it, and the result of the last daily
+  check of the connected account's public profile.
 
 Saved keys are never sent back to the browser: the dashboard only ever receives a mask such as
 `sk-…a1b2`. Logs and error messages pass through a redactor that removes stored secrets and
@@ -36,10 +37,11 @@ anything shaped like a key.
 
 ## What leaves your machine
 
-- **Reddit**: read-only requests for subreddit listings, with your connected account's session
-  cookie when you connect one (the cookie is sent only to www.reddit.com), or logged out.
-- **A data provider**, if you set one up: the names of the subreddits you watch, the ids of
-  posts to fetch in full, and the posts behind reply links you add for visibility checks.
+- **Reddit**: read-only requests, with your connected account's session cookie when you connect
+  one (the cookie is sent only to www.reddit.com), or logged out. With an account these are
+  subreddit listings, the account's name (`/api/me.json`), the threads of comment links you add
+  for reply checks, and the account's own public profile once a day; logged out, the public
+  feeds of the subreddits you watch.
 - **Your AI provider**: post text, your product profile and drafts, to the provider and models
   you configure, and the addresses of post images if you turn on image descriptions.
 - **Your product's website**: read once when you build a profile.

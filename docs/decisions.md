@@ -44,29 +44,38 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
   stopped accepting new access requests in late 2026, so new users cannot get credentials for
   an app-only source. Subreddit rules are pasted by the user instead and summarised once; the
   summary sets the promotion policy only while the user has not chosen one.
-- **Three sources, tried in order.** Reddit ended RSS support in late 2026 and is closing its
+- **Two sources, tried in order.** Reddit ended RSS support in late 2026 and is closing its
   public data API, so RSS is kept only as a best-effort fallback. The default is a Reddit
-  account the user connects; a paid data provider is the alternative for people who would
-  rather not. The preferred source goes first and, with failover on, a source whose account or
-  key stops working hands the rest of the scan to the next one. See `sources.md`.
+  account the user connects. The preferred source goes first and, with failover on, a source
+  whose account stops working hands the rest of the scan to the other one. See `sources.md`.
+- **No paid data source.** The open-source app does not ship one: it would add a vendor, a key
+  and a bill to a tool meant to run for free on the user's machine. The `RedditSource`
+  interface stays, so a source can be added later without touching the pipeline.
 - **The session reads the hot listing.** Reddit refuses the newest-first listing to signed-in
   sessions too. Paging stops after a page that reaches a post older than the age limit or one
   already stored, rather than at the first such post, because hot pages are not in time order.
 - **Signing in happens in a real browser window.** The user signs in on Reddit's own page and
   the app only takes the cookies afterwards, so it never handles the password. A pasted cookie
-  is the fallback where no window can open. Either is checked with one request before saving.
-- **Provider previews are completed after the free filters.** Feed pages carry previews only;
-  full posts are fetched in batches for the survivors, which keeps a scan to one or two paid
-  requests per subreddit. Posts are filtered again once complete, since locked or NSFW status
-  may only show then.
-- **Data spend shares the AI budget.** Paid requests are recorded in the usage ledger as their
-  own stage and count against the same per-scan and daily caps; runs store the data part
-  separately so the Runs screen can show both.
+  is the fallback where no window can open. Either is checked with one request to
+  `/api/me.json` before saving: a signed-in session answers with the account's name, a
+  signed-out one with an empty object, so the check also gives the name to show.
+- **A refusal is about the session unless it names a subreddit.** A 401, a 403 or a redirect
+  to the sign-in page marks the session for reconnecting. A 403 whose JSON names a private,
+  banned or quarantined subreddit is about that subreddit, so reading the others goes on.
 - **A source that runs out of pages counts as busy.** Busy subreddits are read more often when a
   read stops at its page limit before reaching older posts, not only when a feed is full.
-- **Reply checks use the provider, and only comments.** Visibility checks read a post's comments
-  through the provider's own limiter, so they never pause scanning. The provider's documentation
-  does not say how suspended and missing accounts differ, so there is no profile check.
+- **Reply checks read the comment's own permalink.** Scanning a post's newest comments misses
+  replies in busy threads; the permalink thread always contains the comment unless it was
+  removed. The checks use the connected session, so they share its pace and hourly cap with
+  scans and run a few per minute at most. Only a refusal or a sign-in redirect marks the session;
+  other failures are retried twice and then reported as "could not tell".
+- **A reply from the connected account cannot be judged.** Reddit shows authors their own
+  removed comments as if nothing happened, so such a check says it could not tell rather than
+  "visible". The settings and the reply dialog advise replying from another account.
+- **The profile check is confirmed before it warns.** The connected account's
+  `/user/<name>/about.json` is read daily; `is_suspended` means suspended and a 404 means
+  shadowbanned or deleted. One bad answer may be a glitch, so it is read again after half an
+  hour and only a repeat raises the warning.
 - **Busy subreddits calm down again.** A subreddit polled more often because it was
   busy has its interval doubled back towards the default once a poll brings in fewer
   than a quarter of a full feed.
@@ -141,6 +150,10 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
   Radix primitives and Tailwind tokens, written the shadcn way, with one accent colour.
 - **Onboarding connects the AI provider first.** The product profile is built from the
   website with a model, so the provider has to be set up before the product step.
+- **Connecting a Reddit account comes next, and can be skipped.** Subreddit validation and the
+  first scan are much faster with an account, so it is offered before the product step. Skipping
+  is allowed, with a note that the app then reads the public feeds Reddit is retiring; the
+  progress bar shows the step as skipped rather than done, and a fresh setup still opens on it.
 - **Sessions expire and wrong passwords are throttled.** The session cookie holds its issue
   time and an HMAC keyed by an scrypt hash of `APP_PASSWORD`, and lasts 30 days. After ten
   wrong passwords in a minute, sign-ins pause for everyone until the minute has passed, so a

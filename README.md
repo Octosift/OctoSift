@@ -17,7 +17,7 @@ your voice that you copy and post by hand.
 2. **Suggests subreddits.** You confirm three to ten communities where your customers ask
    questions.
 3. **Reads new posts on a schedule.** Every hour by default, through a Reddit account you
-   connect, a paid data provider or public feeds, slowly and one request at a time.
+   connect or public feeds, slowly and one request at a time.
 4. **Filters, judges and scores every post.** Free checks first, then a cheap model, then a
    strong model, then deterministic rules. Each post gets a verdict and a reason you can
    inspect.
@@ -72,8 +72,8 @@ pnpm build
 pnpm start             # dashboard and worker
 ```
 
-Open http://127.0.0.1:3000 and follow the four onboarding steps: AI provider, product,
-subreddits, first scan. For development, `pnpm dev` runs both processes with reloading.
+Open http://127.0.0.1:3000 and follow the five onboarding steps: AI provider, Reddit account
+(you can skip it), product, subreddits, first scan. For development, `pnpm dev` runs both processes with reloading.
 
 ### With Docker
 
@@ -96,26 +96,33 @@ pnpm scan --once --json       # the full report as JSON
 ## How it reads Reddit
 
 In late 2026 Reddit ended support for its public RSS feeds and began closing its public data
-API to new apps. Octosift therefore reads Reddit in one of three ways and falls back
-between them:
+API to new apps. Octosift therefore reads Reddit in one of two ways and falls back between
+them:
 
-1. **A Reddit account you connect** (the default, free). Subreddit listings are read with
-   that account's session: one request at a time, at least eight seconds apart and at most
-   120 an hour. Use a separate account, not your main one; the app only reads, but automated
-   reading can still get an account limited. Connect it in Settings by signing in through a
-   browser window the app opens (the app never sees your password), or by pasting the
-   session cookie when the app runs in Docker. The cookie is stored encrypted and only ever
+1. **A Reddit account you connect** (the default). Subreddit listings are read with that
+   account's session: one request at a time, at least eight seconds apart and at most 120 an
+   hour. Use a separate account, not your main one; the app only reads, but automated reading
+   can still get an account limited. Connect it during onboarding or in Settings, by signing
+   in through a browser window the app opens (the app never sees your password), or by pasting
+   the session cookie when the app runs in Docker. The cookie is stored encrypted and only ever
    sent to www.reddit.com.
-2. **A paid data provider** (charged per request), for people who would rather not connect an
-   account. A scan reads one to three feed pages per subreddit, filters the previews for free
-   and fetches full posts only for the ones that pass. The supported adapters are listed in
-   [docs/sources.md](docs/sources.md).
-3. **Public RSS feeds** (free, logged out, best effort). They may stop working at any time.
+2. **Public RSS feeds** (logged out, best effort). Reddit is retiring them, so they may return
+   nothing or stop working at any time. Without a connected account they are the only way the
+   app can read.
+
+Demo mode reads synthetic posts instead and needs neither.
 
 The source you prefer is tried first. If it stops working during a scan, for example when a
-session expires, the rest of the scan uses the next one that is set up, and a banner says
-what happened. `pnpm cli check-source` makes one request with the configured source, so you
-can test a session or a key before relying on it.
+session expires, the rest of the scan uses the other one, and a banner says what happened.
+`pnpm cli check-source` makes one request with the configured source, so you can test a
+session before relying on it.
+
+A connected account also serves two checks, at the same slow pace. An hour and a day after
+you mark a lead as replied with your comment's link, the app reads that comment's own page
+and tells you whether others can still see it. Once a day it reads the connected account's
+public profile and warns if Reddit shows it as suspended or not found (usually a shadowban).
+Reply from a different account than the connected one: Reddit shows authors their own removed
+comments, so a check on them cannot tell.
 
 Whatever the source, reading is slow on purpose: one request at a time, rate limits followed,
 and a pause instead of retries when Reddit pushes back. Busy subreddits are read more often,
@@ -150,24 +157,28 @@ $3 per 24 hours) and leave the remaining posts for the next scan.
 
 ### A worked example: ten subreddits every hour
 
-Reading costs nothing with a connected account or public feeds. With a data provider at
-$0.001 a request, each hourly scan reads one feed page per subreddit (up to three for busy
-ones) and fetches the survivors' full posts in one batch:
+Reading Reddit costs nothing: a connected account and the public feeds are both free. What you
+pay for is AI, to your own provider, and it follows the number of new posts, because each post
+is judged once.
 
-| Source           | Requests a scan | Requests a day | Data cost a month |
-| ---------------- | --------------: | -------------: | ----------------: |
-| Reddit account   |        10 to 30 |     240 to 720 |              free |
-| Data provider    |        11 to 17 |     260 to 400 |   about $8 to $12 |
-| Public RSS feeds |         2 to 10 |      50 to 240 |              free |
+Take ten subreddits that together get about 40 new posts an hour, scanned every hour with the
+models in the table above. Each scan costs about $0.11, so a day costs about 24 × $0.11, roughly
+$2.60, and a month about $80. The default caps hold it near there.
 
-A provider's feed page holds only six to eight posts, so a subreddit with more than about
-twenty new posts an hour is read every fifteen minutes instead, which adds requests.
+To spend less:
 
-AI comes on top, from your own provider. With the models in the table above and about 40 new
-posts an hour across the ten subreddits, a day of hourly scans costs about 24 × $0.11, roughly
-$2.60, or about $80 a month; the default caps hold it near there. Cheaper strong models, fewer
-subreddits or a stricter profile bring it down. Data and AI spend count against the same caps
-and are shown separately on the Runs screen.
+- **Keep a small model for triage.** Triage reads every post that passes the free filters. With
+  the strong model in its place, triage would cost about $0.066 a scan instead of $0.003, and
+  the example about $125 a month.
+- **Watch fewer subreddits, or quieter ones.** Cost scales with new posts: five subreddits with
+  20 new posts an hour together cost about $40 a month.
+- **Scan fewer times a day.** This saves Reddit requests and keeps the account's reading
+  lighter, but it barely changes the AI cost: a post costs the same in whichever scan reads it.
+  It only saves AI when busy subreddits post more between scans than one scan reads, and then
+  the posts it skips are ones you never see.
+- **Choose a cheaper model for qualifying and drafting.** The strong model makes up most of the
+  cost. Run `pnpm eval --yes-spend` before and after switching, to see what it does to
+  precision.
 
 ## Responsible use
 
@@ -248,7 +259,7 @@ account and about a minute apart logged out. The AI stages are quick.
 - [The pipeline and its prompts](docs/pipeline.md)
 - [Adding a new source](docs/adding-a-source.md)
 - [Privacy: what is stored and where](docs/privacy.md)
-- [Data sources and provider adapters](docs/sources.md)
+- [Data sources and the checks made with a connected account](docs/sources.md)
 - [How logged-out Reddit reads behave](docs/reddit-reads.md)
 - [Decisions](docs/decisions.md)
 
