@@ -15,11 +15,13 @@ export interface ShellData {
   lastRun: { id: string; startedAt: number; status: string } | null;
   scan: 'idle' | 'requested' | 'running';
   demo: boolean;
+  /** Finished or skipped; the dashboard then opens even without a product. */
+  onboardingCompleted: boolean;
   now: number;
 }
 
 export function loadShell(): ShellData {
-  const { db, clock, env } = getRuntime();
+  const { db, clock, env, settings } = getRuntime();
   const now = nowSeconds();
   wakeSnoozedLeads(db, now);
   const last = recentRuns(db, 1)[0];
@@ -31,6 +33,7 @@ export function loadShell(): ShellData {
     lastRun: last ? { id: last.id, startedAt: last.startedAt, status: last.status } : null,
     scan: running ? 'running' : pendingScanRequest(db) ? 'requested' : 'idle',
     demo: env.DEMO_MODE,
+    onboardingCompleted: settings.get('onboarding.completed'),
     now,
   };
 }

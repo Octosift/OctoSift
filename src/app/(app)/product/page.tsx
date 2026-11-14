@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react';
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { feedbackRules } from '@/core/db/queries/feedback';
 import { listProducts } from '@/core/db/queries/products';
@@ -23,7 +24,7 @@ export default async function ProductPage({
   const products = listProducts(db);
   const requested = (await searchParams).product;
   const product = products.find((candidate) => candidate.id === requested) ?? products[0];
-  if (!product) return null;
+  if (!product) redirect('/product/new');
   const replyPreferences = settings.getForProduct(product.id, 'replyPreferences');
   return (
     <>

@@ -7,7 +7,12 @@ import { ProfileFields } from '../components/profile-fields';
 import { Button } from '../components/ui/button';
 import { Banner, Card, CardHeader } from '../components/ui/display';
 import { Checkbox, Field, Input, Textarea } from '../components/ui/fields';
-import { buildProfile, crawlSite, createProduct } from '../lib/actions/onboarding';
+import {
+  buildProfile,
+  completeOnboarding,
+  crawlSite,
+  createProduct,
+} from '../lib/actions/onboarding';
 import { stepHref } from './steps';
 
 type Phase = 'url' | 'working' | 'review';
@@ -133,8 +138,7 @@ export function StepProduct({
             What did you build?
           </h2>
           <p className="mt-1 text-[13px] text-muted-foreground">
-            We read your homepage and a few pages it links to (pricing, features, about, docs, FAQ)
-            and draft a profile you can edit.
+            Paste your website. We read a few of its pages and draft a profile you can edit.
           </p>
         </div>
         <form
@@ -165,6 +169,23 @@ export function StepProduct({
           <Banner tone="danger" role="alert">
             {error}
           </Banner>
+        ) : null}
+        {afterCreate === 'onboarding' && phase === 'url' ? (
+          <div className="flex justify-start">
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={pending}
+              onClick={() => {
+                startTransition(async () => {
+                  await completeOnboarding();
+                  router.push('/inbox');
+                });
+              }}
+            >
+              Skip for now and add a product later
+            </Button>
+          </div>
         ) : null}
         {askDescription ? (
           <div className="flex flex-col gap-2">
@@ -209,7 +230,7 @@ export function StepProduct({
           Check the profile
         </h2>
         <p className="mt-1 text-[13px] text-muted-foreground">
-          Every stage works from this text, so correct anything that is wrong or missing.
+          Drafted from your site. Fix anything that is wrong, then continue.
         </p>
       </div>
       <Card>
@@ -223,12 +244,14 @@ export function StepProduct({
         />
       </Card>
 
-      <Card>
-        <CardHeader
-          title="A few questions"
-          description="All optional. Your answers make leads more precise."
-        />
-        <div className="grid gap-4 px-4 py-4">
+      <details className="group rounded-lg border border-border bg-surface">
+        <summary className="cursor-pointer list-none px-4 py-3 text-[13px] font-medium">
+          A few optional questions
+          <span className="ml-2 text-xs font-normal text-muted-foreground">
+            Answers make leads more precise.
+          </span>
+        </summary>
+        <div className="grid gap-4 border-t border-border px-4 py-4">
           <Field label="Who is your best customer? Describe one." htmlFor="answer-best">
             <Textarea
               id="answer-best"
@@ -299,7 +322,7 @@ export function StepProduct({
             />
           </Field>
         </div>
-      </Card>
+      </details>
       {Object.keys(fieldErrors).length > 0 ? (
         <Banner tone="danger" role="alert">
           Some fields need attention: {Object.values(fieldErrors).join(' ')}
@@ -308,6 +331,7 @@ export function StepProduct({
       <div className="flex justify-between gap-3">
         <Button
           variant="ghost"
+          size="sm"
           onClick={() => {
             setPhase('url');
           }}

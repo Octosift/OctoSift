@@ -245,6 +245,8 @@ export const CONFIG = deepFreeze({
 
   subreddits: {
     maxSuggestions: 15,
+    /** Suggestions ticked for the user in onboarding; they only confirm. */
+    preselected: 5,
     minSelected: 3,
     maxSelected: 10,
   },

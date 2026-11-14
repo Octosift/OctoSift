@@ -22,7 +22,7 @@ interface Candidate {
   strictness: string;
 }
 
-const { minSelected, maxSelected } = CONFIG.subreddits;
+const { minSelected, maxSelected, preselected } = CONFIG.subreddits;
 
 export function StepSubreddits({ productId, saved }: { productId: string; saved: string[] }) {
   const router = useRouter();
@@ -55,7 +55,7 @@ export function StepSubreddits({ productId, saved }: { productId: string; saved:
           strictness: s.promotionStrictness,
         })),
       );
-      setSelected(new Set(result.suggestions.slice(0, maxSelected).map((s) => s.name)));
+      setSelected(new Set(result.suggestions.slice(0, preselected).map((s) => s.name)));
     });
     return () => {
       cancelled = true;
@@ -147,9 +147,8 @@ export function StepSubreddits({ productId, saved }: { productId: string; saved:
           Where do your customers ask questions?
         </h2>
         <p className="mt-1 text-[13px] text-muted-foreground">
-          Pick {minSelected} to {maxSelected}. Fewer, well-chosen subreddits give better leads and
-          cost less. Without a connected Reddit account, checking that they exist takes about a
-          minute each, because Reddit limits logged-out reads.
+          The best matches are ticked. Untick any that look wrong or add your own; {minSelected} to{' '}
+          {maxSelected} work best.
         </p>
       </div>
       {loading ? <Banner>Suggesting subreddits…</Banner> : null}
@@ -230,11 +229,27 @@ export function StepSubreddits({ productId, saved }: { productId: string; saved:
         </Banner>
       ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="text-xs text-muted-foreground tabular">{selected.size} selected</span>
-        <div className="flex gap-2">
-          <Button onClick={check} disabled={pending || checking || selected.size === 0}>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              router.push(stepHref('scan'));
+            }}
+          >
+            Skip for now
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={check}
+            disabled={pending || checking || selected.size === 0}
+          >
             {checking ? 'Checking…' : 'Check these exist'}
           </Button>
+        </div>
+        <div className="ml-auto flex items-center gap-3">
+          <span className="text-xs text-muted-foreground tabular">{selected.size} selected</span>
           <Button
             variant="primary"
             onClick={save}

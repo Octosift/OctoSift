@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const shell = loadShell();
-  if (shell.products.length === 0) redirect('/onboarding');
+  if (shell.products.length === 0 && !shell.onboardingCompleted) redirect('/onboarding');
 
   return (
     <div className="flex min-h-dvh flex-col md:flex-row">

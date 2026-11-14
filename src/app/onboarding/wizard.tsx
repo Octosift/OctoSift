@@ -41,9 +41,11 @@ export function Wizard({
         {STEPS.map(({ id, label }, index) => {
           const number = index + 1;
           const current = number === step;
-          // Passing the account step without connecting skips it rather than finishing it.
+          // Passing an optional step without doing it skips it rather than finishing it.
           const skipped =
-            id === 'account' && number < step && !state.accountConnected && !state.demo;
+            number < step &&
+            ((id === 'account' && !state.accountConnected && !state.demo) ||
+              (id === 'subreddits' && state.subreddits.length === 0));
           const done = number < step && !skipped;
           return (
             <li key={id} aria-current={current ? 'step' : undefined}>
@@ -93,7 +95,11 @@ export function Wizard({
         <StepSubreddits productId={state.product.id} saved={state.subreddits} />
       ) : null}
       {show('scan') && state.product ? (
-        <StepScan productId={state.product.id} productName={state.product.name} />
+        <StepScan
+          productId={state.product.id}
+          productName={state.product.name}
+          subredditCount={state.subreddits.length}
+        />
       ) : null}
     </div>
   );

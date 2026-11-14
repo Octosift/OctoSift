@@ -30,9 +30,10 @@ function loadState(): OnboardingState {
 }
 
 /**
- * The furthest step that may be shown, and the one to open by default. The
- * account step is optional, so the product step is reachable without it, but
- * a fresh setup still opens on it.
+ * The furthest step that may be shown, and the one to open by default. Only
+ * the AI step is required: the account and subreddit steps can be skipped,
+ * and skipping the product step ends onboarding. A fresh setup still opens on
+ * each optional step once.
  */
 function progress(state: OnboardingState): { allowed: number; landing: number } {
   const at = (id: Parameters<typeof stepNumber>[0]) => stepNumber(id);
@@ -43,8 +44,10 @@ function progress(state: OnboardingState): { allowed: number; landing: number } 
       landing: state.accountConnected ? at('product') : at('account'),
     };
   }
-  if (state.subreddits.length < 3) return { allowed: at('subreddits'), landing: at('subreddits') };
-  return { allowed: at('scan'), landing: at('scan') };
+  return {
+    allowed: at('scan'),
+    landing: state.subreddits.length === 0 ? at('subreddits') : at('scan'),
+  };
 }
 
 export default async function OnboardingPage({

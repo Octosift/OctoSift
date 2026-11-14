@@ -14,7 +14,15 @@ import {
   type ScanProgress,
 } from '../lib/actions/onboarding';
 
-export function StepScan({ productId, productName }: { productId: string; productName: string }) {
+export function StepScan({
+  productId,
+  productName,
+  subredditCount,
+}: {
+  productId: string;
+  productName: string;
+  subredditCount: number;
+}) {
   const router = useRouter();
   const [since, setSince] = useState<number | null>(null);
   const [progress, setProgress] = useState<ScanProgress | null>(null);
@@ -44,9 +52,9 @@ export function StepScan({ productId, productName }: { productId: string; produc
           Run the first scan
         </h2>
         <p className="mt-1 text-[13px] text-muted-foreground">
-          The first scan reads posts from the last two days in each subreddit. Reading is slow on
-          purpose so Reddit does not block you: several seconds between requests with a connected
-          Reddit account, about a minute without one. The AI stages take a few seconds per post.
+          {subredditCount === 0
+            ? 'No subreddits are saved yet, so there is nothing to read. Add them on the Subreddits page later.'
+            : 'Reads the last two days of posts. Reading is slow on purpose, so this takes a few minutes.'}
         </p>
       </div>
       <Card>
@@ -59,7 +67,7 @@ export function StepScan({ productId, productName }: { productId: string; produc
                 : `Ready to scan for ${productName}`
           }
           actions={
-            since === null ? (
+            since === null && subredditCount > 0 ? (
               <Button
                 variant="primary"
                 disabled={pending}

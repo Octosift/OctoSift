@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { listProducts } from '@/core/db/queries/products';
 import { subredditStats } from '@/core/db/queries/stats';
 import { rulesSummaryWire } from '@/core/ai/schemas';
@@ -20,7 +21,7 @@ export default async function SubredditsPage({
   const products = listProducts(db);
   const requested = (await searchParams).product;
   const product = products.find((candidate) => candidate.id === requested) ?? products[0];
-  if (!product) return null;
+  if (!product) redirect('/product/new');
   const rows = subredditStats(db, product.id).map((row) => {
     const rules = rulesSummaryWire.safeParse(row.rulesSummary);
     return { ...row, rulesSummary: rules.success ? rules.data : null };
