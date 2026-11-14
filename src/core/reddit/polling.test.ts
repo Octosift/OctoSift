@@ -92,6 +92,15 @@ describe('nextPollIntervals', () => {
     expect(nextPollIntervals({ states, posts, ...defaults })).toEqual(new Map([['busy_demo', 30]]));
   });
 
+  it('also treats a read the source cut short as a full feed', () => {
+    const states = [state('busy_demo', { previousNewestAt: NOW - 10 * HOUR })];
+    const posts = [1, 2].map((n) => post(`t3_b${n}`, 'busy_demo', NOW - n * 60));
+    expect(nextPollIntervals({ states, posts, ...defaults, truncated: true })).toEqual(
+      new Map([['busy_demo', 30]]),
+    );
+    expect(nextPollIntervals({ states, posts, ...defaults }).size).toBe(0);
+  });
+
   it('never goes below the minimum interval', () => {
     const states = [
       state('busy_demo', { previousNewestAt: NOW - 10 * HOUR, pollIntervalMinutes: 20 }),

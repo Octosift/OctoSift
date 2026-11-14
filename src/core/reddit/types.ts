@@ -64,7 +64,13 @@ export interface SpendHooks {
 }
 
 export type FetchResult =
-  | { ok: true; posts: RedditPost[]; rate: RateInfo }
+  | {
+      ok: true;
+      posts: RedditPost[];
+      rate: RateInfo;
+      /** The source stopped at its page limit before reaching older or stored posts. */
+      truncated?: boolean;
+    }
   | { ok: false; kind: FetchFailureKind; retryAfterS?: number; message?: string };
 
 export type UserVisibility = 'visible' | 'suspended' | 'missing' | 'unknown';

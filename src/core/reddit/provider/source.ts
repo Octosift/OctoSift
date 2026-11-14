@@ -62,6 +62,7 @@ export function createProviderSource(options: ProviderSourceOptions): ProviderSo
     const maxAgeS = options.maxPostAgeHours() * 3600;
     const posts: RedditPost[] = [];
     let after: string | null = null;
+    let reachedOld = false;
     const pages = Math.min(CONFIG.provider.feedPages, opts.maxPages ?? CONFIG.provider.feedPages);
     for (let page = 0; page < pages; page += 1) {
       const answer = await call(
@@ -82,7 +83,7 @@ export function createProviderSource(options: ProviderSourceOptions): ProviderSo
       }
       posts.push(...parsed.posts);
       const known = opts.knownIds?.(parsed.posts.map((post) => post.id)) ?? new Set<string>();
-      const reachedOld = parsed.posts.some(
+      reachedOld = parsed.posts.some(
         (post) => known.has(post.id) || now - post.createdAt > maxAgeS,
       );
       after = parsed.next;
@@ -90,7 +91,13 @@ export function createProviderSource(options: ProviderSourceOptions): ProviderSo
     }
     const unique = [...new Map(posts.map((post) => [post.id, post])).values()];
     unique.sort((a, b) => b.createdAt - a.createdAt);
-    return { ok: true, posts: unique, rate: { used: null, remaining: null, resetS: null } };
+    return {
+      ok: true,
+      posts: unique,
+      rate: { used: null, remaining: null, resetS: null },
+      // Pages ran out while newer posts kept coming: the subreddit needs reading more often.
+      truncated: after !== null && !reachedOld,
+    };
   }
 
   return {
@@ -102,12 +109,14 @@ export function createProviderSource(options: ProviderSourceOptions): ProviderSo
         return { ok: false, kind: 'gone', message: 'Invalid subreddit name' };
       }
       const posts: RedditPost[] = [];
+      let truncated = false;
       for (const name of names) {
         const result = await readSubreddit(name, opts);
         if (!result.ok) return result;
         posts.push(...result.posts);
+        truncated ||= result.truncated === true;
       }
-      return { ok: true, posts, rate: { used: null, remaining: null, resetS: null } };
+      return { ok: true, posts, rate: { used: null, remaining: null, resetS: null }, truncated };
     },
 
     async fetchDetails(ids, opts) {

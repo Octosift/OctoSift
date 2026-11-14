@@ -191,7 +191,13 @@ export function createSessionSource(options: SessionSourceOptions): RedditSource
       byId.set(post.id, rest);
     }
     const posts = [...byId.values()].sort((a, b) => b.createdAt - a.createdAt);
-    return { ok: true, posts, rate: { used: null, remaining: null, resetS: null } };
+    // A subreddit this busy may hide posts between hot and top; it should be read more often.
+    return {
+      ok: true,
+      posts,
+      rate: { used: null, remaining: null, resetS: null },
+      truncated: busy,
+    };
   }
 
   return {
@@ -202,12 +208,14 @@ export function createSessionSource(options: SessionSourceOptions): RedditSource
         return { ok: false, kind: 'gone', message: 'Invalid subreddit name' };
       }
       const posts: RedditPost[] = [];
+      let truncated = false;
       for (const name of names) {
         const result = await readSubreddit(name, opts);
         if (!result.ok) return result;
         posts.push(...result.posts);
+        truncated ||= result.truncated === true;
       }
-      return { ok: true, posts, rate: { used: null, remaining: null, resetS: null } };
+      return { ok: true, posts, rate: { used: null, remaining: null, resetS: null }, truncated };
     },
   };
 }

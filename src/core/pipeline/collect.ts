@@ -86,11 +86,17 @@ function storePosts(ctx: CollectContext, selected: RedditPost[]): string[] {
   return rows.map((row) => row.id);
 }
 
-function recordPolls(ctx: CollectContext, states: SubredditPollState[], posts: RedditPost[]): void {
+function recordPolls(
+  ctx: CollectContext,
+  states: SubredditPollState[],
+  posts: RedditPost[],
+  truncated: boolean,
+): void {
   const intervals = nextPollIntervals({
     states,
     posts,
     limit: CONFIG.reddit.feedLimit,
+    truncated,
     defaultIntervalMinutes: ctx.defaultIntervalMinutes,
     minIntervalMinutes: CONFIG.schedule.minIntervalMinutes,
   });
@@ -183,7 +189,7 @@ export async function collectPosts(
     });
     newPostIds.push(...storePosts(ctx, selected));
     ctx.counts.new += selected.length;
-    recordPolls(ctx, requestStates, result.posts);
+    recordPolls(ctx, requestStates, result.posts, result.truncated === true);
   }
   return { newPostIds, blockedUntil: null };
 }

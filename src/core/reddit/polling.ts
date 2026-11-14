@@ -53,6 +53,8 @@ export interface IntervalInput {
   /** Every entry the request returned, newest first. */
   posts: RedditPost[];
   limit: number;
+  /** The source said it may have stopped before reaching the posts it had seen. */
+  truncated?: boolean;
   defaultIntervalMinutes: number;
   minIntervalMinutes: number;
 }
@@ -68,7 +70,7 @@ export function nextPollIntervals(input: IntervalInput): Map<string, number | nu
   const counts = new Map<string, number>();
   for (const post of posts) counts.set(post.subreddit, (counts.get(post.subreddit) ?? 0) + 1);
 
-  if (posts.length >= limit) {
+  if (posts.length >= limit || input.truncated === true) {
     const oldest = Math.min(...posts.map((post) => post.createdAt));
     const atRisk = states.filter(
       (state) => state.previousNewestAt !== null && oldest > state.previousNewestAt,

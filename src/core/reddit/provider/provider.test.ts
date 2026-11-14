@@ -214,6 +214,15 @@ describe('provider source', () => {
     ]);
   });
 
+  it('says when its pages ran out before older posts, so the subreddit is read more often', async () => {
+    // Every page is full of fresh posts and points to another one.
+    const { source, spend } = setup(() => json(fixture('feed-page-1')));
+    const busy = await source.fetchNewPosts(['freelance_demo'], { limit: 100, spend });
+    expect(busy.ok && busy.truncated).toBe(true);
+    const calm = await setup(feedRoute).source.fetchNewPosts(['freelance_demo'], { limit: 100 });
+    expect(calm.ok && calm.truncated).toBe(false);
+  });
+
   it('stops paging at a post already stored', async () => {
     const { source, requests, spend } = setup(feedRoute);
     await source.fetchNewPosts(['freelance_demo'], {
