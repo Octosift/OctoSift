@@ -165,10 +165,16 @@ Settings live in the dashboard and are stored in a local SQLite file. Environmen
 | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `OPENAI_COMPATIBLE_API_KEY` | none                         | Provider keys; they take precedence over keys saved in the dashboard |
 | `REDDIT_PROXY_URL`                                                                                 | none                         | Proxy for Reddit reads                                               |
 | `WEBHOOK_URL`                                                                                      | none                         | Webhook for strong leads (Slack-style or Discord-style)              |
+| `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`                                                          | none                         | Optional: finds Reddit threads that rank on Google for your keywords |
 
 In the dashboard you also set the model for each stage, prices, budget caps, the scan
 interval, score thresholds, filters, your Reddit username (to skip your own posts) and the
 User-Agent.
+
+**Evergreen threads (optional).** With DataForSEO credentials (in Settings or the environment),
+an Evergreen tab lists the Reddit threads that rank on Google for your buyer keywords, checked
+once a week or on demand. Old threads that rank keep being read, so a helpful reply there pays
+off for months. A check costs about $0.004 per keyword and the exact cost of each one is shown.
 
 ## FAQ
 
@@ -198,7 +204,6 @@ AI stages are quick.
 
 ## Roadmap
 
-- Threads that rank on Google for your buyers' searches, worth answering even when old.
 - Checks that your posted replies are visible to logged-out readers.
 - A browser extension for one-click copy on Reddit itself.
 - More sources besides Reddit.

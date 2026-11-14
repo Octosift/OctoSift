@@ -49,6 +49,19 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
   busy has its interval doubled back towards the default once a poll brings in fewer
   than a quarter of a full feed.
 
+## Evergreen threads
+
+- **DataForSEO's live endpoint, not the task queue.** The queue costs less per search but needs
+  polling for results; a weekly check of at most 20 keywords costs about $0.08 live, and the
+  user sees the results at once when pressing Check now.
+- **The cost shown is the one DataForSEO reports**, summed over the keywords of a check, not an
+  estimate.
+- **Archived threads are listed, not hidden.** Threads past Reddit's archive age (about six
+  months) are greyed and labelled, because they show what ranks even though they take no new
+  replies. The tab's count leaves them out.
+- **Checks do not take the scan lock.** They read Google results, not Reddit, so they do not
+  compete for Reddit's rate limit.
+
 ## AI
 
 - **Vercel AI SDK** for OpenAI, Anthropic, Google and OpenAI-compatible endpoints.

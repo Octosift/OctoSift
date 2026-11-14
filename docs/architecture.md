@@ -40,6 +40,7 @@ demo mode and tests replace parts of it.
 | `pipeline/` | Prefilter, dedup, triage, qualify, veto, score, draft, review and the scan orchestration                                             |
 | `guard/`    | Health warnings and pacing warnings                                                                                                  |
 | `notify/`   | The webhook                                                                                                                          |
+| `serp/`     | Optional: the DataForSEO client and the weekly check for Reddit threads that rank on Google                                          |
 | `db/`       | Schema, migrations and small query modules; nothing else touches the database                                                        |
 | `secrets/`  | Encryption, the secret store and redaction                                                                                           |
 | `settings/` | Typed settings with defaults and validation                                                                                          |
@@ -50,9 +51,10 @@ demo mode and tests replace parts of it.
 
 - Input is validated with Zod where it enters: environment variables, settings, server
   action arguments, feed entries, AI output and stored JSON.
-- Only `reddit/client.ts`, `ai/provider.ts`, `profile/crawl.ts` and `notify/webhook.ts` call
-  `fetch`; a lint rule enforces it. The crawler and the webhook reach the network by design
-  (your product site and your webhook), in addition to Reddit and the AI provider.
+- Only `reddit/client.ts`, `ai/provider.ts`, `profile/crawl.ts`, `notify/webhook.ts` and
+  `serp/dataforseo.ts` call `fetch`; a lint rule enforces it. The crawler, the webhook and
+  DataForSEO reach the network by design (your product site, your webhook and, when you set it
+  up, Google results), in addition to Reddit and the AI provider.
 - Expected failures are values (`{ ok: false, kind, message }`), not exceptions. A scan
   never throws: problems end up in the run's status and error.
 - Logging goes through one logger that redacts stored secrets and anything shaped like a key.
@@ -68,6 +70,7 @@ demo mode and tests replace parts of it.
 | `leads`, `drafts`                | Posts that became leads, and their draft versions                   |
 | `feedback`                       | Good and bad marks with notes                                       |
 | `runs`, `usage`                  | Scan history with funnel counts, and the AI cost ledger             |
+| `serp_runs`, `serp_threads`      | Evergreen checks with their cost, and the threads that ranked       |
 | `settings`, `secrets`            | Settings, internal state and encrypted keys                         |
 
 Timestamps are UTC epoch seconds and ids are text.

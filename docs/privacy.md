@@ -20,8 +20,10 @@ Everything stays on the machine that runs Octosift.
 - **Your actions**: replied, snoozed and dismissed leads, the links to comments you posted if
   you added them, and your good or bad marks with notes.
 - **Scan history and AI usage**: counts per stage, token counts and costs.
-- **Settings and keys**: settings in plain JSON; API keys, the webhook URL and the proxy URL
-  encrypted with AES-256-GCM.
+- **Evergreen threads**, if you set up DataForSEO: the keywords you check, the Reddit threads
+  that ranked for them (address, title, rank and date) and the cost of each check.
+- **Settings and keys**: settings in plain JSON; API keys, the DataForSEO login and password,
+  the webhook URL and the proxy URL encrypted with AES-256-GCM.
 
 Saved keys are never sent back to the browser: the dashboard only ever receives a mask such as
 `sk-…a1b2`. Logs and error messages pass through a redactor that removes stored secrets and
@@ -33,6 +35,7 @@ anything shaped like a key.
 - **Your AI provider**: post text, your product profile and drafts, to the provider and models
   you configure.
 - **Your product's website**: read once when you build a profile.
+- **DataForSEO**, if you set it up: your keywords, once a week or when you press Check now.
 - **Your webhook**, if you set one: the title, subreddit, score and reason of strong leads, with
   a link to the lead in your dashboard.
 
