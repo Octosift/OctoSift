@@ -96,8 +96,6 @@ export const posts = sqliteTable(
     nsfw: integer('nsfw', { mode: 'boolean' }).notNull().default(false),
     locked: integer('locked', { mode: 'boolean' }).notNull().default(false),
     removed: integer('removed', { mode: 'boolean' }).notNull().default(false),
-    /** The body is a preview until the full post is fetched. */
-    partial: integer('partial', { mode: 'boolean' }).notNull().default(false),
   },
   (table) => [
     index('posts_subreddit_created_idx').on(table.subreddit, table.createdAt),
@@ -218,10 +216,7 @@ export const runs = sqliteTable(
     status: text('status').$type<RunStatus>().notNull(),
     dryRun: integer('dry_run', { mode: 'boolean' }).notNull().default(false),
     countsJson: text('counts_json', { mode: 'json' }).$type<unknown>().notNull(),
-    /** AI and data together. */
     costUsd: real('cost_usd').notNull().default(0),
-    /** The part of the cost spent on a paid Reddit data provider. */
-    dataCostUsd: real('data_cost_usd').notNull().default(0),
     /** True when at least one AI call had no known price. */
     costIncomplete: integer('cost_incomplete', { mode: 'boolean' }).notNull().default(false),
     error: text('error'),

@@ -213,7 +213,6 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
     status,
     counts,
     costUsd: usage.costUsd,
-    dataCostUsd: usage.dataCostUsd,
     costIncomplete: usage.incomplete,
     error,
   });

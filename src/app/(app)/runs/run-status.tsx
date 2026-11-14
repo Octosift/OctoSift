@@ -1,5 +1,4 @@
 import { Badge } from '../../components/ui/display';
-import { formatUsd } from '../../lib/format';
 
 const STATUS: Record<string, { label: string; tone: 'brand' | 'warning' | 'danger' | 'neutral' }> =
   {
@@ -27,36 +26,4 @@ export function formatDuration(start: number, end: number | null): string {
   const seconds = Math.max(0, end - start);
   if (seconds < 60) return `${seconds}s`;
   return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
-}
-
-/** A run's cost; when it paid for Reddit data, the AI and data parts are shown apart. */
-export function RunCost({
-  costUsd,
-  dataCostUsd,
-  incomplete,
-  inline = false,
-}: {
-  costUsd: number;
-  dataCostUsd: number;
-  incomplete: boolean;
-  /** One line, for headers. */
-  inline?: boolean;
-}) {
-  if (dataCostUsd <= 0) return <>{formatUsd(costUsd, incomplete)}</>;
-  const ai = formatUsd(Math.max(0, costUsd - dataCostUsd), incomplete);
-  if (inline) {
-    return (
-      <>
-        {formatUsd(costUsd, incomplete)} (AI {ai} + data {formatUsd(dataCostUsd)})
-      </>
-    );
-  }
-  return (
-    <span title="AI and Reddit data together">
-      {formatUsd(costUsd, incomplete)}
-      <span className="block text-xs text-muted-foreground">
-        AI {ai} · data {formatUsd(dataCostUsd)}
-      </span>
-    </span>
-  );
 }

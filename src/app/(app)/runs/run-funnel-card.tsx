@@ -3,7 +3,8 @@ import type { RunRow } from '@/core/db/queries/runs';
 import type { FunnelCounts } from '@/core/pipeline/funnel';
 import { Funnel, type FunnelStepKey } from '../../components/funnel';
 import { Card, CardHeader } from '../../components/ui/display';
-import { formatDuration, RunCost, RunStatus, TRIGGER_LABELS } from './run-status';
+import { formatUsd } from '../../lib/format';
+import { formatDuration, RunStatus, TRIGGER_LABELS } from './run-status';
 
 const STAGE_FOR_STEP: Record<FunnelStepKey, string | null> = {
   fetched: null,
@@ -28,14 +29,7 @@ export function RunFunnelCard({ run, counts }: { run: RunRow; counts: FunnelCoun
             <span aria-hidden>·</span>
             <span className="tabular">{formatDuration(run.startedAt, run.finishedAt)}</span>
             <span aria-hidden>·</span>
-            <span className="tabular">
-              <RunCost
-                costUsd={run.costUsd}
-                dataCostUsd={run.dataCostUsd}
-                incomplete={run.costIncomplete}
-                inline
-              />
-            </span>
+            <span className="tabular">{formatUsd(run.costUsd, run.costIncomplete)}</span>
           </span>
         }
       />

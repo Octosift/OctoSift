@@ -29,7 +29,6 @@ export function finishRun(
     status: RunStatus;
     counts: unknown;
     costUsd: number;
-    dataCostUsd?: number;
     costIncomplete: boolean;
     error: string | null;
   },
@@ -40,7 +39,6 @@ export function finishRun(
       status: result.status,
       countsJson: result.counts,
       costUsd: result.costUsd,
-      dataCostUsd: result.dataCostUsd ?? 0,
       costIncomplete: result.costIncomplete,
       error: result.error,
     })

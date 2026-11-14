@@ -76,7 +76,6 @@ function storePosts(ctx: CollectContext, selected: RedditPost[]): string[] {
     nsfw: post.nsfw ?? false,
     locked: post.locked ?? false,
     removed: post.removed ?? false,
-    partial: false,
   }));
   ctx.store.insertPosts(rows);
   return rows.map((row) => row.id);
