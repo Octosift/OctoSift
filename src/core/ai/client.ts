@@ -187,7 +187,8 @@ export function createModelResolver(
         : {
             ok: false,
             kind: 'not_configured',
-            message: `${PROVIDER_LABEL[model.provider]} is experimental. Set EXPERIMENTAL_CLI_PROVIDERS=1 to use it, or choose another provider in Settings.`,
+            message:
+              'The Codex CLI provider is experimental. Set EXPERIMENTAL_CLI_PROVIDERS=1 in .env and restart the app, or choose another provider in Settings.',
             model,
           };
     }

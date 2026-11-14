@@ -5,9 +5,12 @@
 import { hostname } from 'node:os';
 import { demoRuntimeOverrides } from '../core/demo/runtime';
 import { parseEnv } from '../core/env';
+import { loadDotEnv } from '../core/load-env';
 import { createRuntime } from '../core/runtime';
 import { createScheduler } from './scheduler';
 
+// Next.js loads .env for the dashboard; the worker must see the same settings.
+loadDotEnv();
 const parsedEnv = parseEnv(process.env);
 if (!parsedEnv.ok) {
   process.stderr.write(`Invalid environment:\n${parsedEnv.errors.join('\n')}\n`);

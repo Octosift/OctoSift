@@ -5,7 +5,10 @@
 import { resolve } from 'node:path';
 import { openDatabase } from '../src/core/db/client';
 import { parseEnv } from '../src/core/env';
+import { loadDotEnv } from '../src/core/load-env';
 
+// The same .env the dashboard reads, so both migrate the same database file.
+loadDotEnv();
 const parsed = parseEnv(process.env);
 if (!parsed.ok) {
   process.stderr.write(`Invalid environment:\n${parsed.errors.join('\n')}\n`);

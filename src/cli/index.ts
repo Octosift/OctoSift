@@ -5,6 +5,7 @@
 import { BRAND } from '../core/brand';
 import { demoRuntimeOverrides } from '../core/demo/runtime';
 import { parseEnv } from '../core/env';
+import { loadDotEnv } from '../core/load-env';
 import { createRuntime, type Runtime } from '../core/runtime';
 import { createRedactor } from '../core/secrets/redact';
 import { nowSeconds } from '../core/clock';
@@ -26,6 +27,7 @@ function usageError(message: string): number {
 async function withRuntime(
   run: (runtime: Runtime) => Promise<{ code: number; output: string }>,
 ): Promise<number> {
+  loadDotEnv();
   const parsedEnv = parseEnv(process.env);
   if (!parsedEnv.ok) return usageError(`Invalid environment:\n${parsedEnv.errors.join('\n')}`);
   const runtime = createRuntime({
