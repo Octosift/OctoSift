@@ -23,7 +23,7 @@ test('onboarding in demo mode ends in an inbox with leads', async () => {
   await page.goto('/');
   await expect(page).toHaveURL(/\/onboarding/);
   await expect(page.getByRole('heading', { name: 'Connect a Reddit account' })).toBeVisible();
-  await expect(page.getByText('Demo source')).toBeVisible();
+  await expect(page.getByText('Demo source', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.getByRole('heading', { name: 'What did you build?' })).toBeVisible();
 
