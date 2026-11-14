@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardHeader } from '../../components/ui/display';
 import { Checkbox, Field, Input, Textarea } from '../../components/ui/fields';
 import { removeProduct, saveProductRules } from '../../lib/actions/product';
-import { SaveBar } from '../settings/models-section';
+import { SaveBar } from '../settings/save-bar';
 import { useSave } from './product-forms';
 
 export function RulesForm({

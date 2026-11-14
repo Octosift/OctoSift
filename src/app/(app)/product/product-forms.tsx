@@ -6,7 +6,7 @@ import { ProfileFields, type EditableProfile } from '../../components/profile-fi
 import { Banner, Card, CardHeader } from '../../components/ui/display';
 import { Checkbox, Field, Input, Select, Textarea } from '../../components/ui/fields';
 import { saveProfile, saveReplySettings, type ProductResult } from '../../lib/actions/product';
-import { SaveBar } from '../settings/models-section';
+import { SaveBar } from '../settings/save-bar';
 
 export function useSave() {
   const [errors, setErrors] = useState<Record<string, string>>({});

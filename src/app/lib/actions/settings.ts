@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { forgetModelList } from '@/core/ai/model-lists';
 import { listModels, testConnection } from '@/core/ai/provider';
 import {
   AI_STAGES,
@@ -57,7 +58,13 @@ export async function saveSecret(input: { name: string; value: string }): Promis
 
 export async function removeSecret(input: { name: string }): Promise<{ ok: boolean }> {
   if (!isSecretName(input.name) || !EDITABLE_SECRETS.includes(input.name)) return { ok: false };
-  getRuntime().secrets.remove(input.name);
+  const runtime = getRuntime();
+  runtime.secrets.remove(input.name);
+  // A removed key can no longer use the models it listed.
+  const provider = (Object.keys(SECRET_FOR) as ProviderId[]).find(
+    (id) => SECRET_FOR[id] === input.name,
+  );
+  if (provider) forgetModelList(runtime.db, provider);
   revalidatePath('/settings');
   return Promise.resolve({ ok: true });
 }

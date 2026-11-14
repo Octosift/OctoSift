@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { openMemoryDatabase } from '../db/client';
+import { createSettingsStore } from '../settings/store';
+import { applyPreset } from './apply-preset';
 import { estimateMonthlyCost, expectedPostsPerDay, DEFAULT_POSTS_PER_DAY } from './estimate';
 import {
   activePreset,
@@ -110,5 +113,27 @@ describe('monthly estimate', () => {
       postsPerDay: DEFAULT_POSTS_PER_DAY,
       measured: false,
     });
+  });
+});
+
+describe('applying a preset', () => {
+  it('sets the stages and adds missing prices without touching the user ones', () => {
+    const settings = createSettingsStore(openMemoryDatabase());
+    settings.set('ai.prices', {
+      'openai/gpt-6.1-sol': { inputPerMillionUsd: 1.5, outputPerMillionUsd: 9 },
+    });
+    applyPreset(settings, 'openai', 'balanced');
+    expect(settings.get('ai.stages')).toEqual(presetStages('openai', 'balanced'));
+    const prices = settings.get('ai.prices');
+    expect(prices['openai/gpt-6.1-sol']).toEqual({
+      inputPerMillionUsd: 1.5,
+      outputPerMillionUsd: 9,
+    });
+    expect(prices['openai/gpt-6-luna']?.inputPerMillionUsd).toBe(0.1);
+    expect(Object.keys(prices).sort()).toEqual([
+      'openai/gpt-6-luna',
+      'openai/gpt-6.1-sol',
+      'openai/gpt-6.1-terra',
+    ]);
   });
 });

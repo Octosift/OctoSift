@@ -17,6 +17,8 @@ export function SecretField({
   description,
   placeholder,
   type = 'password',
+  onSaved,
+  onRemoved,
 }: {
   name: string;
   label: string;
@@ -24,6 +26,8 @@ export function SecretField({
   placeholder?: string;
   /** "text" for values that are private but not secret-looking, such as a login. */
   type?: 'password' | 'url' | 'text';
+  onSaved?: () => void;
+  onRemoved?: () => void;
 }) {
   const [editing, setEditing] = useState(!description.configured);
   const [value, setValue] = useState('');
@@ -40,6 +44,7 @@ export function SecretField({
         setValue('');
         setEditing(false);
         setError(null);
+        onSaved?.();
       } else {
         setError(result.error);
       }
@@ -116,6 +121,7 @@ export function SecretField({
                 await removeSecret({ name });
                 setMask(null);
                 setEditing(true);
+                onRemoved?.();
               });
             }}
           >

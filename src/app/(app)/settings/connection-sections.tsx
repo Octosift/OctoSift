@@ -3,7 +3,7 @@
 import { Card, CardHeader } from '../../components/ui/display';
 import { Field, Input, Select } from '../../components/ui/fields';
 import type { SettingsData } from '../../lib/data/settings';
-import { SaveBar } from './models-section';
+import { SaveBar } from './save-bar';
 import { SecretField } from './secret-field';
 import { useSettingsForm } from './use-settings-form';
 

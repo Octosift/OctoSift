@@ -4,6 +4,7 @@ import { sessionStatus } from '@/core/reddit/account';
 import type { SecretDescription, SecretName } from '@/core/secrets/store';
 import { readState } from '@/core/state';
 import { runsInContainer } from '../reddit-sign-in';
+import { loadAiSettings } from './ai';
 import { getRuntime } from '../runtime';
 
 const SHOWN_SECRETS = [
@@ -26,6 +27,7 @@ export function loadSettings() {
   return {
     demo: env.DEMO_MODE,
     secrets: described,
+    ai: loadAiSettings(),
     account: {
       ...sessionStatus(db, secrets),
       cookieMask: secrets.describe('reddit_session_cookie').mask,

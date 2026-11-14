@@ -3,8 +3,7 @@
 import { Card, CardHeader } from '../../components/ui/display';
 import { Field, Input, Textarea } from '../../components/ui/fields';
 import type { SettingsData } from '../../lib/data/settings';
-import { SaveBar } from './models-section';
-import { SecretField } from './secret-field';
+import { SaveBar } from './save-bar';
 import { useSettingsForm } from './use-settings-form';
 
 const toNumber = (text: string) => (text.trim() === '' ? Number.NaN : Number(text));
@@ -13,34 +12,6 @@ const lines = (text: string) =>
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-
-export function KeysSection({ data }: { data: SettingsData }) {
-  return (
-    <Card id="ai">
-      <CardHeader
-        title="AI provider keys"
-        description="Keys are encrypted before they are stored and are never shown again. Environment variables take precedence."
-      />
-      <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
-        <SecretField
-          name="openai_api_key"
-          label="OpenAI API key"
-          description={data.secrets.openai_api_key}
-        />
-        <SecretField
-          name="anthropic_api_key"
-          label="Anthropic API key"
-          description={data.secrets.anthropic_api_key}
-        />
-        <SecretField
-          name="openai_compatible_api_key"
-          label="OpenAI-compatible key (if needed)"
-          description={data.secrets.openai_compatible_api_key}
-        />
-      </div>
-    </Card>
-  );
-}
 
 export function BudgetSection({ data }: { data: SettingsData }) {
   const { values } = data;
@@ -116,15 +87,26 @@ export function BudgetSection({ data }: { data: SettingsData }) {
 
 export function PricesSection({ data }: { data: SettingsData }) {
   const initial = Object.entries(data.values.prices)
-    .map(([model, price]) => `${model} ${price.inputPerMillionUsd} ${price.outputPerMillionUsd}`)
+    .map(([model, price]) =>
+      [
+        model,
+        price.inputPerMillionUsd,
+        price.outputPerMillionUsd,
+        ...(price.cachedInputPerMillionUsd === undefined ? [] : [price.cachedInputPerMillionUsd]),
+      ].join(' '),
+    )
     .join('\n');
   const form = useSettingsForm({ text: initial }, (v) => ({
     'ai.prices': Object.fromEntries(
       lines(v.text).map((line) => {
-        const [model = '', input = '', output = ''] = line.split(/\s+/);
+        const [model = '', input = '', output = '', cached] = line.split(/\s+/);
         return [
           model,
-          { inputPerMillionUsd: toNumber(input), outputPerMillionUsd: toNumber(output) },
+          {
+            inputPerMillionUsd: toNumber(input),
+            outputPerMillionUsd: toNumber(output),
+            ...(cached === undefined ? {} : { cachedInputPerMillionUsd: toNumber(cached) }),
+          },
         ];
       }),
     ),
@@ -133,13 +115,13 @@ export function PricesSection({ data }: { data: SettingsData }) {
     <Card id="prices">
       <CardHeader
         title="Model prices"
-        description="Used to show the cost of each scan and enforce the budget. Models without a price are counted as unknown."
+        description="Used to show the cost of each scan and enforce the budget. Choosing a preset fills in its models; models without a price are counted as unknown."
       />
       <div className="px-4 py-4">
         <Field
-          label="One model per line: model id, input and output price in USD per million tokens"
+          label="One model per line: model id, input and output price in USD per million tokens, and optionally the cached-input price"
           htmlFor="prices"
-          hint="For example: small-model 0.15 0.60. Use provider/model to price one provider's model separately."
+          hint="For example: openai/gpt-6-luna 0.10 0.50 0.01. Use provider/model to price one provider's model separately."
           error={form.errorFor('ai.prices')}
         >
           <Textarea

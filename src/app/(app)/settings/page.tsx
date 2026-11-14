@@ -2,19 +2,18 @@ import type { Metadata } from 'next';
 import { Banner, PageHeader } from '../../components/ui/display';
 import { nowSeconds } from '../../lib/runtime';
 import { loadSettings } from '../../lib/data/settings';
-import { ModelsSection } from './models-section';
+import { AiSection } from './ai-section';
 import { EvergreenSection, NotificationsSection, RedditSection } from './connection-sections';
 import { DataSection } from './data-section';
 import { DataSourceSection } from './data-source';
 import { RedditAccountCard } from './reddit-account';
-import { BudgetSection, FiltersSection, KeysSection, PricesSection } from './sections';
+import { BudgetSection, FiltersSection, PricesSection } from './sections';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Settings' };
 
 const SECTIONS = [
-  ['ai', 'Keys'],
-  ['models', 'Models'],
+  ['ai', 'AI'],
   ['prices', 'Prices'],
   ['budget', 'Budget'],
   ['filters', 'Filters'],
@@ -55,8 +54,7 @@ export default function SettingsPage() {
               Changes here are saved to the demo database only.
             </Banner>
           ) : null}
-          <KeysSection data={data} />
-          <ModelsSection data={data} />
+          <AiSection data={data} />
           <PricesSection data={data} />
           <BudgetSection data={data} />
           <FiltersSection data={data} />

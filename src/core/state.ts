@@ -34,6 +34,11 @@ const STATE = {
     checkedAt: z.number(),
     nextAt: z.number(),
   }),
+  /** Model ids each provider offered the saved key, for the model lists and presets. */
+  'state.modelLists': z.record(
+    z.string(),
+    z.object({ models: z.array(z.string()), fetchedAt: z.number() }),
+  ),
   'state.scanRequest': z.object({ requestedAt: z.number(), productId: z.string().nullable() }),
   'state.validationRequest': z.object({ requestedAt: z.number(), names: z.array(z.string()) }),
   'state.validationProgress': z.object({

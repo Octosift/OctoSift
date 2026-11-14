@@ -4,7 +4,7 @@ import { Card, CardHeader } from '../../components/ui/display';
 import { Checkbox } from '../../components/ui/fields';
 import { cn } from '../../components/ui/utils';
 import type { SettingsData } from '../../lib/data/settings';
-import { SaveBar } from './models-section';
+import { SaveBar } from './save-bar';
 import { useSettingsForm } from './use-settings-form';
 
 type SourceId = SettingsData['values']['source'];
