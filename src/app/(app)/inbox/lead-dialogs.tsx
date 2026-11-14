@@ -43,8 +43,10 @@ export function ReplyConfirmDialog({
         >
           <Input
             id="comment-url"
-            type="url"
-            placeholder="https://www.reddit.com/r/…/comments/…"
+            type="text"
+            inputMode="url"
+            spellCheck={false}
+            placeholder="reddit.com/r/…/comments/…"
             value={commentUrl}
             onChange={(event) => {
               setCommentUrl(event.target.value);

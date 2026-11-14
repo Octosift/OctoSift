@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { isRedditShareLink, normalizeRedditUrl } from '@/core/urls';
 import { scheduleReplyChecks } from '@/core/guard/visibility';
 import { FITS, INTENTS } from '@/core/ai/schemas';
 import { getLead, updateDraftText, updateLead } from '@/core/db/queries/leads';
@@ -34,8 +35,22 @@ const repliedInput = z.object({
     .string()
     .trim()
     .max(500)
-    .refine((value) => value === '' || /^https:\/\/(www\.|old\.)?reddit\.com\//.test(value), {
-      message: 'Paste the link to your comment on reddit.com',
+    .transform((value, ctx) => {
+      if (value === '') return '';
+      if (isRedditShareLink(value)) {
+        ctx.addIssue({
+          code: 'custom',
+          message:
+            'This is a short share link. Open it, then copy the address from the browser bar.',
+        });
+        return z.NEVER;
+      }
+      const normalized = normalizeRedditUrl(value);
+      if (normalized === null) {
+        ctx.addIssue({ code: 'custom', message: 'Paste the link to your comment on reddit.com' });
+        return z.NEVER;
+      }
+      return normalized;
     })
     .optional(),
 });

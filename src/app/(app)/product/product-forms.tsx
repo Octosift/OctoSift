@@ -64,7 +64,9 @@ export function ProfileForm({
         <Field label="Website" htmlFor="profile-url" error={form.errors.url}>
           <Input
             id="profile-url"
-            type="url"
+            type="text"
+            inputMode="url"
+            spellCheck={false}
             value={state.url}
             onChange={(event) => {
               update({ url: event.target.value });

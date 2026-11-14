@@ -24,6 +24,7 @@ import { leads, posts, replyChecks } from '../db/schema';
 import { newId } from '../ids';
 import type { Logger } from '../log';
 import type { SessionClient } from '../reddit/session-client';
+import { normalizeRedditUrl } from '../urls';
 
 export type ReplyCheckResult = 'visible' | 'removed' | 'post_gone' | 'unknown';
 
@@ -40,18 +41,10 @@ const PERMALINK =
 
 /** Reads a comment permalink; null for links that are not to a comment. */
 export function parseCommentLink(raw: string): CommentLink | null {
-  let url: URL;
-  try {
-    url = new URL(raw.trim());
-  } catch {
-    // Not a link at all.
-    return null;
-  }
-  const host = url.hostname.toLowerCase();
-  if (url.protocol !== 'https:' || (host !== 'reddit.com' && !host.endsWith('.reddit.com'))) {
-    return null;
-  }
-  const match = PERMALINK.exec(url.pathname);
+  // Any Reddit host, with or without https://, in its canonical form.
+  const normalized = normalizeRedditUrl(raw);
+  if (normalized === null) return null;
+  const match = PERMALINK.exec(new URL(normalized).pathname);
   const [, subreddit, post, slug, comment] = match ?? [];
   if (!subreddit || !post || !slug || !comment) return null;
   return {

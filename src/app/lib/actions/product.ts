@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { webUrl } from '@/core/urls';
 import { profileWire } from '@/core/ai/schemas';
 import { updateFeedbackNote } from '@/core/db/queries/feedback';
 import { deleteProduct, getProduct, listProducts, updateProduct } from '@/core/db/queries/products';
@@ -18,7 +19,7 @@ const productId = z.string().min(1).max(100);
 const profileInput = profileWire.omit({ open_questions: true }).extend({
   name: z.string().trim().min(1, 'Give the product a name').max(80),
   one_liner: z.string().trim().min(1, 'Describe the product in one line').max(160),
-  url: z.url('Enter the full website address'),
+  url: webUrl('Enter the website, for example acme.com'),
   best_customer: z.string().trim().max(1_000),
   misconceptions: z.string().trim().max(1_000),
   never_reply_to: z.string().trim().max(1_000),

@@ -4,11 +4,12 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { forgetModelList } from '@/core/ai/model-lists';
+import { normalizeWebUrl } from '@/core/urls';
 import { testConnection } from '@/core/ai/provider';
 import { AI_STAGES, isSettingKey, SETTINGS, type ProviderId } from '@/core/settings/registry';
 import { deleteAllData } from '@/core/db/queries/data';
 import { isSecretName, maskSecret, type SecretName } from '@/core/secrets/store';
-import type { SettingInput, SettingKey } from '@/core/settings/registry';
+import type { SettingKey } from '@/core/settings/registry';
 import { getRuntime } from '../runtime';
 
 /** Secrets the dashboard may set; others belong to integrations that are not enabled yet. */
@@ -39,15 +40,26 @@ export async function saveSecret(input: { name: string; value: string }): Promis
     };
   }
   const name = parsed.data.name;
-  if (
-    (name === 'webhook_url' || name === 'reddit_proxy_url') &&
-    !z.url().safeParse(parsed.data.value).success
-  ) {
-    return { ok: false, error: 'Enter a full URL, including https:// or http://' };
+  let value = parsed.data.value;
+  if (name === 'webhook_url' || name === 'reddit_proxy_url') {
+    // Proxies are usually plain http; webhooks are https.
+    const normalized = normalizeWebUrl(value, {
+      defaultScheme: name === 'reddit_proxy_url' ? 'http' : 'https',
+    });
+    if (normalized === null) {
+      return {
+        ok: false,
+        error:
+          name === 'webhook_url'
+            ? 'Enter the webhook address, for example hooks.slack.com/services/…'
+            : 'Enter the proxy address, for example proxy.example.com:8080',
+      };
+    }
+    value = normalized;
   }
-  getRuntime().secrets.set(name, parsed.data.value);
+  getRuntime().secrets.set(name, value);
   revalidatePath('/settings');
-  return Promise.resolve({ ok: true, mask: maskSecret(parsed.data.value) });
+  return Promise.resolve({ ok: true, mask: maskSecret(value) });
 }
 
 export async function removeSecret(input: { name: string }): Promise<{ ok: boolean }> {
@@ -81,7 +93,7 @@ export async function saveSettings(changes: Record<string, unknown>): Promise<Se
   }
   if (Object.keys(errors).length > 0) return Promise.resolve({ ok: false, errors });
   for (const key of keys as SettingKey[]) {
-    settings.set(key, changes[key] as SettingInput<typeof key>);
+    settings.set(key, changes[key]);
   }
   revalidatePath('/', 'layout');
   return Promise.resolve({ ok: true });

@@ -44,8 +44,8 @@ export function RedditSection({ data }: { data: SettingsData }) {
           <SecretField
             name="reddit_proxy_url"
             label="Proxy URL (optional)"
-            type="url"
-            placeholder="http://user:password@proxy.example.com:8080"
+            type="text"
+            placeholder="user:password@proxy.example.com:8080"
             description={data.secrets.reddit_proxy_url}
           />
           <p className="mt-1 text-xs text-muted-foreground">
@@ -78,8 +78,8 @@ export function NotificationsSection({ data }: { data: SettingsData }) {
         <SecretField
           name="webhook_url"
           label="Webhook URL"
-          type="url"
-          placeholder="https://hooks.example.com/…"
+          type="text"
+          placeholder="hooks.slack.com/services/…"
           description={data.secrets.webhook_url}
         />
         <Field label="Format" htmlFor="webhook-format">

@@ -7,6 +7,7 @@
  */
 import { z } from 'zod';
 import { CONFIG } from '../config';
+import { normalizeWebUrl } from '../urls';
 
 export const PROVIDER_IDS = ['openai', 'anthropic', 'openai_compatible', 'codex_cli'] as const;
 export type ProviderId = (typeof PROVIDER_IDS)[number];
@@ -112,7 +113,13 @@ export const SETTINGS = {
     z.object({ triage: stageModel, qualify: stageModel, draft: stageModel, review: stageModel }),
     { triage: null, qualify: null, draft: null, review: null },
   ),
-  'ai.compatibleBaseUrl': setting(z.url().nullable(), null),
+  'ai.compatibleBaseUrl': setting(
+    z.preprocess(
+      (value) => (typeof value === 'string' ? (normalizeWebUrl(value) ?? value) : value),
+      z.url('Enter the endpoint address, for example localhost:11434/v1').nullable(),
+    ),
+    null,
+  ),
   'ai.prices': setting(z.record(z.string().min(1), price), {}),
   /** Reasoning effort per stage for the experimental Codex CLI provider. */
   'ai.codexEffort': setting(

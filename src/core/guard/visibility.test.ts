@@ -115,7 +115,6 @@ describe('comment links', () => {
   it.each([
     'https://www.reddit.com/r/freelance_demo/comments/rpl001/how_do_you_get_clients_to_pay/',
     'https://example.com/r/freelance_demo/comments/rpl001/x/cmt001/',
-    'http://www.reddit.com/r/freelance_demo/comments/rpl001/x/cmt001/',
     'not a link',
   ])('refuses %s', (url) => {
     expect(parseCommentLink(url)).toBeNull();

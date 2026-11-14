@@ -82,6 +82,8 @@ export function StepProduct({
           return;
         }
         pages = crawl.pages;
+        // Show the address as it was read, for example with https:// added.
+        setUrl(crawl.url);
         setStatus(
           `Read ${pages.length} ${pages.length === 1 ? 'page' : 'pages'}. Building the profile…`,
         );
@@ -151,9 +153,12 @@ export function StepProduct({
           <Field label="Product website" htmlFor="product-url" className="flex-1">
             <Input
               id="product-url"
-              type="url"
+              type="text"
+              inputMode="url"
+              autoComplete="url"
+              spellCheck={false}
               required
-              placeholder="https://"
+              placeholder="yourproduct.com"
               value={url}
               onChange={(event) => {
                 setUrl(event.target.value);

@@ -537,12 +537,14 @@ function AdvancedModels({
         <Field
           label="OpenAI-compatible base URL"
           htmlFor="compatible-base-url"
-          hint="For Ollama, LM Studio, OpenRouter and similar, for example http://localhost:11434/v1"
+          hint="For Ollama, LM Studio, OpenRouter and similar, for example localhost:11434/v1"
           error={form.errorFor('ai.compatibleBaseUrl')}
         >
           <Input
             id="compatible-base-url"
-            type="url"
+            type="text"
+            inputMode="url"
+            spellCheck={false}
             value={form.values.baseUrl}
             onChange={(event) => {
               form.set('baseUrl', event.target.value);

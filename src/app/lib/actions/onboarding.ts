@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { webUrl } from '@/core/urls';
 import { profileWire, type ExtractedProfile } from '@/core/ai/schemas';
 import { CONFIG } from '@/core/config';
 import { insertProduct, getProduct, watchSubreddit } from '@/core/db/queries/products';
@@ -28,14 +29,15 @@ const pageSchema = z.object({
 type Page = z.output<typeof pageSchema>;
 
 export type CrawlResponse =
-  { ok: true; pages: Page[] } | { ok: false; message: string; askForDescription: boolean };
+  | { ok: true; url: string; pages: Page[] }
+  | { ok: false; message: string; askForDescription: boolean };
 
 export async function crawlSite(rawUrl: string): Promise<CrawlResponse> {
-  const url = z.url().safeParse(rawUrl.trim());
+  const url = webUrl().safeParse(rawUrl);
   if (!url.success)
     return {
       ok: false,
-      message: 'Enter a full web address starting with https://',
+      message: 'Enter your website, for example acme.com',
       askForDescription: false,
     };
   const runtime = getRuntime();
@@ -45,7 +47,11 @@ export async function crawlSite(rawUrl: string): Promise<CrawlResponse> {
       (profile) => profile.url === url.data.replace(/\/$/, ''),
     );
     return sample
-      ? { ok: true, pages: [{ url: sample.url, title: sample.name, text: sample.one_liner }] }
+      ? {
+          ok: true,
+          url: url.data,
+          pages: [{ url: sample.url, title: sample.name, text: sample.one_liner }],
+        }
       : {
           ok: false,
           message:
@@ -56,11 +62,11 @@ export async function crawlSite(rawUrl: string): Promise<CrawlResponse> {
   const result = await crawlProduct(url.data);
   if (!result.ok)
     return { ok: false, message: result.message, askForDescription: result.kind !== 'invalid_url' };
-  return { ok: true, pages: result.pages };
+  return { ok: true, url: url.data, pages: result.pages };
 }
 
 const extractInput = z.object({
-  url: z.url(),
+  url: webUrl(),
   pages: z.array(pageSchema).max(CONFIG.crawl.maxExtraPages + 1),
   description: z.string().trim().max(6_000).nullable(),
 });
@@ -95,7 +101,7 @@ const answersSchema = z.object({
 });
 
 const createInput = z.object({
-  url: z.url(),
+  url: webUrl(),
   profile: profileWire.extend({
     name: z.string().trim().min(1, 'Give the product a name').max(80),
     one_liner: z.string().trim().min(1, 'Describe the product in one line').max(160),
