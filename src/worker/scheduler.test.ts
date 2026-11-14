@@ -112,4 +112,31 @@ describe('scheduler', () => {
     expect(iterations).toBe(3);
     expect(harness.db.select().from(runs).all()).toHaveLength(1);
   });
+
+  it('runs the weekly evergreen check when DataForSEO is configured', async () => {
+    const harness = createScanHarness('acme-invoices');
+    const asked: string[] = [];
+    const scheduler = createScheduler({
+      db: harness.db,
+      settings: harness.settings,
+      clock: harness.clock,
+      log: silentLogger(),
+      scanDeps: () => harness.deps,
+      serp: () => (keyword) => {
+        asked.push(keyword);
+        return Promise.resolve({ ok: true, items: [], costUsd: 0.004 });
+      },
+      owner: 'worker-test',
+    });
+    expect(await scheduler.checkEvergreen()).toBe(1);
+    expect(asked.length).toBeGreaterThan(0);
+    expect(await scheduler.checkEvergreen()).toBe(0);
+    harness.clock.advance(7 * 24 * 3600 * 1000);
+    expect(await scheduler.checkEvergreen()).toBe(1);
+  });
+
+  it('skips the evergreen check while DataForSEO is not configured', async () => {
+    const { scheduler } = setup();
+    expect(await scheduler.checkEvergreen()).toBe(0);
+  });
 });

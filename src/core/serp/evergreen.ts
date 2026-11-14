@@ -17,8 +17,10 @@ import {
   upsertSerpThread,
 } from '../db/queries/serp';
 import type { SerpRunStatus, SerpRunTrigger } from '../db/schema';
+import type { Product } from '../db/queries/products';
 import { newId } from '../ids';
 import type { Logger } from '../log';
+import type { SettingsStore } from '../settings/store';
 import type { SerpFailureKind, SerpFetcher } from './dataforseo';
 
 export interface RedditThread {
@@ -191,4 +193,17 @@ export async function runEvergreenCheck(
     now,
   });
   return { ok: true, runId, status, threads: threadIds.size, costUsd: cost, error: firstError };
+}
+
+/** Checks one product's keywords: its saved list, or else its buyer phrases. */
+export function runEvergreenForProduct(
+  deps: EvergreenDeps & { settings: SettingsStore },
+  product: Product,
+  trigger: SerpRunTrigger,
+): Promise<EvergreenResult> {
+  const keywords = evergreenKeywords(
+    deps.settings.getForProduct(product.id, 'evergreen.keywords'),
+    product.profile?.buyer_phrases ?? [],
+  );
+  return runEvergreenCheck(deps, { productId: product.id, keywords, trigger });
 }

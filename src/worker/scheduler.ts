@@ -3,11 +3,15 @@
  * once a minute it checks whether any watched subreddit is due. When there
  * is work it takes the scan lock, runs one scan covering everything due,
  * and keeps the lock alive with heartbeats until the scan finishes.
+ *
+ * Once a minute it also runs the weekly evergreen check for any product that
+ * is due, when DataForSEO is configured. That reads Google results, not
+ * Reddit, so it does not take the scan lock.
  */
 import { nowSeconds, type Clock } from '../core/clock';
 import { CONFIG } from '../core/config';
 import type { Db } from '../core/db/client';
-import { enabledSubredditNames } from '../core/db/queries/products';
+import { enabledSubredditNames, listProducts } from '../core/db/queries/products';
 import { pollStates } from '../core/db/queries/subreddits';
 import type { Logger } from '../core/log';
 import { runScan, type ScanDeps, type ScanReport } from '../core/pipeline/run';
@@ -19,6 +23,8 @@ import {
   releaseScanLock,
   takeScanRequest,
 } from '../core/scan-lock';
+import type { SerpFetcher } from '../core/serp/dataforseo';
+import { evergreenDue, runEvergreenForProduct } from '../core/serp/evergreen';
 import type { SettingsStore } from '../core/settings/store';
 import { hasValidationRequest, runValidationRequest } from '../core/validation-queue';
 
@@ -28,6 +34,8 @@ export interface SchedulerDeps {
   clock: Clock;
   log: Logger;
   scanDeps: () => ScanDeps;
+  /** The DataForSEO fetcher, or null while it is not configured. */
+  serp?: () => SerpFetcher | null;
   /** Identifies this process in the scan lock. */
   owner: string;
   /** Calls `beat` periodically until the returned function is called. */
@@ -130,6 +138,25 @@ export function createScheduler(deps: SchedulerDeps) {
     });
   }
 
+  /** Runs the weekly evergreen check for every product that is due; returns how many ran. */
+  async function checkEvergreen(): Promise<number> {
+    const fetchSerp = deps.serp?.() ?? null;
+    if (!fetchSerp) return 0;
+    let ran = 0;
+    for (const product of listProducts(db)) {
+      const now = nowSeconds(clock);
+      if (!product.profile || !evergreenDue(db, product.id, now)) continue;
+      const result = await runEvergreenForProduct(
+        { db, fetchSerp, log, now, settings },
+        product,
+        'schedule',
+      );
+      if (result.ok) ran += 1;
+      else log.warn('Evergreen check skipped', { productId: product.id, reason: result.message });
+    }
+    return ran;
+  }
+
   async function run(signal: AbortSignal): Promise<void> {
     let lastScheduleCheck = Number.NEGATIVE_INFINITY;
     log.info('Worker started', { owner });
@@ -140,6 +167,7 @@ export function createScheduler(deps: SchedulerDeps) {
       try {
         const outcome = await tick({ checkSchedule });
         if (outcome.kind === 'locked') log.debug('Another process is scanning; waiting');
+        if (checkSchedule) await checkEvergreen();
       } catch (error) {
         log.error('Worker iteration failed', { error });
       }
@@ -148,5 +176,5 @@ export function createScheduler(deps: SchedulerDeps) {
     log.info('Worker stopped', { owner });
   }
 
-  return { tick, run };
+  return { tick, run, checkEvergreen };
 }

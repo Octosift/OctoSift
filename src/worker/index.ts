@@ -32,6 +32,7 @@ const scheduler = createScheduler({
   clock: runtime.clock,
   log: runtime.log,
   scanDeps: () => runtime.scanDeps(),
+  serp: () => runtime.serp(),
   owner: `worker-${hostname()}-${process.pid}`,
 });
 

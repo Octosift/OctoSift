@@ -28,6 +28,7 @@ import type { RedditSource } from './reddit/types';
 import { loadMasterKey } from './secrets/crypto';
 import { createRedactor, type Redactor } from './secrets/redact';
 import { createSecretStore, type SecretStore } from './secrets/store';
+import { createDataForSeoFetcher, type SerpFetcher } from './serp/dataforseo';
 import { createSettingsStore, type SettingsStore } from './settings/store';
 import { readState, writeState } from './state';
 
@@ -45,6 +46,8 @@ export interface Runtime {
   resolveModel: (stage: AiStage) => ModelResolution;
   /** An AI client for calls outside a scan (onboarding, regenerating a draft). */
   ai(): AiClient;
+  /** Google results for evergreen threads; null until DataForSEO credentials are saved. */
+  serp(): SerpFetcher | null;
   scanDeps(): ScanDeps;
   close(): void;
 }
@@ -61,6 +64,7 @@ export interface RuntimeOptions {
     source?: RedditSource;
     generator?: Generator;
     resolveModel?: (stage: AiStage) => ModelResolution;
+    serp?: SerpFetcher;
     extendScanDeps?: (deps: ScanDeps) => ScanDeps;
   };
 }
@@ -148,6 +152,14 @@ export function createRuntime(options: RuntimeOptions): Runtime {
         redact: redactor.redact,
         log,
       }),
+    serp: () => {
+      if (options.overrides?.serp) return options.overrides.serp;
+      const login = secrets.use('dataforseo_login');
+      const password = secrets.use('dataforseo_password');
+      return login.ok && password.ok
+        ? createDataForSeoFetcher({ login: login.value, password: password.value })
+        : null;
+    },
     scanDeps: () => {
       const deps: ScanDeps = {
         db,

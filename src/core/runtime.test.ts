@@ -65,6 +65,16 @@ describe('createRuntime', () => {
     runtime.close();
   });
 
+  it('offers evergreen checks only once both DataForSEO credentials are set', () => {
+    const runtime = createRuntime({ env: env(databasePath()), rawEnv: {} });
+    expect(runtime.serp()).toBeNull();
+    runtime.secrets.set('dataforseo_login', 'demo@example.com');
+    expect(runtime.serp()).toBeNull();
+    runtime.secrets.set('dataforseo_password', 'not-a-real-password');
+    expect(runtime.serp()).toBeTypeOf('function');
+    runtime.close();
+  });
+
   it('keeps Reddit reads paused after a restart', async () => {
     const path = databasePath();
     const clock = createFakeClock();
