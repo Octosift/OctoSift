@@ -20,6 +20,7 @@ function run(
     dryRun: false,
     countsJson: { ...emptyCounts(), ...counts },
     costUsd: 0,
+    apiEquivalentUsd: null,
     costIncomplete: false,
     error: null,
     ...overrides,

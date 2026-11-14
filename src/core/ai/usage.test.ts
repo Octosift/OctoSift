@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { openMemoryDatabase } from '../db/client';
 import { usage } from '../db/schema';
 import { createFakeClock } from '../testing/fake-clock';
-import { createUsageLedger, priceFor, type PriceTable } from './usage';
+import { apiEquivalentOf, createUsageLedger, priceFor, type PriceTable } from './usage';
 
 const PRICES: PriceTable = {
   'small-model': { inputPerMillionUsd: 1, outputPerMillionUsd: 4 },
@@ -44,7 +44,12 @@ describe('usage ledger', () => {
       inputTokens: 1_000_000,
       outputTokens: 250_000,
     });
-    expect(ledger.summary()).toEqual({ costUsd: 2, incomplete: false, calls: 1 });
+    expect(ledger.summary()).toEqual({
+      costUsd: 2,
+      apiEquivalentUsd: null,
+      incomplete: false,
+      calls: 1,
+    });
   });
 
   it('records an unknown price as unknown and marks the run total incomplete', () => {
@@ -53,7 +58,12 @@ describe('usage ledger', () => {
     const mystery = { provider: 'openai_compatible' as const, model: 'mystery' };
     expect(ledger.record('qualify', mystery, { inputTokens: 10, outputTokens: 5 })).toBeNull();
     expect(db.select().from(usage).get()?.costUsd).toBeNull();
-    expect(ledger.summary()).toEqual({ costUsd: 0, incomplete: true, calls: 1 });
+    expect(ledger.summary()).toEqual({
+      costUsd: 0,
+      apiEquivalentUsd: null,
+      incomplete: true,
+      calls: 1,
+    });
   });
 
   it('stops a run once its budget is reached', () => {
@@ -94,5 +104,62 @@ describe('usage ledger', () => {
     make(null).record('qualify', small, { inputTokens: 3_000_000, outputTokens: 0 });
     clock.advance(24 * 3600 * 1000 + 1000);
     expect(make(null).check()).toEqual({ ok: true });
+  });
+
+  it('records subscription calls at no cost, with what the same tokens cost on the API', () => {
+    const { db, make } = setup({ perRunUsd: 0.001, perDayUsd: 0.001 });
+    const ledger = make(null);
+    const codex = { provider: 'codex_cli' as const, model: 'gpt-6.1-sol' };
+    // 18,000 input tokens, 17,000 of them cached, and 1,000 output tokens at GPT-6.1 Sol rates.
+    const cost = ledger.record('triage', codex, {
+      inputTokens: 18_000,
+      cachedInputTokens: 17_000,
+      outputTokens: 1_000,
+    });
+    expect(cost).toBe(0);
+    const expected = (1_000 * 2 + 17_000 * 0.1 + 1_000 * 10) / 1_000_000;
+    expect(ledger.summary()).toEqual({
+      costUsd: 0,
+      apiEquivalentUsd: expected,
+      incomplete: false,
+      calls: 1,
+    });
+    expect(db.select().from(usage).get()).toMatchObject({
+      provider: 'codex_cli',
+      cachedInputTokens: 17_000,
+      costUsd: 0,
+      apiEquivalentUsd: expected,
+    });
+    // Subscription calls never reach the budget caps.
+    expect(ledger.check()).toEqual({ ok: true });
+  });
+
+  it('prices the API equivalent from the price table first', () => {
+    const { make } = setup();
+    const ledger = make(null);
+    const prices = {
+      'openai/gpt-6.1-sol': { inputPerMillionUsd: 1, outputPerMillionUsd: 1 },
+    };
+    expect(
+      apiEquivalentOf(
+        prices,
+        { provider: 'codex_cli', model: 'gpt-6.1-sol' },
+        {
+          inputTokens: 1_000_000,
+          outputTokens: 1_000_000,
+        },
+      ),
+    ).toBe(2);
+    expect(
+      apiEquivalentOf(
+        {},
+        { provider: 'codex_cli', model: 'unknown-model' },
+        {
+          inputTokens: 10,
+          outputTokens: 10,
+        },
+      ),
+    ).toBeNull();
+    expect(ledger.summary().apiEquivalentUsd).toBeNull();
   });
 });

@@ -15,9 +15,8 @@ import {
   PageHeader,
 } from '../../../components/ui/display';
 import { cn } from '../../../components/ui/utils';
-import { formatUsd } from '../../../lib/format';
 import { getRuntime } from '../../../lib/runtime';
-import { formatDuration, RunStatus, TRIGGER_LABELS } from '../run-status';
+import { formatDuration, RunCost, RunStatus, TRIGGER_LABELS } from '../run-status';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Run' };
@@ -79,7 +78,13 @@ export default async function RunPage({
             <span aria-hidden>·</span>
             <span>{formatDuration(run.startedAt, run.finishedAt)}</span>
             <span aria-hidden>·</span>
-            <span className="tabular">{formatUsd(run.costUsd, run.costIncomplete)}</span>
+            <span className="tabular">
+              <RunCost
+                costUsd={run.costUsd}
+                apiEquivalentUsd={run.apiEquivalentUsd}
+                incomplete={run.costIncomplete}
+              />
+            </span>
           </span>
         }
         actions={

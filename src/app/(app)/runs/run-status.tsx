@@ -1,4 +1,5 @@
 import { Badge } from '../../components/ui/display';
+import { formatUsd } from '../../lib/format';
 
 const STATUS: Record<string, { label: string; tone: 'brand' | 'warning' | 'danger' | 'neutral' }> =
   {
@@ -26,4 +27,19 @@ export function formatDuration(start: number, end: number | null): string {
   const seconds = Math.max(0, end - start);
   if (seconds < 60) return `${seconds}s`;
   return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+}
+
+/** A run's cost; for scans billed to a subscription, what the same tokens cost on the API. */
+export function RunCost({
+  costUsd,
+  apiEquivalentUsd,
+  incomplete,
+}: {
+  costUsd: number;
+  apiEquivalentUsd: number | null;
+  incomplete: boolean;
+}) {
+  if (apiEquivalentUsd === null) return <>{formatUsd(costUsd, incomplete)}</>;
+  const equivalent = `Subscription · API equivalent ≈ ${formatUsd(apiEquivalentUsd)}`;
+  return <>{costUsd > 0 ? `${formatUsd(costUsd, incomplete)} + ${equivalent}` : equivalent}</>;
 }

@@ -1,7 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { z } from 'zod';
-import { countRuns, getRun, recentRuns, type RunRow } from '@/core/db/queries/runs';
+import {
+  countRuns,
+  getRun,
+  recentRuns,
+  subscriptionReport,
+  type RunRow,
+  type SubscriptionReport,
+} from '@/core/db/queries/runs';
 import { emptyCounts, type FunnelCounts } from '@/core/pipeline/funnel';
 import { Button } from '../../components/ui/button';
 import { Badge, Card, EmptyState, PageHeader } from '../../components/ui/display';
@@ -9,7 +16,7 @@ import { cn } from '../../components/ui/utils';
 import { formatAgo, formatUsd } from '../../lib/format';
 import { getRuntime, nowSeconds } from '../../lib/runtime';
 import { RunFunnelCard } from './run-funnel-card';
-import { formatDuration, RunStatus, TRIGGER_LABELS } from './run-status';
+import { formatDuration, RunCost, RunStatus, TRIGGER_LABELS } from './run-status';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Runs' };
@@ -40,6 +47,7 @@ export default async function RunsPage({
   const selectHref = (id: string) =>
     page > 1 ? `/runs?page=${String(page)}&run=${id}` : `/runs?run=${id}`;
   const now = nowSeconds();
+  const subscription = subscriptionReport(db, now);
   return (
     <>
       <PageHeader
@@ -52,7 +60,8 @@ export default async function RunsPage({
             <RunFunnelCard run={selected} counts={countsOf(selected)} />
           </div>
         ) : null}
-        <div className="min-w-0 xl:order-1">
+        <div className="flex min-w-0 flex-col gap-5 xl:order-1">
+          {subscription ? <SubscriptionCard report={subscription} /> : null}
           {runs.length === 0 ? (
             <EmptyState title="No scans yet">
               The worker scans on a schedule once subreddits are set up. You can also press Scan
@@ -135,7 +144,11 @@ export default async function RunsPage({
                         <td className="px-2 py-2 text-right tabular">{counts.leads}</td>
                         <td className="px-2 py-2 text-right tabular">{counts.drafts.reply}</td>
                         <td className="px-4 py-2 text-right tabular">
-                          {formatUsd(run.costUsd, run.costIncomplete)}
+                          <RunCost
+                            costUsd={run.costUsd}
+                            apiEquivalentUsd={run.apiEquivalentUsd}
+                            incomplete={run.costIncomplete}
+                          />
                         </td>
                       </tr>
                     );
@@ -166,5 +179,37 @@ export default async function RunsPage({
         </div>
       </div>
     </>
+  );
+}
+
+/** What scans billed to a subscription would have cost on the API, for pricing decisions. */
+function SubscriptionCard({ report }: { report: SubscriptionReport }) {
+  const days = Math.round(report.days * 10) / 10;
+  const figures = [
+    ['Per scan', formatUsd(report.perScanUsd)],
+    ['Per post read', report.perPostUsd === null ? '–' : formatUsd(report.perPostUsd)],
+    ['Per day', formatUsd(report.perDayUsd)],
+  ] as const;
+  return (
+    <Card>
+      <div className="flex flex-col gap-3 px-4 py-3">
+        <div>
+          <p className="text-[13px] font-medium">Subscription scans, API equivalent</p>
+          <p className="text-xs text-muted-foreground">
+            {report.scans} {report.scans === 1 ? 'scan' : 'scans'} and {report.postsRead} posts over
+            the last {days} {days === 1 ? 'day' : 'days'}, priced at the API rates of the same
+            models. Averages.
+          </p>
+        </div>
+        <dl className="grid grid-cols-3 gap-3">
+          {figures.map(([label, value]) => (
+            <div key={label}>
+              <dt className="text-xs text-muted-foreground">{label}</dt>
+              <dd className="text-sm font-medium tabular">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </Card>
   );
 }

@@ -217,6 +217,8 @@ export const runs = sqliteTable(
     dryRun: integer('dry_run', { mode: 'boolean' }).notNull().default(false),
     countsJson: text('counts_json', { mode: 'json' }).$type<unknown>().notNull(),
     costUsd: real('cost_usd').notNull().default(0),
+    /** For calls billed to a subscription: what the same tokens would cost on the API. */
+    apiEquivalentUsd: real('api_equivalent_usd'),
     /** True when at least one AI call had no known price. */
     costIncomplete: integer('cost_incomplete', { mode: 'boolean' }).notNull().default(false),
     error: text('error'),
@@ -234,8 +236,12 @@ export const usage = sqliteTable(
     model: text('model').notNull(),
     inputTokens: integer('input_tokens').notNull(),
     outputTokens: integer('output_tokens').notNull(),
-    /** Null when the model has no known price. */
+    /** The part of the input served from the provider's prompt cache. */
+    cachedInputTokens: integer('cached_input_tokens').notNull().default(0),
+    /** Null when the model has no known price; 0 for calls billed to a subscription. */
     costUsd: real('cost_usd'),
+    /** For subscription calls: the same tokens at the API price, cached input at its rate. */
+    apiEquivalentUsd: real('api_equivalent_usd'),
     createdAt: integer('created_at').notNull(),
   },
   (table) => [

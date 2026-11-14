@@ -1,5 +1,5 @@
 /** Scan history. */
-import { count, desc, eq } from 'drizzle-orm';
+import { and, count, desc, eq, gte, isNotNull } from 'drizzle-orm';
 import type { Db } from '../client';
 import { runs, type RunStatus, type RunTrigger } from '../schema';
 
@@ -29,6 +29,7 @@ export function finishRun(
     status: RunStatus;
     counts: unknown;
     costUsd: number;
+    apiEquivalentUsd?: number | null;
     costIncomplete: boolean;
     error: string | null;
   },
@@ -39,6 +40,7 @@ export function finishRun(
       status: result.status,
       countsJson: result.counts,
       costUsd: result.costUsd,
+      apiEquivalentUsd: result.apiEquivalentUsd ?? null,
       costIncomplete: result.costIncomplete,
       error: result.error,
     })
@@ -61,4 +63,53 @@ export function recentRuns(db: Db, limit: number, offset = 0): RunRow[] {
 
 export function countRuns(db: Db): number {
   return db.select({ value: count() }).from(runs).get()?.value ?? 0;
+}
+
+export interface SubscriptionReport {
+  scans: number;
+  postsRead: number;
+  /** Days the report covers: from the first such scan in the window to now, one to seven. */
+  days: number;
+  totalUsd: number;
+  perScanUsd: number;
+  perPostUsd: number | null;
+  perDayUsd: number;
+}
+
+/**
+ * The API equivalent of scans billed to a subscription over the last seven
+ * days, per scan, per post read and per day; null when there were none.
+ */
+export function subscriptionReport(db: Db, now: number): SubscriptionReport | null {
+  const rows = db
+    .select({ startedAt: runs.startedAt, api: runs.apiEquivalentUsd, counts: runs.countsJson })
+    .from(runs)
+    .where(
+      and(
+        gte(runs.startedAt, now - 7 * 86_400),
+        isNotNull(runs.apiEquivalentUsd),
+        eq(runs.dryRun, false),
+      ),
+    )
+    .all();
+  if (rows.length === 0) return null;
+  const totalUsd = rows.reduce((total, row) => total + (row.api ?? 0), 0);
+  const postsRead = rows.reduce((total, row) => {
+    const fetched =
+      typeof row.counts === 'object' && row.counts !== null && 'fetched' in row.counts
+        ? Number(row.counts.fetched)
+        : 0;
+    return total + (Number.isFinite(fetched) ? fetched : 0);
+  }, 0);
+  const first = Math.min(...rows.map((row) => row.startedAt));
+  const days = Math.min(7, Math.max(1, (now - first) / 86_400));
+  return {
+    scans: rows.length,
+    postsRead,
+    days,
+    totalUsd,
+    perScanUsd: totalUsd / rows.length,
+    perPostUsd: postsRead > 0 ? totalUsd / postsRead : null,
+    perDayUsd: totalUsd / days,
+  };
 }
