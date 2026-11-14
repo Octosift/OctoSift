@@ -134,7 +134,7 @@ export async function runScan(deps: ScanDeps, options: ScanOptions): Promise<Sca
     }),
     { maxFailureRatio: CONFIG.ai.maxFailureRatio, minCalls: CONFIG.ai.minCallsBeforeFailureCheck },
   );
-  const state = { budgetStop: null as string | null };
+  const state = { budgetStop: null as string | null, imagesFailed: false };
   let unexpected: string | null = null;
 
   try {

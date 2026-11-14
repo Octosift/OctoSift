@@ -53,8 +53,8 @@ export interface EvaluateContext {
   newLeads: LeadSummary[];
   /** Called after each step so progress can be shown while the scan runs. */
   onProgress: () => void;
-  /** Set once the budget is exhausted; shared across products. */
-  state: { budgetStop: string | null };
+  /** Shared across products: the budget stop, and whether image descriptions failed. */
+  state: { budgetStop: string | null; imagesFailed: boolean };
   /** Aborted when the scan must stop, for example after losing the scan lock. */
   signal?: AbortSignal;
 }

@@ -7,6 +7,8 @@
  */
 import type { Db } from '../db/client';
 import * as evaluationQueries from '../db/queries/evaluations';
+import * as imageQueries from '../db/queries/images';
+import type { ImageDescriptionRow } from '../db/queries/images';
 import * as leadQueries from '../db/queries/leads';
 import * as postQueries from '../db/queries/posts';
 import * as subredditQueries from '../db/queries/subreddits';
@@ -25,7 +27,9 @@ export interface ScanStore {
   insertLead(lead: NewLead): boolean;
   insertDraft(draft: Parameters<typeof leadQueries.insertDraft>[1]): number;
   updateLead(id: string, changes: Parameters<typeof leadQueries.updateLead>[2], now: number): void;
+  saveImageDescription(row: ImageDescriptionRow): void;
   /** Reads that must see this scan's own unsaved writes in a dry run. */
+  imageDescription(url: string): string | null;
   getPosts(ids: string[]): PostRow[];
   stageRecords(productId: string, postIds: string[]): Map<string, StageRecord[]>;
 }
@@ -40,6 +44,8 @@ export function createDbStore(db: Db): ScanStore {
     insertLead: (lead) => leadQueries.insertLead(db, lead),
     insertDraft: (draft) => leadQueries.insertDraft(db, draft),
     updateLead: (id, changes, now) => leadQueries.updateLead(db, id, changes, now),
+    saveImageDescription: (row) => imageQueries.saveImageDescription(db, row),
+    imageDescription: (url) => imageQueries.getImageDescription(db, url)?.description ?? null,
     getPosts: (ids) => postQueries.getPosts(db, ids),
     stageRecords: (productId, ids) => evaluationQueries.stageRecords(db, productId, ids),
   };
@@ -48,6 +54,7 @@ export function createDbStore(db: Db): ScanStore {
 export function createDryRunStore(db: Db): ScanStore {
   const posts = new Map<string, PostRow>();
   const records = new Map<string, StageRecord[]>();
+  const images = new Map<string, string>();
   const key = (productId: string, postId: string) => `${productId}\u0000${postId}`;
   return {
     insertPosts: (rows) => {
@@ -65,6 +72,11 @@ export function createDryRunStore(db: Db): ScanStore {
     insertLead: () => true,
     insertDraft: () => 1,
     updateLead: () => undefined,
+    saveImageDescription: (row) => {
+      images.set(row.url, row.description);
+    },
+    imageDescription: (url) =>
+      images.get(url) ?? imageQueries.getImageDescription(db, url)?.description ?? null,
     getPosts: (ids) => {
       const stored = postQueries.getPosts(db, ids);
       const found = new Set(stored.map((row) => row.id));

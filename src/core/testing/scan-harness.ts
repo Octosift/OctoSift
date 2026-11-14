@@ -14,7 +14,7 @@ import { goldenToRedditPost, loadGoldenSet, type GoldenSet } from '../eval/golde
 import { silentLogger } from '../log';
 import { createFixtureClient } from '../reddit/fixture';
 import { createAtomSource } from '../reddit/source';
-import type { RedditSource } from '../reddit/types';
+import type { RedditPost, RedditSource } from '../reddit/types';
 import type { ScanDeps } from '../pipeline/run';
 import { createSettingsStore, type SettingsStore } from '../settings/store';
 import { createFakeClock, type FakeClock } from './fake-clock';
@@ -35,6 +35,8 @@ export interface HarnessOptions {
   respond?: (request: GenerateRequest) => FakeReply | undefined;
   resolveModel?: ScanDeps['resolveModel'];
   source?: RedditSource;
+  /** Changes the feed posts, for example to give one an image. */
+  editPosts?: (posts: RedditPost[]) => RedditPost[];
 }
 
 export const HARNESS_NOW_MS = Date.parse('2026-11-13T12:00:00Z');
@@ -53,7 +55,8 @@ export function createScanHarness(
   insertProduct(db, { id: productId, profile: profiles[slug], now: nowS });
   for (const name of golden.subreddits) watchSubreddit(db, productId, name, nowS);
 
-  const posts = golden.posts.map((post) => goldenToRedditPost(post, nowS));
+  const fromGolden = golden.posts.map((post) => goldenToRedditPost(post, nowS));
+  const posts = options.editPosts ? options.editPosts(fromGolden) : fromGolden;
   const client = createFixtureClient({ posts: () => posts, clock });
   const labels = new Map(golden.posts.map((post) => [post.id, post.label]));
   const fixtureResponder = createFixtureResponder({ labels, profiles: Object.values(profiles) });

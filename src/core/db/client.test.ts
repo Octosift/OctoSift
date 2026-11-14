@@ -28,6 +28,7 @@ describe('openMemoryDatabase', () => {
       'drafts',
       'evaluations',
       'feedback',
+      'image_descriptions',
       'leads',
       'posts',
       'product_subreddits',

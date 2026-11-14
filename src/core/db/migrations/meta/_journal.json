@@ -22,6 +22,13 @@
       "when": 1794614517568,
       "tag": "0002_evergreen_threads",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1794615407215,
+      "tag": "0003_image_descriptions",
+      "breakpoints": true
     }
   ]
 }

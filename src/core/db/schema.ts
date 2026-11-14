@@ -238,6 +238,14 @@ export const usage = sqliteTable(
   ],
 );
 
+/** Descriptions of post images, so each image is described once. */
+export const imageDescriptions = sqliteTable('image_descriptions', {
+  url: text('url').primaryKey(),
+  description: text('description').notNull(),
+  model: text('model').notNull(),
+  createdAt: integer('created_at').notNull(),
+});
+
 export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
   valueJson: text('value_json', { mode: 'json' }).$type<unknown>().notNull(),

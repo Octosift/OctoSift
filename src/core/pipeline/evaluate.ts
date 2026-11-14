@@ -1,6 +1,7 @@
 /**
- * The evaluation half of a scan, for one product: prefilter, triage, then
- * qualify, veto and score for each remaining post.
+ * The evaluation half of a scan, for one product: prefilter, image
+ * descriptions when enabled, triage, then qualify, veto and score for each
+ * remaining post.
  *
  * Each post resumes where its evaluation stopped. Every stage writes a
  * verdict with a reason. AI failures leave posts retryable; a budget stop or
@@ -12,6 +13,7 @@ import { watchedSubreddits } from '../db/queries/products';
 import { getSubreddits, rulesSummaryOf, type SubredditRow } from '../db/queries/subreddits';
 import type { RedditPost } from '../reddit/types';
 import { resumeStage } from './dedup';
+import { describeImages, withImage, withoutImage } from './images';
 import {
   aiAvailable,
   saveVerdict,
@@ -164,7 +166,8 @@ async function judgePost(
   const veto = applyVeto({
     qualify: outcome.result,
     internalFlags: outcome.internalFlags,
-    postText: `${post.title}\n${post.bodyText}`,
+    // Quotes must come from the author's words, not from an image description.
+    postText: `${post.title}\n${withoutImage(post.bodyText)}`,
     subredditNoPromotion: subreddit?.promotionPolicy === 'no_promotion',
     rulesPromotion: rules?.promotion ?? null,
     vetoPhrases: ctx.settings.getForProduct(product.id, 'vetoPhrases'),
@@ -208,11 +211,20 @@ export async function evaluateProduct(
 
   const fresh = prefilterStep(ctx, product, at('prefilter'));
   ctx.onProgress();
-  const kept = await triageStep(ctx, product, [...at('triage'), ...fresh]);
+  const waiting = [...at('triage'), ...fresh];
+  const resuming = at('qualify');
+  const images = aiAvailable(ctx)
+    ? await describeImages(ctx, [...waiting, ...resuming])
+    : new Map<string, string>();
+  const read = (post: PostRow): PostRow =>
+    images.has(post.id)
+      ? { ...post, bodyText: withImage(post.bodyText, images.get(post.id)) }
+      : post;
+  const kept = await triageStep(ctx, product, waiting.map(read));
   ctx.onProgress();
 
   const subreddits = new Map(getSubreddits(ctx.db, [...watched]).map((row) => [row.name, row]));
-  for (const post of [...at('qualify'), ...kept]) {
+  for (const post of [...resuming.map(read), ...kept]) {
     if (!aiAvailable(ctx)) break;
     await judgePost(ctx, product, post, subreddits.get(post.subreddit) ?? null);
   }
