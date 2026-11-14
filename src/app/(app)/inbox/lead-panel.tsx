@@ -15,7 +15,7 @@ import {
   snoozeLead,
   type ActionResult,
 } from '../../lib/actions/leads';
-import { formatAgo, formatClock } from '../../lib/format';
+import { formatAgo, formatClock, plural } from '../../lib/format';
 import { intentLabel, RISK_LABELS } from '../../lib/text';
 import { DraftEditor, type DraftEditorHandle } from './draft-editor';
 import { DismissDialog, ReplyConfirmDialog } from './lead-dialogs';
@@ -138,6 +138,14 @@ export function LeadPanel({
           <span>u/{post.author}</span>
           <span aria-hidden>·</span>
           <span>{formatAgo(post.createdAt, now)}</span>
+          {post.score !== null && post.commentCount !== null ? (
+            <>
+              <span aria-hidden>·</span>
+              <span className="tabular">
+                {plural(post.score, 'point')}, {plural(post.commentCount, 'comment')}
+              </span>
+            </>
+          ) : null}
           <span aria-hidden>·</span>
           <span>{productName}</span>
         </p>

@@ -1,8 +1,9 @@
 import { and, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { evaluations, leads, posts, runs, subreddits, usage, drafts } from '../db/schema';
-import type { GoldenOutcome } from '../eval/golden';
-import { createScanHarness } from '../testing/scan-harness';
+import { goldenToRedditPost, loadGoldenSet, type GoldenOutcome } from '../eval/golden';
+import { createScanHarness, HARNESS_NOW_MS } from '../testing/scan-harness';
+import type { RedditSource } from '../reddit/types';
 import { SAMPLE_PRODUCT_SLUGS, type SampleProductSlug } from '../demo/sample-products';
 import { emptyCounts } from './funnel';
 import { runScan } from './run';
@@ -295,5 +296,46 @@ describe('runScan', () => {
     const report = await runScan(harness.deps, { trigger: 'cli', dryRun: true });
     expect(report.counts.leads).toBe(16);
     expect(sent).toBe(0);
+  });
+
+  it('lowers the score of a lead in a busy thread and says why', async () => {
+    // A source that returns posts as they are, with signals Atom feeds do not carry.
+    const direct = (commentCount: number | null): RedditSource => ({
+      fetchNewPosts: (names) => {
+        const golden = loadGoldenSet('acme-invoices');
+        const now = Math.floor(HARNESS_NOW_MS / 1000);
+        const posts = golden.posts
+          .map((post) => goldenToRedditPost(post, now))
+          .filter((post) => names.includes(post.subreddit))
+          .map((post) => (post.id === 't3_inv01' ? { ...post, commentCount, score: 40 } : post))
+          .sort((a, b) => b.createdAt - a.createdAt);
+        return Promise.resolve({
+          ok: true,
+          posts,
+          rate: { used: null, remaining: null, resetS: null },
+        });
+      },
+    });
+    const leadFor = async (commentCount: number | null) => {
+      const harness = createScanHarness('acme-invoices', { source: direct(commentCount) });
+      await runScan(harness.deps, { trigger: 'cli' });
+      const post = harness.db
+        .select()
+        .from(posts)
+        .all()
+        .find((row) => row.id === 't3_inv01');
+      const lead = harness.db
+        .select()
+        .from(leads)
+        .all()
+        .find((row) => row.postId === 't3_inv01');
+      return { post, lead };
+    };
+    const busy = await leadFor(150);
+    const calm = await leadFor(3);
+    expect(busy.post).toMatchObject({ score: 40, commentCount: 150 });
+    expect(busy.lead?.riskFlagsJson).toContain('busy_thread');
+    expect(calm.lead?.riskFlagsJson).not.toContain('busy_thread');
+    expect((calm.lead?.score ?? 0) - (busy.lead?.score ?? 0)).toBe(5);
   });
 });

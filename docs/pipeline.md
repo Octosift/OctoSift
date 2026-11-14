@@ -68,7 +68,11 @@ Rules the founder or the subreddit decided, which can only lower a result:
 
 The final score is the model's score multiplied by freshness (1.0 under 6 hours, 0.9 under a
 day, 0.75 under two days, 0.5 after that), minus 10 for each of low effort, outside the target
-market and sensitive topic, and minus 20 for an unverified quote. Leads start at 60.
+market and sensitive topic, minus 20 for an unverified quote, and minus 5 for a thread with 100
+or more comments, where a late reply gets buried. Leads start at 60.
+
+Sources that report a post's score and comment count pass them to the qualify model too, and
+posts they mark as locked, NSFW or removed are skipped by the free filters.
 
 ## 6. Draft and review
 

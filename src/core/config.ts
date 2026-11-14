@@ -123,7 +123,10 @@ export const CONFIG = deepFreeze({
       outside_target_market: 10,
       sensitive_topic: 10,
       unverified_quote: 20,
+      busy_thread: 5,
     },
+    /** A thread with this many comments buries a late reply. */
+    busyThreadComments: 100,
   },
 
   thresholds: {

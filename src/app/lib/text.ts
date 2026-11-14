@@ -27,6 +27,7 @@ export const RISK_LABELS: Record<string, string> = {
   low_effort_post: 'Low-effort post',
   sensitive_topic: 'Sensitive topic',
   unverified_quote: 'Quote not found in post',
+  busy_thread: 'Busy thread: replies get buried',
 };
 
 export const MODE_LABELS = {

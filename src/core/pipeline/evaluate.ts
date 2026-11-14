@@ -41,6 +41,11 @@ function toRedditPost(row: PostRow, now: number): RedditPost {
     imageUrl: row.imageUrl,
     createdAt: row.createdAt,
     archived: now - row.createdAt > CONFIG.reddit.archiveAfterS,
+    score: row.score,
+    commentCount: row.commentCount,
+    nsfw: row.nsfw,
+    locked: row.locked,
+    removed: row.removed,
   };
 }
 
@@ -141,6 +146,8 @@ async function judgePost(
       title: post.title,
       bodyText: post.bodyText,
       createdAt: post.createdAt,
+      score: post.score,
+      commentCount: post.commentCount,
     },
     {
       profile: product.profile,
@@ -163,9 +170,10 @@ async function judgePost(
     data: { ...outcome.result, internalFlags: outcome.internalFlags },
   });
 
+  const busy = post.commentCount !== null && post.commentCount >= CONFIG.score.busyThreadComments;
   const veto = applyVeto({
     qualify: outcome.result,
-    internalFlags: outcome.internalFlags,
+    internalFlags: busy ? [...outcome.internalFlags, 'busy_thread'] : outcome.internalFlags,
     // Quotes must come from the author's words, not from an image description.
     postText: `${post.title}\n${withoutImage(post.bodyText)}`,
     subredditNoPromotion: subreddit?.promotionPolicy === 'no_promotion',

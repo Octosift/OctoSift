@@ -14,6 +14,8 @@ import type { RedditPost } from '../reddit/types';
 export type PrefilterReason =
   | 'too_old'
   | 'removed'
+  | 'locked'
+  | 'nsfw'
   | 'empty'
   | 'profile_post'
   | 'own_post'
@@ -113,6 +115,9 @@ export function prefilter(post: RedditPost, context: PrefilterContext): Prefilte
   const text = `${post.title}\n${body}`;
 
   if (body === '[removed]' || body === '[deleted]') return skip('removed', `Body is ${body}`);
+  if (post.removed) return skip('removed', 'Removed by moderators or Reddit');
+  if (post.locked) return skip('locked', 'Comments are locked');
+  if (post.nsfw) return skip('nsfw', 'Marked NSFW');
   if (post.subreddit.startsWith('u_')) return skip('profile_post', 'Posted on a user profile');
   if (
     context.ownUsername !== null &&

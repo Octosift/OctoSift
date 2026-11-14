@@ -74,7 +74,7 @@ export const RISK_FLAGS = [
 export type RiskFlag = (typeof RISK_FLAGS)[number];
 
 /** Flags the pipeline adds itself; the model never sets these. */
-export type InternalFlag = 'unverified_quote';
+export type InternalFlag = 'unverified_quote' | 'busy_thread';
 
 export const qualifyWire = z.object({
   fit: z.enum(FITS),

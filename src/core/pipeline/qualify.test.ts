@@ -56,6 +56,14 @@ describe('qualifyPost', () => {
     expect(call?.system).toContain('We do not serve agencies');
   });
 
+  it('tells the model how busy the thread is when the source knows', async () => {
+    const { ai, generator } = fakeAiClient(() => answer());
+    await qualifyPost(ai, { ...candidate, score: 12, commentCount: 5 }, context);
+    expect(generator.calls[0]?.prompt).toContain('engagement="12 points, 5 comments"');
+    await qualifyPost(ai, candidate, context);
+    expect(generator.calls[1]?.prompt).not.toContain('engagement=');
+  });
+
   it('accepts a quote that differs only in case, spacing or quote marks', async () => {
     const { ai } = fakeAiClient(() =>
       answer({ evidence_quote: '“is there a TOOL that  sends payment reminders for me?”' }),

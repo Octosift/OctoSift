@@ -87,6 +87,8 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
 
 - **The unverified-quote penalty is applied once**, in the score stage, rather than both
   when the quote is checked and again in the score.
+- **Busy threads score a little lower.** When the source reports comment counts, a thread with
+  100 or more comments loses 5 points, because a late reply there is rarely seen.
 - **Language is only judged for posts of 80 characters or more.** Detection on short text
   misread English as other languages in testing, which would silently drop leads.
 - **Private-message drafts are automatic by default**: off for consumer products, on for

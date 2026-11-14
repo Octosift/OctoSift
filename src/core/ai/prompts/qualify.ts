@@ -25,7 +25,14 @@ export interface QualifyInput {
   profile: ProductProfile;
   rulesSummary: string | null;
   feedback: FeedbackContext;
-  post: { subreddit: string; ageSeconds: number; title: string; body: string };
+  post: {
+    subreddit: string;
+    ageSeconds: number;
+    title: string;
+    body: string;
+    score?: number | null;
+    commentCount?: number | null;
+  };
 }
 
 function examples(items: FeedbackExample[]): string {
@@ -74,6 +81,12 @@ export function buildQualifyPrompt(input: QualifyInput): PromptParts {
   const prompt = fence('post', `Title: ${post.title}\nBody: ${post.body || '(no text)'}`, {
     subreddit: `r/${post.subreddit}`,
     age: describeAge(post.ageSeconds),
+    ...(post.score !== undefined &&
+    post.score !== null &&
+    post.commentCount !== undefined &&
+    post.commentCount !== null
+      ? { engagement: `${String(post.score)} points, ${String(post.commentCount)} comments` }
+      : {}),
   });
 
   return { system, prompt };

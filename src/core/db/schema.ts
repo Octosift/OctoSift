@@ -90,6 +90,14 @@ export const posts = sqliteTable(
     contentHash: text('content_hash').notNull(),
     /** Set when another stored post has the same content (a cross-post). */
     duplicateOf: text('duplicate_of'),
+    /** Upvotes and comments when the source reports them; null otherwise. */
+    score: integer('score'),
+    commentCount: integer('comment_count'),
+    nsfw: integer('nsfw', { mode: 'boolean' }).notNull().default(false),
+    locked: integer('locked', { mode: 'boolean' }).notNull().default(false),
+    removed: integer('removed', { mode: 'boolean' }).notNull().default(false),
+    /** The body is a preview until the full post is fetched. */
+    partial: integer('partial', { mode: 'boolean' }).notNull().default(false),
   },
   (table) => [
     index('posts_subreddit_created_idx').on(table.subreddit, table.createdAt),

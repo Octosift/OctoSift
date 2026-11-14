@@ -23,6 +23,8 @@ export interface QualifyCandidate {
   title: string;
   bodyText: string;
   createdAt: number;
+  score?: number | null;
+  commentCount?: number | null;
 }
 
 export interface QualifyContext {
@@ -70,6 +72,8 @@ export async function qualifyPost(
       ageSeconds: context.now - candidate.createdAt,
       title: candidate.title,
       body: candidate.bodyText,
+      score: candidate.score ?? null,
+      commentCount: candidate.commentCount ?? null,
     },
   });
   const response = await ai.object({

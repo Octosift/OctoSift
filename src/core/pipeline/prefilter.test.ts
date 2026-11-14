@@ -36,6 +36,14 @@ describe('prefilter', () => {
     expect(prefilter(post(), context)).toEqual({ verdict: 'pass', brandMention: false });
   });
 
+  it.each([
+    [{ removed: true }, 'removed'],
+    [{ locked: true }, 'locked'],
+    [{ nsfw: true }, 'nsfw'],
+  ] as const)('skips posts the source marks %o', (flags, reason) => {
+    expect(prefilter(post(flags), context)).toMatchObject({ verdict: 'skip', reason });
+  });
+
   it('skips posts older than the maximum age', () => {
     expect(prefilter(post({ createdAt: NOW - 49 * HOUR }), context)).toMatchObject({
       verdict: 'skip',

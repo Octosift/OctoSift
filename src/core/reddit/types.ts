@@ -19,6 +19,15 @@ export interface RedditPost {
   createdAt: number;
   /** Older than Reddit's archive age; replies are no longer possible. */
   archived: boolean;
+  /** Signals that only some sources provide; absent or null when unknown. */
+  score?: number | null;
+  commentCount?: number | null;
+  nsfw?: boolean;
+  locked?: boolean;
+  /** Removed by moderators or Reddit, even if the text is still there. */
+  removed?: boolean;
+  /** The body is a preview; the full post is fetched after the free filters. */
+  partial?: boolean;
 }
 
 export interface RedditComment {

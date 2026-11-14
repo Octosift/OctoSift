@@ -71,6 +71,12 @@ function storePosts(ctx: CollectContext, selected: RedditPost[]): string[] {
     fetchedAt: ctx.now,
     contentHash: hash,
     duplicateOf: crossposts.get(post.id) ?? null,
+    score: post.score ?? null,
+    commentCount: post.commentCount ?? null,
+    nsfw: post.nsfw ?? false,
+    locked: post.locked ?? false,
+    removed: post.removed ?? false,
+    partial: post.partial ?? false,
   }));
   ctx.store.insertPosts(rows);
   return rows.map((row) => row.id);
