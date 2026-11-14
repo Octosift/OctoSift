@@ -27,11 +27,13 @@ export interface PresetOption {
   /** False when the saved key cannot use one of its models. */
   available: boolean;
   monthlyUsd: number | null;
+  /** Billed to a subscription; monthlyUsd is then the API equivalent. */
+  subscription: boolean;
 }
 
 /** What the AI settings and the onboarding AI step show. */
 export function loadAiSettings() {
-  const { db, settings } = getRuntime();
+  const { db, settings, env } = getRuntime();
   const stages = settings.get('ai.stages');
   const prices = settings.get('ai.prices');
   const rates = getSubreddits(db, enabledSubredditNames(db)).map((row) => row.postsPerDay);
@@ -49,12 +51,22 @@ export function loadAiSettings() {
           }),
         ) as Record<AiStage, string>,
         available: presetAvailable(provider, id, available),
-        monthlyUsd: estimateMonthlyCost(presetStages(provider, id), prices, volume.postsPerDay).usd,
+        ...(() => {
+          const estimate = estimateMonthlyCost(
+            presetStages(provider, id),
+            prices,
+            volume.postsPerDay,
+          );
+          return { monthlyUsd: estimate.usd, subscription: estimate.subscription };
+        })(),
       }));
       return [provider, options];
     }),
   ) as Record<PresetProvider, PresetOption[]>;
   return {
+    /** The experimental CLI provider is offered only when the environment asks for it. */
+    cliProviders: env.EXPERIMENTAL_CLI_PROVIDERS && !env.DEMO_MODE,
+    codexEffort: settings.get('ai.codexEffort'),
     stages,
     active: activePreset(stages),
     presets,
@@ -63,6 +75,7 @@ export function loadAiSettings() {
       openai: storedModelList(db, 'openai'),
       anthropic: storedModelList(db, 'anthropic'),
       openai_compatible: storedModelList(db, 'openai_compatible'),
+      codex_cli: CATALOG.codex_cli.map((model) => model.id),
     },
     catalog: Object.fromEntries(
       PRESET_PROVIDERS.map((provider) => [

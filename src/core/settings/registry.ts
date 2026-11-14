@@ -8,7 +8,7 @@
 import { z } from 'zod';
 import { CONFIG } from '../config';
 
-export const PROVIDER_IDS = ['openai', 'anthropic', 'openai_compatible'] as const;
+export const PROVIDER_IDS = ['openai', 'anthropic', 'openai_compatible', 'codex_cli'] as const;
 export type ProviderId = (typeof PROVIDER_IDS)[number];
 
 export const AI_STAGES = ['triage', 'qualify', 'draft', 'review'] as const;
@@ -47,6 +47,8 @@ const price = z.object({
   /** The rate for input served from the provider's prompt cache, when it has one. */
   cachedInputPerMillionUsd: z.number().min(0).optional(),
 });
+
+const codexEffort = z.enum(['low', 'medium', 'high']);
 
 const phraseList = z.array(z.string().trim().min(1).max(200)).max(200);
 
@@ -112,6 +114,16 @@ export const SETTINGS = {
   ),
   'ai.compatibleBaseUrl': setting(z.url().nullable(), null),
   'ai.prices': setting(z.record(z.string().min(1), price), {}),
+  /** Reasoning effort per stage for the experimental Codex CLI provider. */
+  'ai.codexEffort': setting(
+    z.object({
+      triage: codexEffort,
+      qualify: codexEffort,
+      draft: codexEffort,
+      review: codexEffort,
+    }),
+    { triage: 'low', qualify: 'medium', draft: 'medium', review: 'low' },
+  ),
   'ai.imageDescriptions': setting(z.boolean(), CONFIG.images.enabledByDefault),
   /** Searches to check for evergreen threads; empty means the product's buyer phrases. */
   'evergreen.keywords': setting(

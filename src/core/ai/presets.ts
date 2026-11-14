@@ -7,6 +7,8 @@
  *   platform.claude.com/docs/en/about-claude/pricing
  * - OpenAI: developers.openai.com/api/docs/models and
  *   developers.openai.com/api/docs/pricing
+ * - Codex CLI models: developers.openai.com/codex/models (now served from
+ *   learn.chatgpt.com/docs/models); the same ids as the OpenAI API
  * Model ids and prices change. Check those pages again before changing this
  * file, and update the date above.
  *
@@ -19,6 +21,10 @@
  * - review uses a different model from draft, so a second model checks the
  *   reply;
  * - Economy keeps the small model for qualify and uses a cheaper model to draft.
+ *
+ * The experimental Codex CLI provider uses the OpenAI presets. Its calls are
+ * billed to the ChatGPT subscription; the OpenAI list prices are used to show
+ * what the same tokens would cost on the API.
  */
 import type { AiStage, ModelPrice, ProviderId } from './types';
 
@@ -34,8 +40,8 @@ export const PRESET_LABELS: Record<PresetId, { label: string; hint: string }> = 
 };
 
 /** Providers that have presets; OpenAI-compatible endpoints are configured by hand. */
-export type PresetProvider = Extract<ProviderId, 'openai' | 'anthropic'>;
-export const PRESET_PROVIDERS: readonly PresetProvider[] = ['openai', 'anthropic'];
+export type PresetProvider = Extract<ProviderId, 'openai' | 'anthropic' | 'codex_cli'>;
+export const PRESET_PROVIDERS: readonly PresetProvider[] = ['openai', 'anthropic', 'codex_cli'];
 
 export interface CatalogModel {
   id: string;
@@ -44,7 +50,7 @@ export interface CatalogModel {
   price: ModelPrice & { cachedInputPerMillionUsd: number };
 }
 
-export const CATALOG: Record<PresetProvider, readonly CatalogModel[]> = {
+const API_CATALOG: Record<'openai' | 'anthropic', readonly CatalogModel[]> = {
   anthropic: [
     {
       id: 'claude-haiku-5-5',
@@ -91,7 +97,7 @@ export const CATALOG: Record<PresetProvider, readonly CatalogModel[]> = {
   ],
 };
 
-export const PRESETS: Record<PresetProvider, Record<PresetId, Record<AiStage, string>>> = {
+const API_PRESETS: Record<'openai' | 'anthropic', Record<PresetId, Record<AiStage, string>>> = {
   anthropic: {
     economy: {
       triage: 'claude-haiku-5-5',
@@ -132,6 +138,16 @@ export const PRESETS: Record<PresetProvider, Record<PresetId, Record<AiStage, st
       review: 'gpt-6.1-sol',
     },
   },
+};
+
+export const CATALOG: Record<PresetProvider, readonly CatalogModel[]> = {
+  ...API_CATALOG,
+  codex_cli: API_CATALOG.openai,
+};
+
+export const PRESETS: Record<PresetProvider, Record<PresetId, Record<AiStage, string>>> = {
+  ...API_PRESETS,
+  codex_cli: API_PRESETS.openai,
 };
 
 export const DEFAULT_PRESET: PresetId = 'balanced';

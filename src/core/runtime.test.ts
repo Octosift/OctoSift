@@ -28,6 +28,7 @@ const env = (path: string) => ({
   LOG_LEVEL: 'info' as const,
   PUBLIC_URL: 'http://127.0.0.1:3000',
   DEMO_MODE: false,
+  EXPERIMENTAL_CLI_PROVIDERS: false,
 });
 
 describe('createRuntime', () => {

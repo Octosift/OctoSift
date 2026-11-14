@@ -21,6 +21,10 @@ const envSchema = z.object({
   /** Where the dashboard is reached, used for links in notifications. */
   PUBLIC_URL: z.url().default('http://127.0.0.1:3005'),
   DEMO_MODE: flag,
+  /** Offers providers that run a local CLI on the user's own subscription. Experimental. */
+  EXPERIMENTAL_CLI_PROVIDERS: flag,
+  /** The Codex CLI, when it is not on PATH or in the ChatGPT app. */
+  CODEX_BIN: z.string().optional(),
 });
 
 export type AppEnv = z.output<typeof envSchema>;

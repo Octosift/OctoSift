@@ -5,6 +5,7 @@
  * batches, about a fifth reach qualify, and a few become drafts), and the
  * volume comes from the chosen subreddits when their post rates are known.
  */
+import { CONFIG } from '../config';
 import { catalogModel } from './presets';
 import { priceFor, type PriceTable } from './usage';
 import type { AiStage, ModelPrice, ModelRef } from './types';
@@ -26,11 +27,18 @@ export const STAGE_VOLUME: Record<
 };
 
 export interface MonthlyEstimate {
-  /** Null when a stage has no known price. */
+  /** Null when a stage has no known price. For the CLI provider, the API equivalent. */
   usd: number | null;
+  /** True when the stages run on the CLI provider, which bills a subscription instead. */
+  subscription: boolean;
   postsPerDay: number;
   /** Stages whose model has no price in the table or the catalogue. */
   unpriced: AiStage[];
+}
+
+function cliBatch(stage: AiStage): number {
+  if (stage === 'triage') return CONFIG.ai.cliBatch.triage;
+  return stage === 'qualify' ? CONFIG.ai.cliBatch.qualify : 1;
 }
 
 /** The price used for an estimate: the user's table first, then the catalogue. */
@@ -54,13 +62,19 @@ export function estimateMonthlyCost(
     }
     const volume = STAGE_VOLUME[stage];
     const posts = postsPerDay * volume.share;
+    // Every CLI call also carries the CLI's own instructions; batching keeps the calls few.
+    const overhead =
+      model?.provider === 'codex_cli'
+        ? Math.ceil(posts / cliBatch(stage)) * CONFIG.ai.cliOverheadInputTokens
+        : 0;
     perDay +=
-      (posts * volume.inputTokens * price.inputPerMillionUsd +
+      ((posts * volume.inputTokens + overhead) * price.inputPerMillionUsd +
         posts * volume.outputTokens * price.outputPerMillionUsd) /
       1_000_000;
   }
   return {
     usd: unpriced.length > 0 ? null : perDay * DAYS_PER_MONTH,
+    subscription: Object.values(stages).every((model) => model?.provider === 'codex_cli'),
     postsPerDay,
     unpriced,
   };

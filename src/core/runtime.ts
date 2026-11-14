@@ -10,8 +10,9 @@ import {
   type AiClient,
   type ModelResolution,
 } from './ai/client';
+import { createCodexGenerator, findCodexBin } from './ai/codex';
 import { createSdkGenerator } from './ai/provider';
-import type { AiStage, Generator } from './ai/types';
+import { TASK_STAGE, type AiStage, type Generator } from './ai/types';
 import { createUsageLedger } from './ai/usage';
 import { runAccountCheck } from './guard/account-check';
 import { runDueReplyChecks } from './guard/visibility';
@@ -200,8 +201,21 @@ export function createRuntime(options: RuntimeOptions): Runtime {
   }
 
   const source = buildSource();
-  const generator = options.overrides?.generator ?? createSdkGenerator();
-  const resolveModel = options.overrides?.resolveModel ?? createModelResolver(settings, secrets);
+  const sdkGenerator = createSdkGenerator();
+  // The experimental CLI provider runs locally; every other provider goes through the AI SDK.
+  const codexGenerator = createCodexGenerator({
+    bin: () => findCodexBin(options.rawEnv),
+    env: options.rawEnv,
+    effort: (request) => settings.get('ai.codexEffort')[TASK_STAGE[request.task]],
+    redact: redactor.redact,
+  });
+  const generator: Generator =
+    options.overrides?.generator ??
+    ((request) =>
+      request.model.provider === 'codex_cli' ? codexGenerator(request) : sdkGenerator(request));
+  const resolveModel =
+    options.overrides?.resolveModel ??
+    createModelResolver(settings, secrets, { cliProviders: env.EXPERIMENTAL_CLI_PROVIDERS });
 
   return {
     env,

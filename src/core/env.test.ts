@@ -10,6 +10,7 @@ describe('parseEnv', () => {
         LOG_LEVEL: 'info',
         PUBLIC_URL: 'http://127.0.0.1:3005',
         DEMO_MODE: false,
+        EXPERIMENTAL_CLI_PROVIDERS: false,
       },
     });
   });

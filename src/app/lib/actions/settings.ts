@@ -4,14 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { forgetModelList } from '@/core/ai/model-lists';
-import { listModels, testConnection } from '@/core/ai/provider';
-import {
-  AI_STAGES,
-  isSettingKey,
-  PROVIDER_IDS,
-  SETTINGS,
-  type ProviderId,
-} from '@/core/settings/registry';
+import { testConnection } from '@/core/ai/provider';
+import { AI_STAGES, isSettingKey, SETTINGS, type ProviderId } from '@/core/settings/registry';
 import { deleteAllData } from '@/core/db/queries/data';
 import { isSecretName, maskSecret, type SecretName } from '@/core/secrets/store';
 import type { SettingInput, SettingKey } from '@/core/settings/registry';
@@ -111,31 +105,12 @@ export async function testStageConnection(stage: string): Promise<ConnectionResu
   return result.ok ? result : { ok: false, message: runtime.redactor.redact(result.message) };
 }
 
-const SECRET_FOR: Record<ProviderId, SecretName> = {
+const SECRET_FOR: Record<ProviderId, SecretName | null> = {
   openai: 'openai_api_key',
   anthropic: 'anthropic_api_key',
   openai_compatible: 'openai_compatible_api_key',
+  codex_cli: null,
 };
-
-export async function loadModelSuggestions(
-  provider: string,
-): Promise<{ ok: true; models: string[] } | { ok: false; message: string }> {
-  const parsed = z.enum(PROVIDER_IDS).safeParse(provider);
-  if (!parsed.success) return { ok: false, message: 'Unknown provider' };
-  const runtime = getRuntime();
-  if (runtime.env.DEMO_MODE) {
-    return { ok: true, models: AI_STAGES.map((stage) => `demo-${stage}`) };
-  }
-  const key = runtime.secrets.use(SECRET_FOR[parsed.data]);
-  if (!key.ok && parsed.data !== 'openai_compatible') {
-    return { ok: false, message: 'Save an API key for this provider first.' };
-  }
-  const result = await listModels(parsed.data, {
-    apiKey: key.ok ? key.value : '',
-    baseUrl: runtime.settings.get('ai.compatibleBaseUrl'),
-  });
-  return result.ok ? result : { ok: false, message: runtime.redactor.redact(result.message) };
-}
 
 export async function deleteEverything(
   confirmation: string,

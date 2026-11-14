@@ -27,6 +27,8 @@ export const sdkModelFactory: ModelFactory = (model, { apiKey, baseUrl }) => {
       return createOpenAI({ apiKey })(model.model);
     case 'anthropic':
       return createAnthropic({ apiKey })(model.model);
+    case 'codex_cli':
+      throw new Error('The Codex CLI runs through its own generator, not the AI SDK');
     case 'openai_compatible':
       if (baseUrl === null) throw new Error('An OpenAI-compatible model needs a base URL');
       return createOpenAICompatible({
@@ -168,6 +170,7 @@ function listEndpoint(
         headers: { 'x-api-key': credentials.apiKey, 'anthropic-version': '2023-06-01' },
         read: readIds,
       };
+    case 'codex_cli':
     case 'openai_compatible':
       return {
         url: `${(credentials.baseUrl ?? '').replace(/\/+$/, '')}/models`,
@@ -183,6 +186,7 @@ export async function listModels(
   credentials: ProviderCredentials,
   fetchImpl: typeof fetch = fetch,
 ): Promise<ModelListResult> {
+  if (provider === 'codex_cli') return { ok: false, message: 'The Codex CLI has no model list' };
   if (provider === 'openai_compatible' && !credentials.baseUrl) {
     return { ok: false, message: 'Set the base URL of the OpenAI-compatible endpoint first' };
   }

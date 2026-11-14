@@ -125,22 +125,26 @@ export function createAiClient(options: AiClientOptions): AiClient {
   };
 }
 
-const PROVIDER_SECRET: Record<ProviderId, SecretName> = {
+/** The key each provider needs; the CLI provider uses the CLI's own sign-in. */
+const PROVIDER_SECRET: Record<ProviderId, SecretName | null> = {
   openai: 'openai_api_key',
   anthropic: 'anthropic_api_key',
   openai_compatible: 'openai_compatible_api_key',
+  codex_cli: null,
 };
 
 const PROVIDER_LABEL: Record<ProviderId, string> = {
   openai: 'OpenAI',
   anthropic: 'Anthropic',
   openai_compatible: 'the OpenAI-compatible endpoint',
+  codex_cli: 'the Codex CLI',
 };
 
 /** Resolves a stage's model and credentials from settings and the secret store. */
 export function createModelResolver(
   settings: SettingsStore,
   secrets: SecretStore,
+  options: { cliProviders?: boolean } = {},
 ): (stage: AiStage) => ModelResolution {
   return (stage) => {
     const model = settings.get('ai.stages')[stage];
@@ -161,7 +165,18 @@ export function createModelResolver(
         model,
       };
     }
-    const key = secrets.use(PROVIDER_SECRET[model.provider]);
+    const secret = PROVIDER_SECRET[model.provider];
+    if (secret === null) {
+      return options.cliProviders
+        ? { ok: true, model, credentials: { apiKey: '', baseUrl: null } }
+        : {
+            ok: false,
+            kind: 'not_configured',
+            message: `${PROVIDER_LABEL[model.provider]} is experimental. Set EXPERIMENTAL_CLI_PROVIDERS=1 to use it, or choose another provider in Settings.`,
+            model,
+          };
+    }
+    const key = secrets.use(secret);
     if (!key.ok && model.provider !== 'openai_compatible') {
       return {
         ok: false,

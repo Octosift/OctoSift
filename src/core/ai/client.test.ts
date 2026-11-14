@@ -138,6 +138,19 @@ describe('model resolver', () => {
     review: null,
   });
 
+  it('runs the Codex CLI without a key, but only when the experimental flag is on', () => {
+    const { settings, secrets, resolve } = stores();
+    settings.set('ai.stages', stages({ provider: 'codex_cli', model: 'gpt-6-luna' }));
+    const off = resolve('triage');
+    expect(off).toMatchObject({ ok: false, kind: 'not_configured' });
+    expect(off.ok ? '' : off.message).toContain('EXPERIMENTAL_CLI_PROVIDERS=1');
+    expect(createModelResolver(settings, secrets, { cliProviders: true })('triage')).toEqual({
+      ok: true,
+      model: { provider: 'codex_cli', model: 'gpt-6-luna' },
+      credentials: { apiKey: '', baseUrl: null },
+    });
+  });
+
   it('asks the user to choose a model when the stage has none', () => {
     const { resolve } = stores();
     expect(resolve('triage')).toMatchObject({ ok: false, kind: 'not_configured' });

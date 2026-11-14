@@ -107,6 +107,16 @@ describe('monthly estimate', () => {
     ).toMatchObject({ usd: null, unpriced: ['triage', 'qualify', 'draft', 'review'] });
   });
 
+  it('adds the CLI overhead per call for the Codex presets and marks them as subscription', () => {
+    const api = estimateMonthlyCost(presetStages('openai', 'balanced'), {}, 960);
+    const cli = estimateMonthlyCost(presetStages('codex_cli', 'balanced'), {}, 960);
+    expect(api.subscription).toBe(false);
+    expect(cli.subscription).toBe(true);
+    // 39 triage calls, 39 qualify calls, 72 drafts and 72 reviews a day, 18,000 tokens each.
+    const overheadPerDay = ((39 * 0.1 + 39 * 2 + 72 * 2 + 72 * 1) * 18_000) / 1_000_000;
+    expect((cli.usd ?? 0) - (api.usd ?? 0)).toBeCloseTo(overheadPerDay * 30, 6);
+  });
+
   it('takes the volume from the subreddits when their rates are known', () => {
     expect(expectedPostsPerDay([12, null, 30])).toEqual({ postsPerDay: 42, measured: true });
     expect(expectedPostsPerDay([null])).toEqual({

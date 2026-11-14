@@ -9,8 +9,12 @@ import { Button } from '../../components/ui/button';
 import { Badge, Card, CardHeader } from '../../components/ui/display';
 import { Checkbox, Field, Input, Select } from '../../components/ui/fields';
 import { cn } from '../../components/ui/utils';
-import { choosePreset, refreshModelList } from '../../lib/actions/ai';
-import { testStageConnection, type ConnectionResult } from '../../lib/actions/settings';
+import { checkCodex, choosePreset, refreshModelList, testCodex } from '../../lib/actions/ai';
+import {
+  saveSettings,
+  testStageConnection,
+  type ConnectionResult,
+} from '../../lib/actions/settings';
 import type { PresetOption } from '../../lib/data/ai';
 import type { SettingsData } from '../../lib/data/settings';
 import { SaveBar } from './save-bar';
@@ -22,11 +26,16 @@ export type PresetProvider = keyof Ai['presets'];
 
 export const PROVIDER_CHOICES: Record<
   PresetProvider,
-  { label: string; keyName: 'openai_api_key' | 'anthropic_api_key'; keyLabel: string }
+  { label: string; keyName: 'openai_api_key' | 'anthropic_api_key' | null; keyLabel: string }
 > = {
   openai: { label: 'OpenAI', keyName: 'openai_api_key', keyLabel: 'OpenAI API key' },
   anthropic: { label: 'Anthropic', keyName: 'anthropic_api_key', keyLabel: 'Anthropic API key' },
+  // Experimental: runs the Codex CLI on the user's ChatGPT sign-in, no key.
+  codex_cli: { label: 'Codex CLI (experimental)', keyName: null, keyLabel: '' },
 };
+
+const EFFORTS = ['low', 'medium', 'high'] as const;
+type Effort = (typeof EFFORTS)[number];
 
 const STAGES: { stage: AiStage; label: string; hint: string }[] = [
   { stage: 'triage', label: 'Triage', hint: 'Screens every post in batches.' },
@@ -39,15 +48,16 @@ const ALL_PROVIDERS: { id: ProviderId; label: string }[] = [
   { id: 'openai', label: 'OpenAI' },
   { id: 'anthropic', label: 'Anthropic' },
   { id: 'openai_compatible', label: 'OpenAI-compatible' },
+  { id: 'codex_cli', label: 'Codex CLI (experimental)' },
 ];
 
 const CUSTOM = '__custom__';
 
 /** "≈ $3.20 a month", rounded to whole dollars above ten. */
-export function formatMonthly(usd: number | null): string {
+export function formatMonthly(usd: number | null, subscription = false): string {
   if (usd === null) return 'Cost unknown';
   const amount = usd >= 10 ? `$${String(Math.round(usd))}` : `$${usd.toFixed(2)}`;
-  return `≈ ${amount} a month`;
+  return subscription ? `Subscription · ≈ ${amount} a month on the API` : `≈ ${amount} a month`;
 }
 
 /** The provider the stages already use, when it has presets. */
@@ -60,13 +70,19 @@ export function initialProvider(ai: Ai): PresetProvider {
 export function ProviderChoice({
   value,
   onChange,
+  cli,
 }: {
   value: PresetProvider;
   onChange: (provider: PresetProvider) => void;
+  /** Whether the experimental CLI provider is offered. */
+  cli: boolean;
 }) {
+  const ids = (Object.keys(PROVIDER_CHOICES) as PresetProvider[]).filter(
+    (id) => cli || id !== 'codex_cli',
+  );
   return (
     <div role="radiogroup" aria-label="AI provider" className="flex flex-wrap gap-2">
-      {(Object.keys(PROVIDER_CHOICES) as PresetProvider[]).map((id) => (
+      {ids.map((id) => (
         <button
           key={id}
           type="button"
@@ -134,7 +150,9 @@ export function PresetPicker({
               {option.id === 'balanced' ? <Badge tone="outline">Recommended</Badge> : null}
             </span>
             <span className="text-xs text-muted-foreground">{option.hint}</span>
-            <span className="text-[13px] tabular">{formatMonthly(option.monthlyUsd)}</span>
+            <span className="text-[13px] tabular">
+              {formatMonthly(option.monthlyUsd, option.subscription)}
+            </span>
             <span className="text-[11px] leading-relaxed text-muted-foreground">
               {STAGES.map(({ stage, label }) => (
                 <span key={stage} className="block">
@@ -154,6 +172,98 @@ export function PresetPicker({
   );
 }
 
+/**
+ * The experimental Codex CLI: no key, only a sign-in check and a test call.
+ * Settings also edit the reasoning effort per stage.
+ */
+export function CodexPanel({
+  effort,
+  onEffortChange,
+  onChecked,
+}: {
+  effort?: Record<AiStage, Effort>;
+  onEffortChange?: (effort: Record<AiStage, Effort>) => void;
+  onChecked?: (ok: boolean) => void;
+}) {
+  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, startTransition] = useTransition();
+  return (
+    <div className="flex flex-col gap-3 rounded-md border border-border px-3 py-3">
+      <p className="text-xs text-muted-foreground">
+        Runs the Codex CLI on this computer with your ChatGPT sign-in, so no API key is needed.
+        Calls count against your ChatGPT plan; the Runs screen shows what they would cost on the
+        API. Sign in once with <code>codex login</code> in a terminal.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          disabled={pending}
+          onClick={() => {
+            startTransition(async () => {
+              const result = await checkCodex();
+              setStatus({ ok: result.ok, text: result.message });
+              onChecked?.(result.ok);
+            });
+          }}
+        >
+          Check Codex
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={pending}
+          onClick={() => {
+            setStatus({ ok: true, text: 'Testing… one small call, usually under ten seconds.' });
+            startTransition(async () => {
+              const result = await testCodex();
+              setStatus(
+                result.ok
+                  ? {
+                      ok: true,
+                      text: `Answered with ${result.model} in ${String(Math.round(result.latencyMs / 100) / 10)} s, using ${String(result.inputTokens)} input tokens (${String(result.cachedInputTokens)} cached) and ${String(result.outputTokens)} output tokens.`,
+                    }
+                  : { ok: false, text: result.message },
+              );
+              onChecked?.(result.ok);
+            });
+          }}
+        >
+          Test connection
+        </Button>
+      </div>
+      {status ? (
+        <p
+          role="status"
+          className={`text-xs ${status.ok ? 'text-brand-subtle-foreground' : 'text-danger-foreground'}`}
+        >
+          {status.text}
+        </p>
+      ) : null}
+      {effort && onEffortChange ? (
+        <div className="grid gap-2 sm:grid-cols-4">
+          {STAGES.map(({ stage, label }) => (
+            <Field key={stage} label={`${label} effort`} htmlFor={`codex-effort-${stage}`}>
+              <Select
+                id={`codex-effort-${stage}`}
+                value={effort[stage]}
+                onChange={(event) => {
+                  onEffortChange({ ...effort, [stage]: event.target.value as Effort });
+                }}
+              >
+                {EFFORTS.map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /** Settings → AI: provider, key and preset, with per-stage models under Advanced. */
 export function AiSection({ data }: { data: SettingsData }) {
   const router = useRouter();
@@ -164,6 +274,7 @@ export function AiSection({ data }: { data: SettingsData }) {
   const [advanced, setAdvanced] = useState(custom);
   const [saved, setSaved] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [effort, setEffort] = useState<Record<AiStage, Effort>>(ai.codexEffort);
   const [pending, startTransition] = useTransition();
   const choice = PROVIDER_CHOICES[provider];
 
@@ -184,23 +295,34 @@ export function AiSection({ data }: { data: SettingsData }) {
       <div className="flex flex-col gap-4 px-4 py-4 text-[13px]">
         <ProviderChoice
           value={provider}
+          cli={ai.cliProviders}
           onChange={(id) => {
             setProvider(id);
             setSaved(false);
           }}
         />
-        <SecretField
-          key={choice.keyName}
-          name={choice.keyName}
-          label={choice.keyLabel}
-          description={data.secrets[choice.keyName]}
-          onSaved={() => {
-            refresh(provider);
-          }}
-          onRemoved={() => {
-            router.refresh();
-          }}
-        />
+        {choice.keyName ? (
+          <SecretField
+            key={choice.keyName}
+            name={choice.keyName}
+            label={choice.keyLabel}
+            description={data.secrets[choice.keyName]}
+            onSaved={() => {
+              refresh(provider);
+            }}
+            onRemoved={() => {
+              router.refresh();
+            }}
+          />
+        ) : (
+          <CodexPanel
+            effort={effort}
+            onEffortChange={(next) => {
+              setEffort(next);
+              setSaved(false);
+            }}
+          />
+        )}
         <PresetPicker
           options={ai.presets[provider]}
           value={preset}
@@ -225,6 +347,9 @@ export function AiSection({ data }: { data: SettingsData }) {
         onSave={() => {
           startTransition(async () => {
             const result = await choosePreset({ provider, preset });
+            if (result.ok && provider === 'codex_cli') {
+              await saveSettings({ 'ai.codexEffort': effort });
+            }
             setSaved(result.ok);
             setNotice(result.ok ? null : result.error);
             router.refresh();
@@ -326,7 +451,9 @@ function AdvancedModels({
                     });
                   }}
                 >
-                  {ALL_PROVIDERS.map((provider) => (
+                  {ALL_PROVIDERS.filter(
+                    (provider) => ai.cliProviders || provider.id !== 'codex_cli',
+                  ).map((provider) => (
                     <option key={provider.id} value={provider.id}>
                       {provider.label}
                     </option>

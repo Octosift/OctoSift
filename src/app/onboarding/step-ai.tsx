@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import type { PresetId } from '@/core/ai/presets';
 import {
+  CodexPanel,
   initialProvider,
   PresetPicker,
   PROVIDER_CHOICES,
@@ -36,7 +37,8 @@ export function StepAi({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const choice = PROVIDER_CHOICES[provider];
-  const keyReady = savedKeys[provider] ?? settings.secrets[choice.keyName].configured;
+  const keyReady =
+    savedKeys[provider] ?? (choice.keyName ? settings.secrets[choice.keyName].configured : false);
   const keepCustom = ready && ai.active === null && !touched;
   const canContinue = demo || keyReady || keepCustom;
   const next = () => {
@@ -61,27 +63,36 @@ export function StepAi({
         <div className="flex flex-col gap-4 text-[13px]">
           <ProviderChoice
             value={provider}
+            cli={ai.cliProviders}
             onChange={(id) => {
               setProvider(id);
               setTouched(true);
             }}
           />
-          <SecretField
-            key={choice.keyName}
-            name={choice.keyName}
-            label={choice.keyLabel}
-            description={settings.secrets[choice.keyName]}
-            onSaved={() => {
-              setSavedKeys({ ...savedKeys, [provider]: true });
-              startTransition(async () => {
-                await refreshModelList(provider);
-                router.refresh();
-              });
-            }}
-            onRemoved={() => {
-              setSavedKeys({ ...savedKeys, [provider]: false });
-            }}
-          />
+          {choice.keyName ? (
+            <SecretField
+              key={choice.keyName}
+              name={choice.keyName}
+              label={choice.keyLabel}
+              description={settings.secrets[choice.keyName]}
+              onSaved={() => {
+                setSavedKeys({ ...savedKeys, [provider]: true });
+                startTransition(async () => {
+                  await refreshModelList(provider);
+                  router.refresh();
+                });
+              }}
+              onRemoved={() => {
+                setSavedKeys({ ...savedKeys, [provider]: false });
+              }}
+            />
+          ) : (
+            <CodexPanel
+              onChecked={(ok) => {
+                setSavedKeys({ ...savedKeys, [provider]: ok });
+              }}
+            />
+          )}
           <PresetPicker
             options={ai.presets[provider]}
             value={preset}
@@ -100,7 +111,9 @@ export function StepAi({
       ) : null}
       <div className="flex items-center justify-end gap-3">
         {!canContinue ? (
-          <p className="text-xs text-muted-foreground">Save a key to continue.</p>
+          <p className="text-xs text-muted-foreground">
+            {choice.keyName ? 'Save a key to continue.' : 'Check Codex to continue.'}
+          </p>
         ) : null}
         <Button
           variant="primary"
