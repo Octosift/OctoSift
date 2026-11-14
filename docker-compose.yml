@@ -19,7 +19,7 @@ services:
     <<: *app
     command: ['pnpm', 'start:web']
     ports:
-      - '127.0.0.1:3000:3000'
+      - '127.0.0.1:3005:3005'
     depends_on:
       migrate:
         condition: service_completed_successfully

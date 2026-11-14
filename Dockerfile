@@ -24,11 +24,11 @@ RUN pnpm build && pnpm prune --prod --ignore-scripts
 FROM base AS runtime
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
-    PORT=3000 \
+    PORT=3005 \
     DATABASE_PATH=data/app.sqlite
 COPY --from=build --chown=node:node /app /app
 RUN mkdir -p /app/data && chown node:node /app/data
 USER node
 VOLUME ["/app/data"]
-EXPOSE 3000
+EXPOSE 3005
 CMD ["pnpm", "start"]

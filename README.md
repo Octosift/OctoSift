@@ -61,7 +61,7 @@ pnpm demo
 ```
 
 `pnpm demo` builds a demo database with a sample product and a few days of history, then
-starts the dashboard at http://127.0.0.1:3000 with a simulated AI provider and synthetic
+starts the dashboard at http://127.0.0.1:3005 with a simulated AI provider and synthetic
 Reddit posts. No key and no network are needed.
 
 When you are ready for the real thing:
@@ -72,7 +72,7 @@ pnpm build
 pnpm start             # dashboard and worker
 ```
 
-Open http://127.0.0.1:3000 and follow the five onboarding steps: AI provider, Reddit account
+Open http://127.0.0.1:3005 and follow the five onboarding steps: AI provider, Reddit account
 (you can skip it), product, subreddits, first scan. For development, `pnpm dev` runs both processes with reloading.
 
 ### With Docker
@@ -81,7 +81,7 @@ Open http://127.0.0.1:3000 and follow the five onboarding steps: AI provider, Re
 docker compose up --build
 ```
 
-The dashboard is published on 127.0.0.1:3000 only. Data lives in a named volume. Put keys
+The dashboard is published on 127.0.0.1:3005 only. Data lives in a named volume. Put keys
 and options in `.env` (see `.env.example`); set `APP_PASSWORD` before exposing the dashboard
 beyond your machine.
 
@@ -202,8 +202,8 @@ Settings live in the dashboard and are stored in a local SQLite file. Environmen
 | `DATABASE_PATH`                                                                                    | `data/app.sqlite`            | Where the database lives                                             |
 | `APP_SECRET`                                                                                       | random key in `data/.secret` | Encrypts saved API keys                                              |
 | `APP_PASSWORD`                                                                                     | none                         | Requires a password to open the dashboard                            |
-| `HOST`, `PORT`                                                                                     | `127.0.0.1`, `3000`          | Where the dashboard listens                                          |
-| `PUBLIC_URL`                                                                                       | `http://127.0.0.1:3000`      | Used for links in notifications                                      |
+| `HOST`, `PORT`                                                                                     | `127.0.0.1`, `3005`          | Where the dashboard listens                                          |
+| `PUBLIC_URL`                                                                                       | `http://127.0.0.1:3005`      | Used for links in notifications                                      |
 | `LOG_LEVEL`                                                                                        | `info`                       | `debug`, `info`, `warn` or `error`                                   |
 | `DEMO_MODE`                                                                                        | off                          | Synthetic data and a simulated AI provider                           |
 | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `OPENAI_COMPATIBLE_API_KEY` | none                         | Provider keys; they take precedence over keys saved in the dashboard |

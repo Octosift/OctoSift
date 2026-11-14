@@ -8,7 +8,7 @@ describe('parseEnv', () => {
       env: {
         DATABASE_PATH: 'data/app.sqlite',
         LOG_LEVEL: 'info',
-        PUBLIC_URL: 'http://127.0.0.1:3000',
+        PUBLIC_URL: 'http://127.0.0.1:3005',
         DEMO_MODE: false,
       },
     });
