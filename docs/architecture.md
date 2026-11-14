@@ -53,7 +53,8 @@ demo mode and tests replace parts of it.
 - Input is validated with Zod where it enters: environment variables, settings, server
   action arguments, feed entries, AI output and stored JSON.
 - Only `reddit/client.ts`, `reddit/session-client.ts`, `ai/provider.ts`, `profile/crawl.ts`,
-  `notify/webhook.ts` and `serp/dataforseo.ts` call `fetch`; a lint rule enforces it. The crawler, the webhook and
+  `notify/webhook.ts` and `serp/dataforseo.ts` call `fetch`; a lint rule enforces it. The
+  experimental Codex CLI provider (`ai/codex.ts`) runs the CLI as a child process instead. The crawler, the webhook and
   DataForSEO reach the network by design (your product site, your webhook and, when you set it
   up, Google results), in addition to Reddit and the AI provider.
 - Expected failures are values (`{ ok: false, kind, message }`), not exceptions. A scan

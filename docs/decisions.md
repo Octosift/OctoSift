@@ -111,8 +111,24 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
   enforced by truncating and clamping in code, because providers accept different
   subsets of JSON Schema and an over-long reason is not worth discarding an answer.
 - **The daily budget is a rolling 24 hours**, which needs no time zone.
-- **No default price table.** Prices change and differ by provider, so the table
-  starts empty and cost shows as unknown until the user enters prices in Settings.
+- **Presets instead of model ids.** Onboarding asks for one key and one of three presets;
+  `src/core/ai/presets.ts` maps each to recommended models, taken from the providers' model and
+  pricing pages and dated in the file. Saving a key fetches the models it can use, and presets
+  it cannot use are hidden. Per-stage models, custom ids and OpenAI-compatible endpoints stay
+  under Advanced in Settings.
+- **Prices come with the preset.** Choosing a preset adds the list prices of its models to the
+  price table, so scans have a cost from the start; prices the user entered are never replaced.
+  Models chosen by hand have no price until the user adds one, and count as unknown.
+- **Only OpenAI and Anthropic in onboarding.** Fewer choices make the first step quicker;
+  OpenAI-compatible endpoints are for people running local models and live under Advanced.
+- **An experimental CLI provider, off by default.** With `EXPERIMENTAL_CLI_PROVIDERS=1`, the
+  Codex CLI can run the pipeline on a ChatGPT sign-in. Each call runs `codex exec` in an empty
+  temporary folder, with the user's Codex config and rules ignored, a read-only sandbox, stdin
+  closed and no API keys passed on, one call at a time and killed after 180 seconds. Every call
+  carries about 18,000 tokens of the CLI's own instructions, so triage sends 25 posts per call
+  and qualify five. Calls cost nothing per token; the ledger records what the same tokens would
+  cost on the API, and the Runs screen reports it. Its stderr is never logged, only a scrubbed
+  one-line summary. It is meant for measuring costs, not for the first release.
 
 ## Pipeline
 
@@ -149,7 +165,12 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
 - **shadcn/ui as an approach, not a generator.** The components are small local files on
   Radix primitives and Tailwind tokens, written the shadcn way, with one accent colour.
 - **Onboarding connects the AI provider first.** The product profile is built from the
-  website with a model, so the provider has to be set up before the product step.
+  website with a model, so the provider has to be set up before the product step. It is the
+  only required step: the others can be skipped, and skipping the product step ends onboarding
+  on an inbox that asks for a product.
+- **Fewer inputs.** The product step fills in the profile from the crawl and keeps the
+  interview questions folded away as optional; the top five subreddit suggestions come ticked;
+  each step has one primary button.
 - **Connecting a Reddit account comes next, and can be skipped.** Subreddit validation and the
   first scan are much faster with an account, so it is offered before the product step. Skipping
   is allowed, with a note that the app then reads the public feeds Reddit is retiring; the

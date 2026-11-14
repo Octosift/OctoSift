@@ -44,6 +44,9 @@ anything shaped like a key.
   feeds of the subreddits you watch.
 - **Your AI provider**: post text, your product profile and drafts, to the provider and models
   you configure, and the addresses of post images if you turn on image descriptions.
+- **The Codex CLI**, only if you turn on the experimental provider: the same prompts an AI
+  provider would get, run by the CLI on this computer under your own ChatGPT sign-in. No API keys
+  are passed to it.
 - **Your product's website**: read once when you build a profile.
 - **DataForSEO**, if you set it up: your keywords, once a week or when you press Check now.
 - **Your webhook**, if you set one: the title, subreddit, score and reason of strong leads, with

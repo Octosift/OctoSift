@@ -72,8 +72,10 @@ pnpm build
 pnpm start             # dashboard and worker
 ```
 
-Open http://127.0.0.1:3005 and follow the five onboarding steps: AI provider, Reddit account
-(you can skip it), product, subreddits, first scan. For development, `pnpm dev` runs both processes with reloading.
+Open http://127.0.0.1:3005 and follow the onboarding: paste one OpenAI or Anthropic key and pick
+a preset, then connect a Reddit account, describe your product, confirm the suggested
+subreddits and run a first scan. Only the AI step is required; you can skip the rest and come
+back later. For development, `pnpm dev` runs both processes with reloading.
 
 ### With Docker
 
@@ -130,8 +132,11 @@ down to every fifteen minutes.
 
 ## Cost
 
-You bring your own AI provider (OpenAI or Anthropic, or any OpenAI-compatible endpoint
-such as OpenRouter, Ollama or LM Studio) and pick one model per stage. Spending stays low
+You bring your own AI provider, OpenAI or Anthropic, and choose a preset: **Economy**,
+**Balanced** (the default) or **Best quality**. Each preset picks the provider's recommended
+model for every stage and shows an estimated monthly cost for your subreddits. Under Settings →
+AI → Advanced you can pick a model per stage instead, or point a stage at any OpenAI-compatible
+endpoint such as Ollama, LM Studio or OpenRouter for local or other models. Spending stays low
 because each stage only sees what the previous one let through:
 
 - free filters remove removed posts, bots, spam, old posts and other languages;
