@@ -39,9 +39,26 @@ function StatusLine({ account, now }: { account: Account; now: number }) {
       <span className="text-xs text-muted-foreground">
         {account.username ? `as u/${account.username}` : 'account name unknown'}
         {account.cookieMask ? ` · cookie ${account.cookieMask}` : ''}
+        {profileNote(account, now)}
       </span>
     </span>
   );
+}
+
+const PROFILE_NOTES = {
+  visible: 'public profile visible',
+  suspended: 'profile shows the account as suspended',
+  missing: 'profile not found',
+} as const;
+
+/** The last daily profile check, when it was about this account. */
+function profileNote(account: Account, now: number): string {
+  const check = account.profileCheck;
+  if (account.status !== 'connected' || !check?.status || check.username !== account.username) {
+    return '';
+  }
+  const pending = check.status !== 'visible' && !check.confirmed ? ', checking again soon' : '';
+  return ` · ${PROFILE_NOTES[check.status]}${pending} (${formatAgo(check.checkedAt, now)})`;
 }
 
 function PasteDialog({

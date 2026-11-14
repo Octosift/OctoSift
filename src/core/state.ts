@@ -25,6 +25,15 @@ const STATE = {
     at: z.number(),
     reason: z.string().nullable(),
   }),
+  /** The last daily check of the connected account's public profile. */
+  'state.accountCheck': z.object({
+    username: z.string().nullable(),
+    status: z.enum(['visible', 'suspended', 'missing']).nullable(),
+    /** True once a bad status was seen twice in a row, half an hour apart. */
+    confirmed: z.boolean(),
+    checkedAt: z.number(),
+    nextAt: z.number(),
+  }),
   'state.scanRequest': z.object({ requestedAt: z.number(), productId: z.string().nullable() }),
   'state.validationRequest': z.object({ requestedAt: z.number(), names: z.array(z.string()) }),
   'state.validationProgress': z.object({

@@ -11,6 +11,7 @@ import type { Db } from '../db/client';
 import { enabledSubredditNames } from '../db/queries/products';
 import { recentRuns, type RunRow } from '../db/queries/runs';
 import { readState } from '../state';
+import { accountProblem } from './account-check';
 import { removedReplySubreddits } from './visibility';
 
 export type HealthIssue =
@@ -20,6 +21,7 @@ export type HealthIssue =
   | { kind: 'no_leads'; severity: 'warning'; message: string; causes: string[] }
   | { kind: 'no_fetch'; severity: 'warning'; message: string; causes: string[] }
   | { kind: 'session_reauth'; severity: 'error'; message: string; reason: string }
+  | { kind: 'account_hidden'; severity: 'error'; message: string; reason: string }
   | { kind: 'source_failover'; severity: 'warning'; message: string; reason: string }
   | { kind: 'replies_removed'; severity: 'warning' | 'error'; message: string; reason: string };
 
@@ -49,6 +51,8 @@ export interface HealthInput {
   now: number;
   /** Why the connected Reddit account needs reconnecting, when it does. */
   sessionProblem?: string | null;
+  /** The connected account's profile was suspended or not found on two checks in a row. */
+  accountProblem?: { username: string; status: 'suspended' | 'missing' } | null;
   /** The last switch away from the preferred source, if it has not recovered since. */
   failover?: { from: string; to: string | null; reason: string } | null;
   /** Subreddits where one of your replies was removed in the last week. */
@@ -106,6 +110,25 @@ export function computeHealth(input: HealthInput): HealthIssue[] {
       message: 'Reconnect your Reddit account.',
       reason: input.sessionProblem,
     });
+  }
+  if (input.accountProblem) {
+    const { username, status } = input.accountProblem;
+    issues.push(
+      status === 'suspended'
+        ? {
+            kind: 'account_hidden',
+            severity: 'error',
+            message: `Reddit suspended the connected account u/${username}.`,
+            reason: 'Reads with it will stop working soon',
+          }
+        : {
+            kind: 'account_hidden',
+            severity: 'error',
+            message: `The connected account u/${username} has no public profile.`,
+            reason:
+              'Reddit answers "not found" for it, which usually means the account is shadowbanned or was deleted',
+          },
+    );
   }
   const removed = input.removedReplies ?? [];
   if (removed.length === 1) {
@@ -199,6 +222,7 @@ export function loadHealth(db: Db, now: number): HealthIssue[] {
     now,
     sessionProblem:
       session?.status === 'needs_reauth' ? (session.reason ?? 'Reddit refused it') : null,
+    accountProblem: session?.status === 'connected' ? accountProblem(db, session.username) : null,
     failover: readState(db, 'state.sourceFailover'),
     removedReplies: removedReplySubreddits(db, now),
   });

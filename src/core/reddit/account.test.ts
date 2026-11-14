@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { openMemoryDatabase } from '../db/client';
+import { readState, writeState } from '../state';
 import { createTestSecrets } from '../testing/fake-secrets';
 import {
   connectSession,
@@ -97,8 +98,16 @@ describe('connecting an account', () => {
       reason: 'Reddit asked to sign in again',
       since: 200,
     });
+    writeState(db, 'state.accountCheck', {
+      username: 'demo_reader',
+      status: 'visible',
+      confirmed: false,
+      checkedAt: 200,
+      nextAt: 300,
+    });
     disconnectSession(db, secrets);
     expect(sessionStatus(db, secrets)).toEqual({ status: 'not_connected' });
+    expect(readState(db, 'state.accountCheck')).toBeNull();
     expect(secrets.has('reddit_session_cookie')).toBe(false);
   });
 });

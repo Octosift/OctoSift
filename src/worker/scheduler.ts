@@ -36,8 +36,8 @@ export interface SchedulerDeps {
   scanDeps: () => ScanDeps;
   /** The DataForSEO fetcher, or null while it is not configured. */
   serp?: () => SerpFetcher | null;
-  /** Runs the reply visibility checks that are due. */
-  checkReplies?: () => Promise<number>;
+  /** Runs the reply and account visibility checks that are due. */
+  checkVisibility?: () => Promise<void>;
   /** Identifies this process in the scan lock. */
   owner: string;
   /** Calls `beat` periodically until the returned function is called. */
@@ -171,7 +171,7 @@ export function createScheduler(deps: SchedulerDeps) {
         if (outcome.kind === 'locked') log.debug('Another process is scanning; waiting');
         if (checkSchedule) {
           await checkEvergreen();
-          await deps.checkReplies?.();
+          await deps.checkVisibility?.();
         }
       } catch (error) {
         log.error('Worker iteration failed', { error });

@@ -2,6 +2,7 @@ import 'server-only';
 import { CONFIG } from '@/core/config';
 import { sessionStatus } from '@/core/reddit/account';
 import type { SecretDescription, SecretName } from '@/core/secrets/store';
+import { readState } from '@/core/state';
 import { runsInContainer } from '../reddit-sign-in';
 import { getRuntime } from '../runtime';
 
@@ -31,6 +32,7 @@ export function loadSettings() {
       ...sessionStatus(db, secrets),
       cookieMask: secrets.describe('reddit_session_cookie').mask,
       inContainer: runsInContainer(),
+      profileCheck: readState(db, 'state.accountCheck'),
       perHour: CONFIG.session.maxPerHour,
     },
     values: {

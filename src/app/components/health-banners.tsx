@@ -28,18 +28,22 @@ export function HealthBanners({ issues }: { issues: HealthIssue[] }) {
                 .
               </p>
             ) : null}
-            {issue.kind === 'session_reauth' || issue.kind === 'source_failover' ? (
+            {issue.kind === 'session_reauth' ||
+            issue.kind === 'account_hidden' ||
+            issue.kind === 'source_failover' ? (
               <p className="mt-0.5">
                 {issue.reason}.{' '}
                 <Link
                   className="underline underline-offset-2"
                   href={
-                    issue.kind === 'session_reauth' ? '/settings#reddit' : '/settings#data-source'
+                    issue.kind === 'source_failover' ? '/settings#data-source' : '/settings#reddit'
                   }
                 >
                   {issue.kind === 'session_reauth'
                     ? 'Reconnect it or choose another data source in Settings'
-                    : 'Check the data source in Settings'}
+                    : issue.kind === 'account_hidden'
+                      ? 'Connect a different account in Settings'
+                      : 'Check the data source in Settings'}
                 </Link>
                 .
               </p>

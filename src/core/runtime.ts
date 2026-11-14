@@ -13,6 +13,7 @@ import {
 import { createSdkGenerator } from './ai/provider';
 import type { AiStage, Generator } from './ai/types';
 import { createUsageLedger } from './ai/usage';
+import { runAccountCheck } from './guard/account-check';
 import { runDueReplyChecks } from './guard/visibility';
 import { nowSeconds, systemClock, type Clock, type Random } from './clock';
 import { CONFIG } from './config';
@@ -57,8 +58,11 @@ export interface Runtime {
   serp(): SerpFetcher | null;
   /** Whether a Reddit account is connected, which reply checks read with. */
   hasRedditAccount(): boolean;
-  /** Runs the reply visibility checks that are due, through the connected account. */
-  checkReplies(): Promise<number>;
+  /**
+   * Runs the reply checks that are due, then the daily profile check of the
+   * connected account, all through its session.
+   */
+  checkVisibility(): Promise<void>;
   scanDeps(): ScanDeps;
   close(): void;
 }
@@ -258,16 +262,15 @@ export function createRuntime(options: RuntimeOptions): Runtime {
         log,
       }),
     hasRedditAccount,
-    checkReplies: async () => {
-      if (!hasRedditAccount()) return 0;
+    checkVisibility: async () => {
+      if (!hasRedditAccount()) return;
       const session = sessionStatus(db, secrets);
-      return runDueReplyChecks({
-        db,
-        reddit: sessionClient(false),
-        account: session.status === 'connected' ? session.username : null,
-        now: nowSeconds(clock),
-        log,
-      });
+      const username = session.status === 'connected' ? session.username : null;
+      const reddit = sessionClient(false);
+      await runDueReplyChecks({ db, reddit, account: username, now: nowSeconds(clock), log });
+      // A refusal during the reply checks leaves the session needing reconnection.
+      if (!hasRedditAccount()) return;
+      await runAccountCheck({ db, reddit, username, now: nowSeconds(clock), log });
     },
     serp: () => {
       if (options.overrides?.serp) return options.overrides.serp;

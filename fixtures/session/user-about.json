@@ -1,0 +1,11 @@
+{
+  "kind": "t2",
+  "data": {
+    "name": "demo_reader",
+    "is_suspended": false,
+    "created_utc": 1790000000.0,
+    "link_karma": 12,
+    "comment_karma": 40,
+    "verified": true
+  }
+}

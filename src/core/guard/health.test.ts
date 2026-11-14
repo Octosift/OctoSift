@@ -69,6 +69,26 @@ describe('computeHealth', () => {
     ]);
   });
 
+  it('reports a connected account that is suspended or has no public profile', () => {
+    expect(
+      health({ accountProblem: { username: 'demo_reader', status: 'suspended' } }),
+    ).toMatchObject([
+      {
+        kind: 'account_hidden',
+        severity: 'error',
+        message: 'Reddit suspended the connected account u/demo_reader.',
+      },
+    ]);
+    expect(
+      health({ accountProblem: { username: 'demo_reader', status: 'missing' } }),
+    ).toMatchObject([
+      {
+        kind: 'account_hidden',
+        message: 'The connected account u/demo_reader has no public profile.',
+      },
+    ]);
+  });
+
   it('explains a switch to another source, or that none was left', () => {
     expect(
       health({ failover: { from: 'session', to: 'rss', reason: 'Reddit refused the session' } }),

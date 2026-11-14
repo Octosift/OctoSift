@@ -117,4 +117,5 @@ export function markSessionNeedsReauth(db: Db, reason: string, now: number): voi
 export function disconnectSession(db: Db, secrets: SecretStore): void {
   secrets.remove('reddit_session_cookie');
   clearState(db, 'state.redditSession');
+  clearState(db, 'state.accountCheck');
 }
