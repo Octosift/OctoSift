@@ -31,6 +31,8 @@ export interface MonthlyEstimate {
   usd: number | null;
   /** True when the stages run on the CLI provider, which bills a subscription instead. */
   subscription: boolean;
+  /** Model calls a day; what counts against a subscription's usage limits. */
+  callsPerDay: number;
   postsPerDay: number;
   /** Stages whose model has no price in the table or the catalogue. */
   unpriced: AiStage[];
@@ -39,6 +41,23 @@ export interface MonthlyEstimate {
 function cliBatch(stage: AiStage): number {
   if (stage === 'triage') return CONFIG.ai.cliBatch.triage;
   return stage === 'qualify' ? CONFIG.ai.cliBatch.qualify : 1;
+}
+
+function apiBatch(stage: AiStage): number {
+  return stage === 'triage' ? CONFIG.triage.batchSize : 1;
+}
+
+/** Posts a day that reach each step, for the plain summary under the presets. */
+export function stageCounts(postsPerDay: number): {
+  screened: number;
+  judged: number;
+  drafted: number;
+} {
+  return {
+    screened: postsPerDay,
+    judged: postsPerDay * STAGE_VOLUME.qualify.share,
+    drafted: postsPerDay * STAGE_VOLUME.draft.share,
+  };
 }
 
 /** The price used for an estimate: the user's table first, then the catalogue. */
@@ -52,9 +71,14 @@ export function estimateMonthlyCost(
   postsPerDay: number,
 ): MonthlyEstimate {
   let perDay = 0;
+  let callsPerDay = 0;
   const unpriced: AiStage[] = [];
   for (const stage of Object.keys(STAGE_VOLUME) as AiStage[]) {
     const model = stages[stage];
+    const share = postsPerDay * STAGE_VOLUME[stage].share;
+    callsPerDay += Math.ceil(
+      share / (model?.provider === 'codex_cli' ? cliBatch(stage) : apiBatch(stage)),
+    );
     const price = model ? estimatePrice(prices, model) : null;
     if (!price) {
       unpriced.push(stage);
@@ -75,6 +99,7 @@ export function estimateMonthlyCost(
   return {
     usd: unpriced.length > 0 ? null : perDay * DAYS_PER_MONTH,
     subscription: Object.values(stages).every((model) => model?.provider === 'codex_cli'),
+    callsPerDay,
     postsPerDay,
     unpriced,
   };

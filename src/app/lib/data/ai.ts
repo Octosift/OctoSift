@@ -1,5 +1,5 @@
 import 'server-only';
-import { estimateMonthlyCost, expectedPostsPerDay } from '@/core/ai/estimate';
+import { estimateMonthlyCost, expectedPostsPerDay, stageCounts } from '@/core/ai/estimate';
 import { storedModelList } from '@/core/ai/model-lists';
 import {
   activePreset,
@@ -29,6 +29,8 @@ export interface PresetOption {
   monthlyUsd: number | null;
   /** Billed to a subscription; monthlyUsd is then the API equivalent. */
   subscription: boolean;
+  /** Model calls a day, which count against a subscription's limits. */
+  callsPerDay: number;
 }
 
 /** What the AI settings and the onboarding AI step show. */
@@ -57,7 +59,11 @@ export function loadAiSettings() {
             prices,
             volume.postsPerDay,
           );
-          return { monthlyUsd: estimate.usd, subscription: estimate.subscription };
+          return {
+            monthlyUsd: estimate.usd,
+            subscription: estimate.subscription,
+            callsPerDay: estimate.callsPerDay,
+          };
         })(),
       }));
       return [provider, options];
@@ -70,7 +76,7 @@ export function loadAiSettings() {
     stages,
     active: activePreset(stages),
     presets,
-    volume,
+    volume: { ...volume, ...stageCounts(volume.postsPerDay) },
     modelLists: {
       openai: storedModelList(db, 'openai'),
       anthropic: storedModelList(db, 'anthropic'),

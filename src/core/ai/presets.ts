@@ -34,9 +34,18 @@ export const PRESET_IDS = ['economy', 'balanced', 'best'] as const;
 export type PresetId = (typeof PRESET_IDS)[number];
 
 export const PRESET_LABELS: Record<PresetId, { label: string; hint: string }> = {
-  economy: { label: 'Economy', hint: 'Small models throughout, a mid-tier model for drafts.' },
-  balanced: { label: 'Balanced', hint: 'A mid-tier model judges posts and writes drafts.' },
-  best: { label: 'Best quality', hint: 'The top model judges posts and writes drafts.' },
+  economy: {
+    label: 'Economy',
+    hint: 'Lowest cost. A small model picks the leads, so it misses more of them. A mid-size model writes the replies.',
+  },
+  balanced: {
+    label: 'Balanced',
+    hint: 'A mid-size model picks the leads and writes the replies. Right for most products.',
+  },
+  best: {
+    label: 'Best quality',
+    hint: 'The top model picks the leads and writes the replies. Worth it when each customer is worth a lot.',
+  },
 };
 
 /** Providers that have presets; OpenAI-compatible endpoints are configured by hand. */

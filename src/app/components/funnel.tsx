@@ -26,15 +26,15 @@ export function funnelSteps(counts: FunnelCounts, reading = false): FunnelStep[]
     },
     {
       key: 'triage',
-      label: 'Triaged',
+      label: 'Quick screen',
       value: counts.triage.pass,
-      hint: 'Kept by the cheap model screen',
+      hint: 'Kept by a small model’s first look',
     },
     {
       key: 'qualify',
-      label: 'Qualified',
+      label: 'Careful check',
       value: counts.qualify.pass,
-      hint: 'Judged by the strong model',
+      hint: 'Judged one by one by a stronger model',
     },
     { key: 'leads', label: 'Leads', value: counts.leads, hint: 'Added to your inbox' },
     {

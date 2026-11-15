@@ -37,11 +37,24 @@ export const PROVIDER_CHOICES: Record<
 const EFFORTS = ['low', 'medium', 'high'] as const;
 type Effort = (typeof EFFORTS)[number];
 
+/** The same step names as the Runs screen. */
 const STAGES: { stage: AiStage; label: string; hint: string }[] = [
-  { stage: 'triage', label: 'Triage', hint: 'Screens every post in batches.' },
-  { stage: 'qualify', label: 'Qualify', hint: 'Judges each remaining post carefully.' },
-  { stage: 'draft', label: 'Draft', hint: 'Writes replies for strong leads.' },
-  { stage: 'review', label: 'Review', hint: 'Checks each draft; best as a different model.' },
+  {
+    stage: 'triage',
+    label: 'Quick screen',
+    hint: 'A first look at every new post, many at a time.',
+  },
+  {
+    stage: 'qualify',
+    label: 'Careful check',
+    hint: 'Judges each post that passes the quick screen and picks the leads.',
+  },
+  { stage: 'draft', label: 'Drafting', hint: 'Writes replies for the strongest leads.' },
+  {
+    stage: 'review',
+    label: 'Review',
+    hint: 'Reads each reply the way a moderator would. Best as a different model.',
+  },
 ];
 
 const ALL_PROVIDERS: { id: ProviderId; label: string }[] = [
@@ -53,11 +66,28 @@ const ALL_PROVIDERS: { id: ProviderId; label: string }[] = [
 
 const CUSTOM = '__custom__';
 
+function dollars(usd: number): string {
+  return usd >= 10 ? `$${String(Math.round(usd))}` : `$${usd.toFixed(2)}`;
+}
+
 /** "≈ $3.20 a month", rounded to whole dollars above ten. */
-export function formatMonthly(usd: number | null, subscription = false): string {
-  if (usd === null) return 'Cost unknown';
-  const amount = usd >= 10 ? `$${String(Math.round(usd))}` : `$${usd.toFixed(2)}`;
-  return subscription ? `Subscription · ≈ ${amount} a month on the API` : `≈ ${amount} a month`;
+export function formatMonthly(usd: number | null): string {
+  return usd === null ? 'Cost unknown' : `≈ ${dollars(usd)} a month`;
+}
+
+function PriceLine({ option }: { option: PresetOption }) {
+  if (!option.subscription) {
+    return <span className="text-sm font-medium tabular">{formatMonthly(option.monthlyUsd)}</span>;
+  }
+  return (
+    <span className="flex flex-col">
+      <span className="text-sm font-medium">In your ChatGPT plan</span>
+      <span className="text-xs text-muted-foreground tabular">
+        ≈ {Math.round(option.callsPerDay)} calls a day
+        {option.monthlyUsd !== null ? `, ${dollars(option.monthlyUsd)} a month at API prices` : ''}
+      </span>
+    </span>
+  );
 }
 
 /** The provider the stages already use, when it has presets. */
@@ -150,9 +180,7 @@ export function PresetPicker({
               {option.id === 'balanced' ? <Badge tone="outline">Recommended</Badge> : null}
             </span>
             <span className="text-xs text-muted-foreground">{option.hint}</span>
-            <span className="text-sm tabular">
-              {formatMonthly(option.monthlyUsd, option.subscription)}
-            </span>
+            <PriceLine option={option} />
             <span className="text-xs leading-relaxed text-muted-foreground">
               {STAGES.map(({ stage, label }) => (
                 <span key={stage} className="block">
@@ -164,10 +192,19 @@ export function PresetPicker({
         ))}
       </div>
       <p className="text-xs text-muted-foreground">
-        Estimates for about {Math.round(volume.postsPerDay)} new posts a day
-        {volume.measured ? ' in your subreddits' : ', typical for five subreddits'}. Each
-        scan&apos;s actual cost is shown on the Runs screen.
+        Based on about {Math.round(volume.screened)} new posts a day
+        {volume.measured ? ' in your subreddits' : ', typical for five subreddits'}: every post gets
+        a quick screen, about {Math.round(volume.judged)} a careful check and about{' '}
+        {Math.round(volume.drafted)} a reply that is written and reviewed. The Runs screen shows
+        what each scan really cost.
       </p>
+      {shown.some((option) => option.subscription) ? (
+        <p className="text-xs text-muted-foreground">
+          With the Codex CLI nothing is billed per call; the calls use your ChatGPT plan&apos;s
+          limits. The API figure is high because every Codex call also sends about 17,000 tokens of
+          Codex&apos;s own instructions.
+        </p>
+      ) : null}
     </fieldset>
   );
 }
@@ -334,7 +371,7 @@ export function AiSection({ data }: { data: SettingsData }) {
         />
         {custom ? (
           <p className="text-xs text-muted-foreground">
-            The stages use models chosen under Advanced. Using a preset replaces them.
+            You picked the models yourself under Advanced. Using a preset replaces them.
           </p>
         ) : null}
         {notice ? <p className="text-xs text-muted-foreground">{notice}</p> : null}
@@ -365,7 +402,7 @@ export function AiSection({ data }: { data: SettingsData }) {
           }}
           className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium"
         >
-          Advanced: models per stage, local models, images
+          Advanced: a model for each step, local models, images
           <ChevronDown
             aria-hidden
             className={cn('size-4 transition-transform', advanced && 'rotate-180')}
