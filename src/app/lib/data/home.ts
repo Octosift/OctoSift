@@ -21,18 +21,17 @@ export interface SetupItem {
   href: string;
 }
 
-/** Everything Home shows: what is left to set up, and how the search is going. */
-export function loadHome() {
+/** The setup steps and which are done; Home lists them and the sidebar counts them. */
+export function loadSetup(): SetupItem[] {
   const runtime = getRuntime();
-  const { db, secrets, settings, env } = runtime;
-  const now = nowSeconds();
+  const { db, secrets, env } = runtime;
   const product = listProducts(db).at(-1) ?? null;
   const subreddits = product ? watchedSubreddits(db, product.id) : [];
   const lastRun = recentRuns(db, 1)[0] ?? null;
   const aiReady = AI_STAGES.every((stage) => runtime.resolveModel(stage).ok);
   const accountConnected = sessionStatus(db, secrets).status === 'connected';
 
-  const setup: SetupItem[] = [
+  return [
     {
       id: 'ai',
       title: 'Connect an AI provider',
@@ -74,6 +73,23 @@ export function loadHome() {
       href: stepHref('scan'),
     },
   ];
+}
+
+/** Whether every required step is done. */
+export function setupComplete(items: readonly SetupItem[]): boolean {
+  return items.every((item) => item.done || item.optional);
+}
+
+/** Everything Home shows: what is left to set up, and how the search is going. */
+export function loadHome() {
+  const runtime = getRuntime();
+  const { db, secrets, settings } = runtime;
+  const now = nowSeconds();
+  const product = listProducts(db).at(-1) ?? null;
+  const subreddits = product ? watchedSubreddits(db, product.id) : [];
+  const lastRun = recentRuns(db, 1)[0] ?? null;
+  const accountConnected = sessionStatus(db, secrets).status === 'connected';
+  const setup = loadSetup();
 
   const repliedThisWeek =
     db
@@ -91,7 +107,7 @@ export function loadHome() {
     now,
     product: product ? { id: product.id, name: product.name } : null,
     setup,
-    setupDone: setup.every((item) => item.done || item.optional),
+    setupDone: setupComplete(setup),
     stats: {
       toDo: countByTab(db).todo,
       repliedThisWeek,

@@ -86,7 +86,7 @@ export function Wizard({
       </nav>
       {blockedBy ? (
         <Banner tone="warning">
-          {label(blockedBy.wanted)} needs {label(blockedBy.needed).toLowerCase()} first.
+          {label(blockedBy.wanted)} needs the {label(blockedBy.needed)} step first.
         </Banner>
       ) : null}
       {show('ai') && settings ? (

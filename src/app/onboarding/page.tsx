@@ -73,7 +73,7 @@ export default async function OnboardingPage({
           href="/"
           className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="size-3.5" aria-hidden /> Back to home
+          <ArrowLeft className="size-3.5" aria-hidden /> Finish later
         </Link>
       </header>
       <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-10 sm:px-6">

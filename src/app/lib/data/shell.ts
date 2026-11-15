@@ -6,6 +6,7 @@ import { loadHealth } from '@/core/guard/health';
 import { CONFIG } from '@/core/config';
 import { pendingScanRequest, scanInProgress } from '@/core/scan-lock';
 import { getRuntime, nowSeconds } from '../runtime';
+import { loadSetup, setupComplete } from './home';
 
 export interface ShellData {
   products: { id: string; name: string }[];
@@ -15,6 +16,8 @@ export interface ShellData {
   lastRun: { id: string; startedAt: number; status: string } | null;
   scan: 'idle' | 'requested' | 'running';
   demo: boolean;
+  /** Setup progress while a required step is left; null once setup is done. */
+  setup: { done: number; total: number; next: { title: string; href: string } } | null;
   now: number;
 }
 
@@ -24,6 +27,8 @@ export function loadShell(): ShellData {
   wakeSnoozedLeads(db, now);
   const last = recentRuns(db, 1)[0];
   const running = scanInProgress(db, clock.nowMs(), CONFIG.schedule.lockStaleAfterMs);
+  const setup = loadSetup();
+  const next = setup.find((item) => !item.done && !item.optional);
   return {
     products: listProducts(db).map((product) => ({ id: product.id, name: product.name })),
     toDo: countByTab(db).todo,
@@ -31,6 +36,14 @@ export function loadShell(): ShellData {
     lastRun: last ? { id: last.id, startedAt: last.startedAt, status: last.status } : null,
     scan: running ? 'running' : pendingScanRequest(db) ? 'requested' : 'idle',
     demo: env.DEMO_MODE,
+    setup:
+      setupComplete(setup) || !next
+        ? null
+        : {
+            done: setup.filter((item) => item.done).length,
+            total: setup.length,
+            next: { title: next.title, href: next.href },
+          },
     now,
   };
 }

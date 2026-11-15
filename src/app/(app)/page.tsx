@@ -20,7 +20,8 @@ function SetupCard({ items }: { items: SetupItem[] }) {
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Get started</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            About five minutes. Only the AI provider is required; skip anything and come back later.
+            About five minutes. Skip any step and come back to it later; this list stays here until
+            you finish.
           </p>
         </div>
         <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
