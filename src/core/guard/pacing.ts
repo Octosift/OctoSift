@@ -62,13 +62,16 @@ export function pacingWarnings(input: {
   const recent = input.replies.filter((reply) => within(reply, pacing.helpfulPerMentionWindowDays));
   const recentMentions = recent.filter((reply) => reply.mentionedProduct).length;
   const helpful = recent.length - recentMentions;
-  if (helpful < pacing.helpfulRepliesPerMention * (recentMentions + 1)) {
+  const needed = pacing.helpfulRepliesPerMention * (recentMentions + 1) - helpful;
+  if (needed > 0) {
+    const replies = needed === 1 ? 'reply' : 'replies';
     warnings.push({
       rule: 'helpful_ratio',
       message:
-        `In the last ${pacing.helpfulPerMentionWindowDays} days you posted ${helpful} helpful-only ` +
-        `replies and ${recentMentions} that mention the product. Aim for at least ` +
-        `${pacing.helpfulRepliesPerMention} helpful replies for each mention.`,
+        `Post ${needed} more helpful ${replies} without a mention before this one. ` +
+        `Reddit trusts accounts that help first: aim for ${pacing.helpfulRepliesPerMention} for each ` +
+        `mention (last ${pacing.helpfulPerMentionWindowDays} days: ${helpful} helpful, ` +
+        `${recentMentions} with a mention).`,
     });
   }
   return warnings;
