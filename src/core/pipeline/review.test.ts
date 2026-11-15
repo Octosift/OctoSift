@@ -64,6 +64,36 @@ describe('writeReviewedReply', () => {
     expect(generator.calls[2]?.prompt).toContain('- Cut the last sentence');
   });
 
+  it('reports each step, so the dashboard can show where a draft is', async () => {
+    const { ai } = fakeAiClient(
+      scripted([verdict('REVISE', ['Too salesy'], ['Cut the last sentence']), verdict('APPROVE')]),
+    );
+    const steps: unknown[] = [];
+    await writeReviewedReply(ai, request, (step) => steps.push(step));
+    expect(steps).toEqual([
+      { step: 'write' },
+      { step: 'review' },
+      { step: 'revise', detail: 'Cut the last sentence' },
+      { step: 'recheck' },
+    ]);
+  });
+
+  it('reports a rewrite when the automatic checks fail', async () => {
+    let drafts = 0;
+    const { ai } = fakeAiClient((call) => {
+      if (call.task === 'review') return verdict('APPROVE');
+      drafts += 1;
+      return draftReply(drafts === 1 ? `${GOOD} — with a dash.` : GOOD);
+    });
+    const steps: unknown[] = [];
+    await writeReviewedReply(ai, request, (step) => steps.push(step));
+    expect(steps).toEqual([
+      { step: 'write' },
+      { step: 'fix', detail: 'Replace every em dash and en dash.' },
+      { step: 'review' },
+    ]);
+  });
+
   it('stores no draft when the reviewer rejects it twice', async () => {
     const { ai } = fakeAiClient(
       scripted([verdict('REJECT', ['Reads like an ad']), verdict('REJECT', ['Still an ad'])]),

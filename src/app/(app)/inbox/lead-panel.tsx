@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Copy, ExternalLink, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Copy, ExternalLink, RotateCw, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useImperativeHandle, useRef, useState, useTransition, type RefObject } from 'react';
 import type { LeadDetail } from '@/core/db/queries/inbox';
@@ -8,9 +8,11 @@ import type { PacingWarning } from '@/core/guard/pacing';
 import { Button } from '../../components/ui/button';
 import { Badge, Banner, Disclosure, Kbd } from '../../components/ui/display';
 import { Select } from '../../components/ui/fields';
+import { cn } from '../../components/ui/utils';
 import {
   dismissLead,
   markReplied,
+  regenerateDraft,
   restoreLead,
   snoozeLead,
   type ActionResult,
@@ -18,6 +20,7 @@ import {
 import { formatAgo, formatClock, plural } from '../../lib/format';
 import { intentLabel, RISK_LABELS } from '../../lib/text';
 import { DraftEditor, type DraftEditorHandle } from './draft-editor';
+import { DraftSteps } from './draft-steps';
 import { DismissDialog, ReplyConfirmDialog } from './lead-dialogs';
 import { LeadFeedback } from './lead-feedback';
 import { PostCard, StatusNote } from './lead-parts';
@@ -57,6 +60,7 @@ export function LeadPanel({
   const [dismissOpen, setDismissOpen] = useState(false);
   const [snoozeDays, setSnoozeDays] = useState('1');
   const [pending, startTransition] = useTransition();
+  const [dmPending, startDm] = useTransition();
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const editorHandle = useRef<DraftEditorHandle | null>(null);
   const isBrand = lead.kind === 'brand_mention';
@@ -93,6 +97,17 @@ export function LeadPanel({
     }
     window.open(post.url, '_blank', 'noopener,noreferrer');
     if (open) setConfirmOpen(true);
+  }
+
+  function writeDm() {
+    startDm(async () => {
+      const result = await regenerateDraft({ leadId: lead.id, only: 'dm' });
+      setMessage(
+        result.ok
+          ? { tone: 'info', text: 'New private message written.' }
+          : { tone: 'danger', text: result.error },
+      );
+    });
   }
 
   function snooze() {
@@ -199,7 +214,12 @@ export function LeadPanel({
           </Disclosure>
         ) : null}
 
-        <PostCard text={post.bodyText} quote={lead.evidenceQuote} reason={lead.reason} />
+        <PostCard
+          text={post.bodyText}
+          quote={lead.evidenceQuote}
+          reason={lead.reason}
+          angle={isBrand ? '' : lead.suggestedAngle}
+        />
 
         {isBrand ? (
           <p className="rounded-xl border border-border bg-surface px-4 py-3 text-sm text-muted-foreground">
@@ -217,23 +237,54 @@ export function LeadPanel({
           />
         )}
 
-        {detail.dm ? (
+        {detail.dm || (lead.dmOk && !isBrand && open) ? (
           <Disclosure
             summary={<span className="font-medium">Private message draft</span>}
-            meta="Only if the author invited messages"
+            meta={detail.dm ? 'The author invited messages' : 'Not written yet'}
           >
-            <p className="text-sm leading-6 whitespace-pre-wrap">{detail.dm.text}</p>
-            <Button
-              size="sm"
-              className="mt-3"
-              onClick={() => {
-                void navigator.clipboard.writeText(detail.dm?.text ?? '').then(() => {
-                  setMessage({ tone: 'info', text: 'Private message copied.' });
-                });
-              }}
-            >
-              <Copy aria-hidden /> Copy private message
-            </Button>
+            {detail.dm ? (
+              <p
+                className={cn(
+                  'text-sm leading-6 whitespace-pre-wrap transition-opacity',
+                  dmPending && 'opacity-50',
+                )}
+              >
+                {detail.dm.text}
+              </p>
+            ) : (
+              <p className="text-[13px] text-muted-foreground">
+                The author asked people to message them. Write one if you would rather reach out
+                directly than reply in public.
+              </p>
+            )}
+            {dmPending ? (
+              <div className="mt-3">
+                <DraftSteps leadId={lead.id} />
+              </div>
+            ) : null}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {detail.dm ? (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(detail.dm?.text ?? '').then(() => {
+                      setMessage({ tone: 'info', text: 'Private message copied.' });
+                    });
+                  }}
+                >
+                  <Copy aria-hidden /> Copy private message
+                </Button>
+              ) : null}
+              <Button
+                size="sm"
+                variant={detail.dm ? 'ghost' : 'outline'}
+                onClick={writeDm}
+                disabled={dmPending}
+              >
+                <RotateCw className={dmPending ? 'animate-spin' : undefined} aria-hidden />
+                {detail.dm ? 'Rewrite' : 'Write a private message'}
+              </Button>
+            </div>
           </Disclosure>
         ) : null}
 

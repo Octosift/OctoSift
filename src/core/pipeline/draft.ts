@@ -109,7 +109,22 @@ function hostOf(url: string): string {
   }
 }
 
-export async function writeDraft(ai: AiClient, request: DraftRequest): Promise<DraftAttempt> {
+/**
+ * What a draft request is doing, so the dashboard can show each step while
+ * the user waits. `fix` and `revise` carry the first problem being fixed.
+ */
+export type DraftStep =
+  | { step: 'write' }
+  | { step: 'fix'; detail: string }
+  | { step: 'review' }
+  | { step: 'revise'; detail: string }
+  | { step: 'recheck' };
+
+export async function writeDraft(
+  ai: AiClient,
+  request: DraftRequest,
+  onStep?: (step: DraftStep) => void,
+): Promise<DraftAttempt> {
   const words = wordBounds(request.kind);
   const variationHint = pickVariationHint(request.random);
   const checkContext: DraftCheckContext = {
@@ -123,6 +138,7 @@ export async function writeDraft(ai: AiClient, request: DraftRequest): Promise<D
   let fixes = request.fixes;
   let last: DraftAttempt | null = null;
   for (let attempt = 0; attempt <= CONFIG.draft.maxRegenerations; attempt += 1) {
+    if (attempt > 0) onStep?.({ step: 'fix', detail: fixes[0] ?? '' });
     const { system, prompt } = buildDraftPrompt({
       kind: request.kind,
       profile: request.profile,

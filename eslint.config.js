@@ -20,6 +20,8 @@ const networkModules = [
   'src/core/notify/webhook.ts',
   'src/core/serp/dataforseo.ts',
   'src/core/reddit/session-client.ts',
+  // Same-origin only: the inbox polls this app's own server for draft progress.
+  'src/app/lib/draft-progress-client.ts',
 ];
 
 export default tseslint.config(

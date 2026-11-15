@@ -6,8 +6,10 @@ import type { LeadDetail } from '@/core/db/queries/inbox';
 import { Button } from '../../components/ui/button';
 import { Badge, Kbd } from '../../components/ui/display';
 import { Input, Select } from '../../components/ui/fields';
+import { cn } from '../../components/ui/utils';
 import { regenerateDraft, saveDraftText } from '../../lib/actions/leads';
 import { MODE_LABELS, wordCount } from '../../lib/text';
+import { DraftSteps } from './draft-steps';
 
 type Mode = keyof typeof MODE_LABELS;
 
@@ -48,11 +50,13 @@ export function DraftEditor({
 
   function regenerate() {
     startTransition(async () => {
-      onMessage({ tone: 'info', text: 'Writing a new draft…' });
+      onMessage(null);
+      // A new reply leaves the private message alone; it has its own rewrite button.
       const result = await regenerateDraft({
         leadId: detail.lead.id,
         mode,
         ...(instruction.trim() ? { instruction } : {}),
+        ...(draft ? { only: 'reply' as const } : {}),
       });
       onMessage(result.ok ? null : { tone: 'danger', text: result.error });
       if (result.ok) setInstruction('');
@@ -71,10 +75,8 @@ export function DraftEditor({
 
   useImperativeHandle(handleRef, () => ({ text, regenerate }));
   const review = draft?.reviewDecision ? REVIEW_BADGES[draft.reviewDecision] : null;
-  const problems = [
-    ...(draft?.checkFailuresJson ?? []),
-    ...(draft?.reviewDecision === 'REVISE' ? draft.reviewReasonsJson : []),
-  ];
+  const checks = draft?.checkFailuresJson ?? [];
+  const reviewerNotes = draft?.reviewDecision === 'REVISE' ? draft.reviewReasonsJson : [];
 
   return (
     <section
@@ -108,27 +110,44 @@ export function DraftEditor({
               onTextChange(event.target.value);
             }}
             rows={8}
-            className="block w-full resize-y bg-transparent px-4 py-3 text-sm leading-6 focus:outline-none focus-visible:outline-none"
+            readOnly={pending}
+            className={cn(
+              'block w-full resize-y bg-transparent px-4 py-3 text-sm leading-6 transition-opacity focus:outline-none focus-visible:outline-none',
+              pending && 'opacity-50',
+            )}
           />
-          {problems.length > 0 || draft.notesForUser ? (
+          {pending ? (
+            <div className="px-4 pb-3">
+              <DraftSteps leadId={detail.lead.id} />
+            </div>
+          ) : checks.length > 0 || reviewerNotes.length > 0 || draft.notesForUser ? (
             <div className="flex flex-col gap-2 px-4 pb-3">
-              {problems.length > 0 ? (
-                <ul className="list-disc rounded-lg border border-warning-border bg-warning px-3 py-2 pl-7 text-xs text-warning-foreground">
-                  {problems.map((problem) => (
-                    <li key={problem}>{problem}</li>
-                  ))}
-                </ul>
+              {reviewerNotes.length > 0 ? (
+                <Notes
+                  title="The reviewer would change this before posting"
+                  items={reviewerNotes}
+                />
+              ) : null}
+              {checks.length > 0 ? (
+                <Notes title="The automatic checks still found" items={checks} />
               ) : null}
               {draft.notesForUser ? (
-                <p className="text-xs text-muted-foreground">Note: {draft.notesForUser}</p>
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Before you post: </span>
+                  {draft.notesForUser}
+                </p>
               ) : null}
             </div>
           ) : null}
         </>
+      ) : pending ? (
+        <div className="px-4 py-3">
+          <DraftSteps leadId={detail.lead.id} />
+        </div>
       ) : (
         <p className="px-4 py-6 text-sm text-muted-foreground">
           {detail.lead.draftError ??
-            'No draft yet. Leads below the draft threshold are drafted on request.'}
+            'No draft yet. Only the strongest leads get one during a scan; write one here when you want it.'}
         </p>
       )}
 
@@ -180,5 +199,18 @@ export function DraftEditor({
         </p>
       ) : null}
     </section>
+  );
+}
+
+function Notes({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="rounded-lg border border-warning-border bg-warning px-3 py-2 text-xs text-warning-foreground">
+      <p className="font-medium">{title}</p>
+      <ul className="mt-1 list-disc pl-4">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
   );
 }

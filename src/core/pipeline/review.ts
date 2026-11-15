@@ -12,7 +12,7 @@ import { buildReviewPrompt } from '../ai/prompts/review';
 import { normalizeReview, reviewWire, type DraftOutput, type ReviewOutput } from '../ai/schemas';
 import type { AiFailureKind } from '../ai/types';
 import type { ReviewDecision } from '../db/schema';
-import { writeDraft, type DraftRequest } from './draft';
+import { writeDraft, type DraftRequest, type DraftStep } from './draft';
 
 export interface ReviewRequest {
   profile: DraftRequest['profile'];
@@ -69,11 +69,17 @@ type CallResult = { ok: true } | { ok: false; kind: AiFailureKind; message: stri
 export async function writeReviewedReply(
   ai: AiClient,
   request: DraftRequest & { rulesSummary: string | null },
+  onStep?: (step: DraftStep) => void,
 ): Promise<ReviewedReply> {
   const budget: { stop: string | null } = { stop: null };
-  const outcome = await reviewedReply(ai, request, (result) => {
-    if (!result.ok && result.kind === 'budget') budget.stop ??= result.message;
-  });
+  const outcome = await reviewedReply(
+    ai,
+    request,
+    (result) => {
+      if (!result.ok && result.kind === 'budget') budget.stop ??= result.message;
+    },
+    onStep ?? (() => undefined),
+  );
   return { ...outcome, budgetStop: budget.stop };
 }
 
@@ -81,13 +87,18 @@ async function reviewedReply(
   ai: AiClient,
   request: DraftRequest & { rulesSummary: string | null },
   watch: (result: CallResult) => void,
+  onStep: (step: DraftStep) => void,
 ): Promise<ReplyOutcome> {
   const draft = async (fixes?: string[]) => {
-    const result = await writeDraft(ai, fixes ? { ...request, fixes } : request);
+    onStep(fixes ? { step: 'revise', detail: fixes[0] ?? '' } : { step: 'write' });
+    const result = await writeDraft(ai, fixes ? { ...request, fixes } : request, onStep);
     watch(result);
     return result;
   };
+  let reviews = 0;
   const review = async (output: DraftOutput) => {
+    onStep({ step: reviews === 0 ? 'review' : 'recheck' });
+    reviews += 1;
     const result = await reviewDraft(ai, {
       profile: request.profile,
       subreddit: request.subreddit,

@@ -12,6 +12,7 @@ import { getSubreddit, rulesSummaryOf } from '@/core/db/queries/subreddits';
 import { insertFeedback } from '@/core/db/queries/feedback';
 import { draftForLead } from '@/core/pipeline/lead-drafts';
 import { createDbStore } from '@/core/pipeline/store';
+import { startDraftProgress } from '../draft-progress';
 import { getRuntime, nowSeconds } from '../runtime';
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -135,9 +136,14 @@ const regenerateInput = z.object({
   leadId,
   mode: z.enum(MODES).optional(),
   instruction: z.string().trim().max(300).optional(),
+  /** Rewrite only this draft; without it, the reply and (when allowed) a private message. */
+  only: z.enum(['reply', 'dm']).optional(),
 });
 
-/** Writes a new draft (and private message when allowed) on demand. */
+/**
+ * Writes a new draft on demand. Each step is published for the editor's
+ * progress list, because a reviewed draft takes two to six model calls.
+ */
 export async function regenerateDraft(
   input: z.input<typeof regenerateInput>,
 ): Promise<ActionResult> {
@@ -150,8 +156,13 @@ export async function regenerateDraft(
   const product = lead ? getProduct(db, lead.productId) : null;
   if (!lead || !post || !product?.profile)
     return { ok: false, error: 'This lead no longer exists.' };
+  const only = parsed.data.only;
+  if (only === 'dm' && !lead.dmOk) {
+    return { ok: false, error: 'The author did not invite private messages.' };
+  }
   const fit = z.enum(FITS).catch('soft').parse(lead.fit);
   const intent = z.enum(INTENTS).catch('other').parse(lead.intent);
+  const progress = startDraftProgress(lead.id);
   const result = await draftForLead(
     {
       ai: runtime.ai(),
@@ -159,6 +170,7 @@ export async function regenerateDraft(
       random: runtime.random,
       log: runtime.log,
       now: nowSeconds(),
+      onStep: progress.push,
     },
     {
       leadId: lead.id,
@@ -176,10 +188,16 @@ export async function regenerateDraft(
       replyPreferences: runtime.settings.getForProduct(product.id, 'replyPreferences'),
       ...(parsed.data.mode ? { modeOverride: parsed.data.mode } : {}),
       ...(parsed.data.instruction ? { instruction: parsed.data.instruction } : {}),
+      ...(only ? { kinds: [only] } : {}),
       updateStatus: lead.status === 'new',
     },
-  );
+  ).finally(progress.finish);
   revalidatePath('/inbox');
+  if (only === 'dm') {
+    return result.dm === 'drafted'
+      ? { ok: true }
+      : { ok: false, error: 'Could not write a private message that passes review.' };
+  }
   return result.reply === 'drafted'
     ? { ok: true }
     : { ok: false, error: result.message ?? 'No draft was written.' };

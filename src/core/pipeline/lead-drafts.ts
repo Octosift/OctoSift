@@ -10,7 +10,7 @@ import type { DraftKind, ReplyMode } from '../db/schema';
 import { newId } from '../ids';
 import type { Logger } from '../log';
 import type { ProductProfile } from '../profile/types';
-import { chooseMode } from './draft';
+import { chooseMode, type DraftStep } from './draft';
 import { writeReviewedReply } from './review';
 import type { ScanStore } from './store';
 
@@ -20,6 +20,8 @@ export interface DraftDeps {
   random: Random;
   log: Logger;
   now: number;
+  /** Called as each draft is written, fixed and reviewed. */
+  onStep?: (kind: DraftKind, step: DraftStep) => void;
 }
 
 export interface LeadDraftInput {
@@ -90,18 +92,22 @@ export async function draftForLead(
   };
 
   for (const kind of kinds) {
-    const outcome = await writeReviewedReply(deps.ai, {
-      kind,
-      profile: input.profile,
-      subreddit: input.post.subreddit,
-      mode: kind === 'dm' && mode === 'helpful_only' ? 'soft_mention' : mode,
-      linksAllowed,
-      post: { id: input.post.id, title: input.post.title, body: input.post.bodyText },
-      suggestedAngle: input.qualify.suggestedAngle,
-      fixes: input.instruction ? [input.instruction] : [],
-      random: deps.random,
-      rulesSummary: formatRules(input.rules),
-    });
+    const outcome = await writeReviewedReply(
+      deps.ai,
+      {
+        kind,
+        profile: input.profile,
+        subreddit: input.post.subreddit,
+        mode: kind === 'dm' && mode === 'helpful_only' ? 'soft_mention' : mode,
+        linksAllowed,
+        post: { id: input.post.id, title: input.post.title, body: input.post.bodyText },
+        suggestedAngle: input.qualify.suggestedAngle,
+        fixes: input.instruction ? [input.instruction] : [],
+        random: deps.random,
+        rulesSummary: formatRules(input.rules),
+      },
+      (step) => deps.onStep?.(kind, step),
+    );
     if (outcome.status === 'drafted') {
       deps.store.insertDraft({
         id: newId(),

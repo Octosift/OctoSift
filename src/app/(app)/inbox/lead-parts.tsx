@@ -38,10 +38,25 @@ export function PostBody({
   );
 }
 
-/** The post, folded to a few lines so the reply stays in view; the reason sits on top. */
-export function PostCard({ text, quote, reason }: { text: string; quote: string; reason: string }) {
+/**
+ * The post, folded to a few lines so the reply stays in view. The reason and
+ * the suggested approach sit on top; when the key sentence is folded away,
+ * it is shown on its own.
+ */
+export function PostCard({
+  text,
+  quote,
+  reason,
+  angle,
+}: {
+  text: string;
+  quote: string;
+  reason: string;
+  angle: string;
+}) {
   const [expanded, setExpanded] = useState(false);
   const long = text.length > 320 || text.split('\n').length > 4;
+  const quoteHidden = long && !expanded && quote.trim() !== '' && text.indexOf(quote) > 240;
   return (
     <section
       aria-labelledby="post-heading"
@@ -73,7 +88,18 @@ export function PostCard({ text, quote, reason }: { text: string; quote: string;
           <span className="font-medium text-foreground">Why it is a lead: </span>
           {reason}
         </p>
+        {angle ? (
+          <p className="text-[13px] text-muted-foreground">
+            <span className="font-medium text-foreground">How to help: </span>
+            {angle}
+          </p>
+        ) : null}
         <PostBody text={text} quote={quote} className={cn(long && !expanded && 'line-clamp-4')} />
+        {quoteHidden ? (
+          <p className="border-l-2 border-brand pl-3 text-[13px] italic">
+            <span className="sr-only">Key sentence: </span>“{quote}”
+          </p>
+        ) : null}
       </div>
     </section>
   );
