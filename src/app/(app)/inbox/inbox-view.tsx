@@ -194,6 +194,7 @@ export function InboxView({ data }: { data: InboxData }) {
             key={`${data.detail.lead.id}:${data.detail.reply?.id ?? 'none'}`}
             detail={data.detail}
             pacing={data.pacing}
+            replyLength={data.replyLength}
             now={data.now}
             register={handlers}
             onMoved={afterMove}

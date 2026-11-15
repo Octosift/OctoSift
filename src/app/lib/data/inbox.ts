@@ -45,7 +45,7 @@ export function parseInboxParams(raw: Record<string, string | string[] | undefin
 
 /** The lead tabs; the Evergreen tab has its own loader. */
 export function loadInbox(params: InboxParams & { tab: InboxTab }) {
-  const { db } = getRuntime();
+  const { db, settings } = getRuntime();
   const now = nowSeconds();
   const filters: InboxFilters = {
     tab: params.tab,
@@ -84,6 +84,10 @@ export function loadInbox(params: InboxParams & { tab: InboxTab }) {
     products: listProducts(db).map((product) => ({ id: product.id, name: product.name })),
     subreddits: inboxSubreddits(db, params.product),
     detail,
+    /** The product's reply length, for drafts that do not record one. */
+    replyLength: detail
+      ? settings.getForProduct(detail.lead.productId, 'replyPreferences').length
+      : 'medium',
     pacing: pacing.length > 0 ? { warnings: pacing, reason: PACING_REASON } : null,
   };
 }

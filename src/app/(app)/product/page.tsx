@@ -94,6 +94,7 @@ export default async function ProductPage({
                   mode={product.mode}
                   includeLinks={replyPreferences.includeLinks}
                   dmDrafts={replyPreferences.dmDrafts}
+                  length={replyPreferences.length}
                   audience={product.profile.audience}
                 />
               ) : (

@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { webUrl } from '@/core/urls';
 import { profileWire } from '@/core/ai/schemas';
+import { REPLY_LENGTHS } from '@/core/db/schema';
 import { updateFeedbackNote } from '@/core/db/queries/feedback';
 import { deleteProduct, getProduct, listProducts, updateProduct } from '@/core/db/queries/products';
 import { buildShortProfile } from '@/core/profile/extract';
@@ -64,6 +65,7 @@ const replyInput = z.object({
   mode: z.enum(['helpful_only', 'soft_mention', 'direct']),
   includeLinks: z.boolean(),
   dmDrafts: z.boolean().nullable(),
+  length: z.enum(REPLY_LENGTHS),
 });
 
 export async function saveReplySettings(input: z.input<typeof replyInput>): Promise<ProductResult> {
@@ -74,6 +76,7 @@ export async function saveReplySettings(input: z.input<typeof replyInput>): Prom
   settings.setForProduct(parsed.data.productId, 'replyPreferences', {
     includeLinks: parsed.data.includeLinks,
     dmDrafts: parsed.data.dmDrafts,
+    length: parsed.data.length,
   });
   revalidatePath('/product');
   return Promise.resolve({ ok: true });

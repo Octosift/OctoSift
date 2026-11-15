@@ -3,12 +3,13 @@
 import { RotateCw } from 'lucide-react';
 import { useImperativeHandle, useState, useTransition, type RefObject } from 'react';
 import type { LeadDetail } from '@/core/db/queries/inbox';
+import type { ReplyLength } from '@/core/db/schema';
 import { Button } from '../../components/ui/button';
 import { Badge, Kbd } from '../../components/ui/display';
 import { Input, Select } from '../../components/ui/fields';
 import { cn } from '../../components/ui/utils';
 import { regenerateDraft, saveDraftText } from '../../lib/actions/leads';
-import { MODE_LABELS, wordCount } from '../../lib/text';
+import { LENGTH_LABELS, MODE_LABELS, wordCount } from '../../lib/text';
 import { DraftSteps } from './draft-steps';
 
 type Mode = keyof typeof MODE_LABELS;
@@ -31,6 +32,7 @@ export function DraftEditor({
   onTextChange,
   editorRef,
   handleRef,
+  defaultLength,
   onMessage,
 }: {
   detail: LeadDetail;
@@ -38,12 +40,15 @@ export function DraftEditor({
   onTextChange: (text: string) => void;
   editorRef: RefObject<HTMLTextAreaElement | null>;
   handleRef: RefObject<DraftEditorHandle | null>;
+  /** The product's reply length, used when the draft does not record one. */
+  defaultLength: ReplyLength;
   onMessage: (message: { tone: 'info' | 'danger'; text: string } | null) => void;
 }) {
   const draft = detail.reply;
   const [mode, setMode] = useState<Mode>(
     draft?.mode ?? (detail.lead.mentionOk ? 'soft_mention' : 'helpful_only'),
   );
+  const [length, setLength] = useState<ReplyLength>(draft?.length ?? defaultLength);
   const [instruction, setInstruction] = useState('');
   const [pending, startTransition] = useTransition();
   const dirty = draft !== null && text !== draft.text;
@@ -55,6 +60,7 @@ export function DraftEditor({
       const result = await regenerateDraft({
         leadId: detail.lead.id,
         mode,
+        length,
         ...(instruction.trim() ? { instruction } : {}),
         ...(draft ? { only: 'reply' as const } : {}),
       });
@@ -171,11 +177,27 @@ export function DraftEditor({
             </option>
           ))}
         </Select>
+        <Select
+          id="draft-length"
+          aria-label="Reply length"
+          title={LENGTH_LABELS[length].hint}
+          className="h-8 w-auto text-[13px]"
+          value={length}
+          onChange={(event) => {
+            setLength(event.target.value as ReplyLength);
+          }}
+        >
+          {Object.entries(LENGTH_LABELS).map(([value, { label }]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </Select>
         <Input
           id="draft-instruction"
           aria-label="Instruction for the next draft"
           className="h-8 min-w-40 flex-1 text-[13px]"
-          placeholder="Instruction for a new draft, e.g. shorter"
+          placeholder="Anything to change, e.g. mention the free plan"
           value={instruction}
           onChange={(event) => {
             setInstruction(event.target.value);

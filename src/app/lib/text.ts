@@ -36,6 +36,13 @@ export const MODE_LABELS = {
   direct: 'Direct',
 } as const;
 
+/** Reply lengths, as the editor and the Replies settings name them. */
+export const LENGTH_LABELS = {
+  short: { label: 'Short', hint: '2 to 4 sentences' },
+  medium: { label: 'Medium', hint: 'about a paragraph' },
+  detailed: { label: 'Detailed', hint: '1 to 2 paragraphs' },
+} as const;
+
 export type ScoreTone = 'strong' | 'brand' | 'neutral';
 
 export function scoreTone(score: number): ScoreTone {

@@ -44,6 +44,16 @@ describe('settings store', () => {
     expect(settings.get('budget.perRunUsd')).toBe(CONFIG.budget.perRunUsd);
   });
 
+  it('reads reply preferences saved before reply lengths existed as medium', () => {
+    const { db, settings } = setup();
+    writeSetting(db, 'replyPreferences', { includeLinks: false, dmDrafts: true });
+    expect(settings.get('replyPreferences')).toEqual({
+      includeLinks: false,
+      dmDrafts: true,
+      length: 'medium',
+    });
+  });
+
   it('lets a product override a global value and falls back to the global one', () => {
     const { settings } = setup();
     settings.set('thresholds', { show: 55, draft: 70, notify: 90 });

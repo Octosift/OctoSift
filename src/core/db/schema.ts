@@ -17,6 +17,8 @@ import {
 } from 'drizzle-orm/sqlite-core';
 
 export type ReplyMode = 'helpful_only' | 'soft_mention' | 'direct';
+export const REPLY_LENGTHS = ['short', 'medium', 'detailed'] as const;
+export type ReplyLength = (typeof REPLY_LENGTHS)[number];
 export type LeadStatus = 'new' | 'drafted' | 'replied' | 'snoozed' | 'dismissed';
 export type LeadKind = 'opportunity' | 'brand_mention';
 export type EvaluationStage = 'prefilter' | 'triage' | 'qualify' | 'veto';
@@ -176,6 +178,8 @@ export const drafts = sqliteTable(
     kind: text('kind').$type<DraftKind>().notNull(),
     text: text('text').notNull(),
     mode: text('mode').$type<ReplyMode>().notNull(),
+    /** The length asked for; null for drafts written before lengths existed. */
+    length: text('length').$type<ReplyLength>(),
     mentionsProduct: integer('mentions_product', { mode: 'boolean' }).notNull(),
     includesLink: integer('includes_link', { mode: 'boolean' }).notNull(),
     notesForUser: text('notes_for_user').notNull().default(''),

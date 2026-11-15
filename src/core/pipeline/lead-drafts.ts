@@ -6,7 +6,7 @@
 import type { AiClient } from '../ai/client';
 import type { Fit, Intent, RulesSummary } from '../ai/schemas';
 import type { Random } from '../clock';
-import type { DraftKind, ReplyMode } from '../db/schema';
+import type { DraftKind, ReplyLength, ReplyMode } from '../db/schema';
 import { newId } from '../ids';
 import type { Logger } from '../log';
 import type { ProductProfile } from '../profile/types';
@@ -32,9 +32,11 @@ export interface LeadDraftInput {
   post: { id: string; subreddit: string; title: string; bodyText: string };
   qualify: { fit: Fit; intent: Intent; mentionOk: boolean; dmOk: boolean; suggestedAngle: string };
   rules: RulesSummary | null;
-  replyPreferences: { includeLinks: boolean; dmDrafts: boolean | null };
+  replyPreferences: { includeLinks: boolean; dmDrafts: boolean | null; length: ReplyLength };
   /** Set when the user picks a mode in the draft editor. */
   modeOverride?: ReplyMode;
+  /** Set when the user picks a length in the draft editor. */
+  lengthOverride?: ReplyLength;
   /** Extra guidance typed by the user when regenerating. */
   instruction?: string;
   kinds?: DraftKind[];
@@ -91,6 +93,7 @@ export async function draftForLead(
     budgetStop: null,
   };
 
+  const length = input.lengthOverride ?? input.replyPreferences.length;
   for (const kind of kinds) {
     const outcome = await writeReviewedReply(
       deps.ai,
@@ -99,6 +102,7 @@ export async function draftForLead(
         profile: input.profile,
         subreddit: input.post.subreddit,
         mode: kind === 'dm' && mode === 'helpful_only' ? 'soft_mention' : mode,
+        length,
         linksAllowed,
         post: { id: input.post.id, title: input.post.title, body: input.post.bodyText },
         suggestedAngle: input.qualify.suggestedAngle,
@@ -115,6 +119,7 @@ export async function draftForLead(
         kind,
         text: outcome.draft.reply,
         mode,
+        length: kind === 'reply' ? length : null,
         mentionsProduct: outcome.draft.mentionsProduct,
         includesLink: outcome.draft.includesLink,
         notesForUser: outcome.draft.notesForUser,

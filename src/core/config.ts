@@ -138,7 +138,12 @@ export const CONFIG = deepFreeze({
   },
 
   draft: {
-    replyWords: { min: 40, max: 180 },
+    /** Reply lengths the founder can choose; the shape is what the prompt asks for. */
+    replyLengths: {
+      short: { words: { min: 25, max: 70 }, shape: 'Two to four sentences, in one paragraph.' },
+      medium: { words: { min: 40, max: 120 }, shape: 'One paragraph, or two short ones.' },
+      detailed: { words: { min: 90, max: 180 }, shape: 'One or two full paragraphs.' },
+    },
     dmWords: { min: 25, max: 90 },
     maxRegenerations: 1,
     disclosurePhrases: [
@@ -172,7 +177,6 @@ export const CONFIG = deepFreeze({
       'Open with a short question back to the author, then answer it.',
       'Mention the product in the middle of the reply, not at the end.',
       'Start by naming the specific detail in the post that matters most.',
-      'Keep it to two short paragraphs.',
       'Give one concrete step the author can take today before anything else.',
       'Briefly acknowledge the trade-off the author is facing, then answer.',
     ],

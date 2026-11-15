@@ -34,7 +34,7 @@ const context: DraftCheckContext = {
   linksAllowed: false,
   productName: 'Acme Invoices',
   productHost: 'acme-invoices.example',
-  words: CONFIG.draft.replyWords,
+  words: CONFIG.draft.replyLengths.medium.words,
 };
 
 describe('chooseMode', () => {
@@ -175,6 +175,14 @@ describe('writeDraft', () => {
     const result = await writeDraft(ai, { ...request, kind: 'dm' });
     expect(result).toMatchObject({ ok: true, failures: [] });
     expect(generator.calls[0]?.system).toContain('25 to 90 words');
+  });
+
+  it('asks for the chosen reply length in sentences and words', async () => {
+    const { ai, generator } = fakeAiClient(() => reply(MENTION));
+    await writeDraft(ai, { ...request, length: 'short' });
+    expect(generator.calls[0]?.system).toContain(
+      'Length: Two to four sentences, in one paragraph. 25 to 70 words.',
+    );
   });
 
   it('reports a failed call', async () => {

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { isRedditShareLink, normalizeRedditUrl } from '@/core/urls';
 import { scheduleReplyChecks } from '@/core/guard/visibility';
 import { FITS, INTENTS } from '@/core/ai/schemas';
+import { REPLY_LENGTHS } from '@/core/db/schema';
 import { getLead, updateDraftText, updateLead } from '@/core/db/queries/leads';
 import { getPost } from '@/core/db/queries/posts';
 import { getProduct } from '@/core/db/queries/products';
@@ -136,6 +137,7 @@ const regenerateInput = z.object({
   leadId,
   mode: z.enum(MODES).optional(),
   instruction: z.string().trim().max(300).optional(),
+  length: z.enum(REPLY_LENGTHS).optional(),
   /** Rewrite only this draft; without it, the reply and (when allowed) a private message. */
   only: z.enum(['reply', 'dm']).optional(),
 });
@@ -187,6 +189,7 @@ export async function regenerateDraft(
       rules: rulesSummaryOf(getSubreddit(db, post.subreddit)),
       replyPreferences: runtime.settings.getForProduct(product.id, 'replyPreferences'),
       ...(parsed.data.mode ? { modeOverride: parsed.data.mode } : {}),
+      ...(parsed.data.length ? { lengthOverride: parsed.data.length } : {}),
       ...(parsed.data.instruction ? { instruction: parsed.data.instruction } : {}),
       ...(only ? { kinds: [only] } : {}),
       updateStatus: lead.status === 'new',

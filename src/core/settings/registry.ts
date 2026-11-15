@@ -7,6 +7,7 @@
  */
 import { z } from 'zod';
 import { CONFIG } from '../config';
+import { REPLY_LENGTHS } from '../db/schema';
 import { normalizeWebUrl } from '../urls';
 
 export const PROVIDER_IDS = ['openai', 'anthropic', 'openai_compatible', 'codex_cli'] as const;
@@ -93,8 +94,10 @@ export const SETTINGS = {
       includeLinks: z.boolean(),
       /** Null means automatic: off for consumer products, on otherwise. */
       dmDrafts: z.boolean().nullable(),
+      /** Saved before lengths existed means medium. */
+      length: z.enum(REPLY_LENGTHS).default('medium'),
     }),
-    { includeLinks: true, dmDrafts: null },
+    { includeLinks: true, dmDrafts: null, length: 'medium' },
   ),
   /** The preferred way of reading Reddit; others are tried after it when failover is on. */
   'reddit.source': setting(z.enum(['session', 'rss']), 'session'),

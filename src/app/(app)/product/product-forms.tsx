@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import type { ReplyLength } from '@/core/db/schema';
 import type { ProductProfile } from '@/core/profile/types';
 import { ProfileFields, type EditableProfile } from '../../components/profile-fields';
 import { Banner, Card, CardHeader } from '../../components/ui/display';
 import { Checkbox, Field, Input, Select, Textarea } from '../../components/ui/fields';
 import { saveProfile, saveReplySettings, type ProductResult } from '../../lib/actions/product';
+import { LENGTH_LABELS } from '../../lib/text';
 import { SaveBar } from '../settings/save-bar';
 
 export function useSave() {
@@ -142,18 +144,21 @@ export function RepliesForm({
   mode,
   includeLinks,
   dmDrafts,
+  length,
   audience,
 }: {
   productId: string;
   mode: 'helpful_only' | 'soft_mention' | 'direct';
   includeLinks: boolean;
   dmDrafts: boolean | null;
+  length: ReplyLength;
   audience: string;
 }) {
   const [state, setState] = useState({
     mode,
     includeLinks,
     dm: dmDrafts === null ? 'auto' : dmDrafts ? 'on' : 'off',
+    length,
   });
   const form = useSave();
   return (
@@ -176,6 +181,26 @@ export function RepliesForm({
             <option value="direct">Direct recommendation when asked</option>
             <option value="soft_mention">At most a short mention</option>
             <option value="helpful_only">Never mention the product</option>
+          </Select>
+        </Field>
+        <Field
+          label="Reply length"
+          htmlFor="reply-length"
+          hint="Shorter replies read more naturally on Reddit. You can change it for any single draft."
+        >
+          <Select
+            id="reply-length"
+            value={state.length}
+            onChange={(event) => {
+              setState({ ...state, length: event.target.value as ReplyLength });
+              form.touch();
+            }}
+          >
+            {Object.entries(LENGTH_LABELS).map(([value, { label, hint }]) => (
+              <option key={value} value={value}>
+                {label}: {hint}
+              </option>
+            ))}
           </Select>
         </Field>
         <Field
@@ -218,6 +243,7 @@ export function RepliesForm({
               mode: state.mode,
               includeLinks: state.includeLinks,
               dmDrafts: state.dm === 'auto' ? null : state.dm === 'on',
+              length: state.length,
             }),
           );
         }}

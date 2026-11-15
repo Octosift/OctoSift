@@ -14,7 +14,7 @@ import { draftWire, normalizeDraft, type DraftOutput, type Fit, type Intent } fr
 import type { AiFailureKind } from '../ai/types';
 import type { Random } from '../clock';
 import { CONFIG } from '../config';
-import type { DraftKind, ReplyMode } from '../db/schema';
+import type { DraftKind, ReplyLength, ReplyMode } from '../db/schema';
 import type { ProductProfile } from '../profile/types';
 import { containsTerm } from './prefilter';
 
@@ -36,8 +36,16 @@ export function pickVariationHint(random: Random): string {
   return hints[Math.floor(random() * hints.length)] ?? hints[0] ?? '';
 }
 
-export function wordBounds(kind: DraftKind): { min: number; max: number } {
-  return kind === 'reply' ? CONFIG.draft.replyWords : CONFIG.draft.dmWords;
+export function wordBounds(
+  kind: DraftKind,
+  length: ReplyLength = 'medium',
+): { min: number; max: number } {
+  return kind === 'reply' ? CONFIG.draft.replyLengths[length].words : CONFIG.draft.dmWords;
+}
+
+/** How the prompt describes the length, beside the word range. */
+export function lengthShape(kind: DraftKind, length: ReplyLength = 'medium'): string {
+  return kind === 'reply' ? CONFIG.draft.replyLengths[length].shape : 'A few sentences.';
 }
 
 export function countWords(text: string): number {
@@ -94,6 +102,8 @@ export interface DraftRequest {
   /** Fixes requested by a reviewer, applied to the first attempt. */
   fixes: string[];
   random: Random;
+  /** Replies only; medium when not set. */
+  length?: ReplyLength;
 }
 
 export type DraftAttempt =
@@ -125,7 +135,8 @@ export async function writeDraft(
   request: DraftRequest,
   onStep?: (step: DraftStep) => void,
 ): Promise<DraftAttempt> {
-  const words = wordBounds(request.kind);
+  const words = wordBounds(request.kind, request.length);
+  const shape = lengthShape(request.kind, request.length);
   const variationHint = pickVariationHint(request.random);
   const checkContext: DraftCheckContext = {
     mode: request.mode,
@@ -146,6 +157,7 @@ export async function writeDraft(
       mode: request.mode,
       linksAllowed: request.linksAllowed,
       words,
+      shape,
       variationHint,
       post: { title: request.post.title, body: request.post.body },
       suggestedAngle: request.suggestedAngle,

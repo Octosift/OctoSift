@@ -4,6 +4,7 @@ import { ArrowLeft, Copy, ExternalLink, RotateCw, TriangleAlert } from 'lucide-r
 import Link from 'next/link';
 import { useImperativeHandle, useRef, useState, useTransition, type RefObject } from 'react';
 import type { LeadDetail } from '@/core/db/queries/inbox';
+import type { ReplyLength } from '@/core/db/schema';
 import type { PacingWarning } from '@/core/guard/pacing';
 import { Button } from '../../components/ui/button';
 import { Badge, Banner, Disclosure, Kbd } from '../../components/ui/display';
@@ -41,6 +42,7 @@ type Message = { tone: 'info' | 'danger'; text: string } | null;
 export function LeadPanel({
   detail,
   pacing,
+  replyLength,
   now,
   register,
   onMoved,
@@ -48,6 +50,7 @@ export function LeadPanel({
 }: {
   detail: LeadDetail;
   pacing: { warnings: PacingWarning[]; reason: string } | null;
+  replyLength: ReplyLength;
   now: number;
   register: RefObject<PanelHandlers | null>;
   onMoved: () => void;
@@ -233,6 +236,7 @@ export function LeadPanel({
             onTextChange={setText}
             editorRef={editorRef}
             handleRef={editorHandle}
+            defaultLength={replyLength}
             onMessage={setMessage}
           />
         )}

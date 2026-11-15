@@ -10,6 +10,8 @@ export interface DraftInput {
   mode: ReplyMode;
   linksAllowed: boolean;
   words: { min: number; max: number };
+  /** The length in plain terms, such as "Two to four sentences". */
+  shape?: string;
   variationHint: string;
   post: { title: string; body: string };
   suggestedAngle: string;
@@ -65,7 +67,7 @@ export function buildDraftPrompt(input: DraftInput): PromptParts {
       '4. Use only facts from the product profile. Do not invent results, numbers, customers,',
       '   personal stories or comparisons. Never claim to be a customer of the product.',
       `5. ${linkRule(input.linksAllowed, profile.url)}`,
-      `6. Length: ${input.words.min} to ${input.words.max} words.`,
+      `6. Length: ${input.shape ? `${input.shape} ` : ''}${input.words.min} to ${input.words.max} words.`,
       `7. ${input.variationHint}`,
     ].join('\n'),
     `PRODUCT PROFILE\n${profileText(profile)}`,
