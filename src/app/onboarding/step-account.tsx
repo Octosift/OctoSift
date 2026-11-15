@@ -29,8 +29,7 @@ export function StepAccount({
           Connect a Reddit account
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Reading Reddit signed in is several times faster than reading logged out. Sign in through
-          a browser window the app opens, or paste the session cookie if the app runs in Docker.
+          Optional, but every scan gets several times faster. It takes about a minute.
         </p>
       </div>
       <Card className="px-4 py-4">
@@ -38,9 +37,8 @@ export function StepAccount({
       </Card>
       {!connected && !demo ? (
         <p className="text-xs text-muted-foreground">
-          You can skip this and connect an account later in Settings. Until then the app reads
-          Reddit&apos;s public RSS feeds instead. Reddit is retiring them, so scans may find
-          nothing.
+          Skipping is fine; you can connect one later in Settings. Until then the app reads
+          Reddit&apos;s public RSS feeds, which are slower and may stop working at any time.
         </p>
       ) : null}
       <div className="flex items-center justify-end gap-3">

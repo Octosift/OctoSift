@@ -6,6 +6,7 @@ import type { PresetId } from '@/core/ai/presets';
 import {
   CodexPanel,
   initialProvider,
+  keyNote,
   PresetPicker,
   PROVIDER_CHOICES,
   ProviderChoice,
@@ -75,6 +76,7 @@ export function StepAi({
               name={choice.keyName}
               label={choice.keyLabel}
               description={settings.secrets[choice.keyName]}
+              note={keyNote(choice.label)}
               onSaved={() => {
                 setSavedKeys({ ...savedKeys, [provider]: true });
                 startTransition(async () => {

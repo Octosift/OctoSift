@@ -1,5 +1,6 @@
 'use client';
 
+import { Lock } from 'lucide-react';
 import { useState, useTransition } from 'react';
 import type { SecretDescription } from '@/core/secrets/store';
 import { Button } from '../../components/ui/button';
@@ -17,12 +18,15 @@ export function SecretField({
   description,
   placeholder,
   type = 'password',
+  note,
   onSaved,
   onRemoved,
 }: {
   name: string;
   label: string;
   description: SecretDescription;
+  /** Where the value is kept and where it goes, shown under the field. */
+  note?: string;
   placeholder?: string;
   /** "text" for values that are private but not secret-looking, such as a login. */
   type?: 'password' | 'url' | 'text';
@@ -132,6 +136,12 @@ export function SecretField({
       {error ? (
         <p id={`${id}-error`} role="alert" className="text-xs text-danger-foreground">
           {error}
+        </p>
+      ) : null}
+      {note && description.source !== 'environment' ? (
+        <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+          <Lock className="mt-px size-3 shrink-0" aria-hidden />
+          {note}
         </p>
       ) : null}
     </div>

@@ -34,6 +34,11 @@ export const PROVIDER_CHOICES: Record<
   codex_cli: { label: 'Codex CLI (experimental)', keyName: null, keyLabel: '' },
 };
 
+/** Shown under an API key field: where the key is kept and where it is sent. */
+export function keyNote(provider: string): string {
+  return `Stays on this computer, encrypted (AES-256). It is sent only to ${provider} when the app calls it, and is never shown again or included in exports.`;
+}
+
 const EFFORTS = ['low', 'medium', 'high'] as const;
 type Effort = (typeof EFFORTS)[number];
 
@@ -325,10 +330,7 @@ export function AiSection({ data }: { data: SettingsData }) {
 
   return (
     <Card id="ai">
-      <CardHeader
-        title="AI"
-        description="Pick a provider, paste its key and choose a preset. Keys are encrypted and never shown again."
-      />
+      <CardHeader title="AI" description="Pick a provider, paste its key and choose a preset." />
       <div className="flex flex-col gap-4 px-4 py-4 text-sm">
         <ProviderChoice
           value={provider}
@@ -344,6 +346,7 @@ export function AiSection({ data }: { data: SettingsData }) {
             name={choice.keyName}
             label={choice.keyLabel}
             description={data.secrets[choice.keyName]}
+            note={keyNote(choice.label)}
             onSaved={() => {
               refresh(provider);
             }}

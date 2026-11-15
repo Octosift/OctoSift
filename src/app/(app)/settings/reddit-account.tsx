@@ -1,8 +1,8 @@
 'use client';
 
-import { LogIn, ClipboardPaste, Unplug } from 'lucide-react';
+import { ClipboardPaste, Eye, Lock, LogIn, Unplug, UserRound, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState, useTransition, type ReactNode } from 'react';
 import { Button } from '../../components/ui/button';
 import { Dialog } from '../../components/ui/dialog';
 import { Badge, Banner, Card, CardHeader } from '../../components/ui/display';
@@ -200,13 +200,23 @@ export function RedditConnect({
         <div className="flex">
           <StatusLine account={account} now={now} demo={demo} />
         </div>
-        <p className="text-xs text-muted-foreground">
-          Use a separate Reddit account for this, not your main one. The app only reads public
-          subreddits, slowly (at most {account.perHour} requests an hour), and never posts, votes or
-          sends messages. Reddit can still limit an account for automated reading, which is why a
-          separate one is safer. The cookie that keeps you signed in is stored encrypted and only
-          ever sent to www.reddit.com.
-        </p>
+        <ul className="flex flex-col gap-1.5 text-[13px] text-muted-foreground">
+          <Why icon={<Zap aria-hidden />} title="Why connect">
+            Scans run several times faster and see more posts. Logged out, Reddit allows about one
+            read a minute.
+          </Why>
+          <Why icon={<UserRound aria-hidden />} title="Why a separate account">
+            Reddit can limit accounts that read automatically. Use a spare one, so the account you
+            reply from stays safe.
+          </Why>
+          <Why icon={<Eye aria-hidden />} title="What it does">
+            Only reads, at most {account.perHour} times an hour. It never posts, votes or sends
+            messages; you post your replies yourself.
+          </Why>
+          <Why icon={<Lock aria-hidden />} title="Privacy">
+            The sign-in cookie is encrypted on this computer and only ever sent to reddit.com.
+          </Why>
+        </ul>
         <div className="flex flex-wrap gap-2">
           <Button
             variant={connected ? 'outline' : 'brand'}
@@ -289,6 +299,20 @@ export function RedditConnect({
   );
 }
 
+function Why({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+  return (
+    <li className="flex items-start gap-2.5">
+      <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center text-foreground/70 [&>svg]:size-3.5">
+        {icon}
+      </span>
+      <span>
+        <span className="font-medium text-foreground">{title}: </span>
+        {children}
+      </span>
+    </li>
+  );
+}
+
 export function RedditAccountCard({
   account,
   now,
@@ -302,7 +326,7 @@ export function RedditAccountCard({
     <Card id="reddit">
       <CardHeader
         title="Reddit account"
-        description="The app reads your subreddits signed in to this account. That is several times faster than reading logged out."
+        description="Optional. Makes every scan several times faster."
       />
       <div className="px-4 py-4">
         <RedditConnect account={account} now={now} demo={demo} />
