@@ -1,11 +1,10 @@
 'use client';
 
-import { LoaderCircle } from 'lucide-react';
+import { Check, Circle, LoaderCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
-import { emptyCounts } from '@/core/pipeline/funnel';
-import { Funnel } from '../components/funnel';
+import type { FunnelCounts } from '@/core/pipeline/funnel';
 import { Button } from '../components/ui/button';
 import { Banner, Card, CardHeader } from '../components/ui/display';
 import {
@@ -28,7 +27,7 @@ function minutes(count: number): string {
 function describe(
   status: ScanStatus | null,
   waitedS: number,
-): { text: string; tone: 'info' | 'warning'; pace?: boolean } {
+): { text: string; tone: 'info' | 'warning'; pace?: boolean } | null {
   if (status === null) return { text: 'Getting the scan ready…', tone: 'info' };
   const { run, worker } = status;
   if (run === null) {
@@ -57,18 +56,121 @@ function describe(
     }
     return { text: 'Starting the scan…', tone: 'info' };
   }
+  // Once the scan runs, the steps above show the progress; only reading needs a note.
   if (worker?.activity === 'reading') {
-    const where = worker.detail ? `Reading ${worker.detail}` : 'Reading subreddits';
-    const count =
-      worker.total && worker.done !== null
-        ? ` (${String(Math.min(worker.done + 1, worker.total))} of ${String(worker.total)})`
-        : '';
-    return { text: `${where}${count}…`, tone: 'info', pace: true };
+    return {
+      text: 'Reading is the slow part: requests are spaced out so Reddit does not block you.',
+      tone: 'info',
+      pace: true,
+    };
   }
-  if (worker?.activity === 'judging') {
-    return { text: 'Judging the new posts with your AI model…', tone: 'info' };
-  }
-  return { text: 'Scanning…', tone: 'info' };
+  return null;
+}
+
+type StepState = 'waiting' | 'active' | 'done';
+
+interface ScanStep {
+  title: string;
+  state: StepState;
+  detail: string | null;
+}
+
+function plural(count: number, one: string, many = `${one}s`): string {
+  return `${String(count)} ${count === 1 ? one : many}`;
+}
+
+/**
+ * The scan as three steps, from the worker's report and the counts the scan
+ * writes as it goes. Drafts are written as each lead is found, so they share
+ * the careful check's step.
+ */
+export function scanSteps(
+  status: ScanStatus | null,
+  started: boolean,
+  finished: boolean,
+): ScanStep[] {
+  const counts: FunnelCounts | null = status?.run?.counts ?? null;
+  const worker = status?.worker ?? null;
+  const running = started && !finished && status !== null && status.run !== null;
+  const reading = running && (worker === null || worker.activity === 'reading');
+  const screened = counts ? counts.triage.pass + counts.triage.skip + counts.triage.error : 0;
+  const checked = counts ? counts.qualify.pass + counts.qualify.error : 0;
+  const judging = running && !reading;
+  const screening = judging && screened === 0 && (counts?.prefilter.pass ?? 0) > 0;
+
+  const readState: StepState = finished || judging ? 'done' : reading ? 'active' : 'waiting';
+  const readDetail =
+    reading && worker?.detail
+      ? `${worker.detail}${worker.total ? `, ${String(Math.min((worker.done ?? 0) + 1, worker.total))} of ${String(worker.total)}` : ''}`
+      : counts && readState !== 'waiting'
+        ? `${plural(counts.fetched, 'post')} read, ${String(counts.new)} new. ${plural(counts.prefilter.skip, 'post')} skipped for free (seen before, too old or another language).`
+        : null;
+
+  const screenState: StepState =
+    finished || (judging && !screening) ? 'done' : screening ? 'active' : 'waiting';
+  const screenDetail =
+    screenState === 'active'
+      ? `A small model takes a first look at ${plural(counts?.prefilter.pass ?? 0, 'post')}.`
+      : screenState === 'done' && counts
+        ? `${String(counts.triage.pass)} of ${String(screened)} kept for a closer look.`
+        : null;
+
+  const checkState: StepState = finished ? 'done' : judging && !screening ? 'active' : 'waiting';
+  const checkDetail =
+    checkState === 'waiting' || !counts
+      ? null
+      : `${checkState === 'active' ? `${String(checked)} of ${String(counts.triage.pass)} checked. ` : ''}${plural(counts.leads, 'lead')} found, ${plural(counts.drafts.reply, 'reply', 'replies')} drafted.`;
+
+  return [
+    { title: 'Read new posts from your subreddits', state: readState, detail: readDetail },
+    { title: 'Quick screen', state: screenState, detail: screenDetail },
+    {
+      title: 'Careful check, then drafts for the strongest leads',
+      state: checkState,
+      detail: checkDetail,
+    },
+  ];
+}
+
+function ScanSteps({ steps }: { steps: ScanStep[] }) {
+  return (
+    <ol className="flex flex-col gap-3">
+      {steps.map((step) => (
+        <li key={step.title} className="flex items-start gap-3">
+          <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center" aria-hidden>
+            {step.state === 'done' ? (
+              <span className="flex size-5 items-center justify-center rounded-full bg-brand text-brand-foreground">
+                <Check className="size-3.5" />
+              </span>
+            ) : step.state === 'active' ? (
+              <LoaderCircle className="size-4 animate-spin text-brand" />
+            ) : (
+              <Circle className="size-4 text-border" />
+            )}
+          </span>
+          <div className="min-w-0">
+            <p
+              className={
+                step.state === 'waiting' ? 'text-sm text-muted-foreground' : 'text-sm font-medium'
+              }
+            >
+              {step.title}
+              <span className="sr-only">
+                {step.state === 'done'
+                  ? ' (done)'
+                  : step.state === 'active'
+                    ? ' (in progress)'
+                    : ''}
+              </span>
+            </p>
+            {step.detail ? (
+              <p className="text-[13px] text-muted-foreground">{step.detail}</p>
+            ) : null}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
 }
 
 function missingNote(names: string[]): string {
@@ -155,10 +257,7 @@ export function StepScan({
           }
         />
         <div className="px-4 py-4">
-          <Funnel
-            counts={run?.counts ?? emptyCounts()}
-            reading={!finished && status?.worker?.activity === 'reading'}
-          />
+          <ScanSteps steps={scanSteps(status, since !== null, finished)} />
         </div>
       </Card>
       {line ? (
