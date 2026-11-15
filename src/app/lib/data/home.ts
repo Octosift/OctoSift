@@ -83,7 +83,7 @@ export function setupComplete(items: readonly SetupItem[]): boolean {
 /** Everything Home shows: what is left to set up, and how the search is going. */
 export function loadHome() {
   const runtime = getRuntime();
-  const { db, secrets, settings } = runtime;
+  const { db, secrets, settings, env } = runtime;
   const now = nowSeconds();
   const product = listProducts(db).at(-1) ?? null;
   const subreddits = product ? watchedSubreddits(db, product.id) : [];
@@ -132,6 +132,7 @@ export function loadHome() {
     intervalMinutes: settings.get('schedule.intervalMinutes'),
     subredditCount: subreddits.length,
     accountConnected,
+    demo: env.DEMO_MODE,
     worker: readWorkerStatus(db, runtime.clock.nowMs()),
     leads: listLeads(db, { tab: 'todo' }, { limit: 5, offset: 0, now }).rows,
   };

@@ -249,11 +249,15 @@ function ScannerCard({ data }: { data: HomeData }) {
           <div>
             <dt className="text-muted-foreground">Reading</dt>
             <dd className="font-medium">
-              {data.accountConnected ? 'Reddit account' : 'Logged out, slow'}
+              {data.demo
+                ? 'Demo posts'
+                : data.accountConnected
+                  ? 'Reddit account'
+                  : 'Logged out, slow'}
             </dd>
           </div>
         </dl>
-        {!data.accountConnected ? (
+        {!data.accountConnected && !data.demo ? (
           <p className="text-[13px] text-muted-foreground">
             Logged out, Reddit allows about one read a minute.{' '}
             <Link
