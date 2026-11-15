@@ -30,6 +30,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "screenshots": "tsx scripts/screenshots.ts",
     "format": "prettier --write .",
     "leakcheck": "bash scripts/leakcheck.sh --all",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm leakcheck"

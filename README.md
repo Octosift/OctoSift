@@ -1,257 +1,346 @@
-# Octosift
+<p align="center">
+  <img src="src/app/icon.svg" width="72" height="72" alt="" />
+</p>
 
-Find the people on Reddit who need what you built, and reply to them yourself, helpfully
-and honestly.
+<h1 align="center">Octosift</h1>
 
-<!-- TODO(owner): add the demo GIF here once it is recorded (pnpm demo provides the data). -->
+<p align="center">
+  <strong>Find the people on Reddit who need what you built, and reply to them yourself.</strong>
+</p>
 
-Octosift runs on your own machine. It reads a short list of subreddits you choose, picks
-out posts from people your product can actually help, explains why, and prepares a reply in
-your voice that you copy and post by hand.
+<p align="center">
+  Open source and self-hosted. Octosift reads the subreddits you choose, explains which posts
+  are real leads, and drafts honest replies in your voice. You post every one of them by hand.
+</p>
 
-## What it does
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#what-it-costs">Cost</a> ·
+  <a href="#responsible-use">Responsible use</a> ·
+  <a href="docs/architecture.md">Docs</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
 
-1. **Learns your product.** Give it your website. It reads a few pages, drafts a profile
-   (what the product does, who it is for, what it does _not_ do) and asks you a few
-   questions to sharpen it.
-2. **Suggests subreddits.** You confirm three to ten communities where your customers ask
-   questions.
-3. **Reads new posts on a schedule.** Every hour by default, through a Reddit account you
-   connect or public feeds, slowly and one request at a time.
-4. **Filters, judges and scores every post.** Free checks first, then a cheap model, then a
-   strong model, then deterministic rules. Each post gets a verdict and a reason you can
-   inspect.
-5. **Prepares replies for strong leads.** A draft in your voice that discloses that you
-   built the product whenever it mentions it, reviewed by a second model. You copy it, open
-   the thread and post it yourself.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-0f766e" alt="License: AGPL-3.0" /></a>
+  <img src="https://img.shields.io/badge/node-22%20%7C%2024%20%7C%2026-0f766e" alt="Node.js 22, 24 or 26" />
+  <img src="https://img.shields.io/badge/self--hosted-yes-0f766e" alt="Self-hosted" />
+  <img src="https://img.shields.io/badge/telemetry-none-0f766e" alt="No telemetry" />
+</p>
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/inbox-dark.png" />
+  <img src="docs/images/inbox.png" alt="The inbox: a list of scored leads on the left; on the right, the post, why it is a lead, how to help, and a reviewed reply draft ready to copy." />
+</picture>
+
+## Why
+
+The people who need your product rarely search for it. They ask a community: _"What do you
+all use for this?"_ Those posts are the best leads you will ever get, and they are buried in
+thousands of others. Keyword alerts flood you with noise, and replies that read like ads get
+removed, downvoted or banned.
+
+Octosift does the reading for you. It watches a short list of communities, picks out the
+posts where you can genuinely help, tells you why, and prepares a reply that is useful even
+without the sentence about your product. Then you decide what to post.
+
+## Features
+
+- **Leads you can check.** Every post gets a verdict, a score and a reason. Open any scan to
+  see each post it read and why it was kept or dropped.
+- **Replies in your voice, reviewed before you see them.** A second model checks each draft
+  the way a moderator would: it answers the question, invents nothing, says you built the
+  product and does not read like an ad. Pick the angle and length, or ask for a rewrite in
+  plain words. When an author invites messages, a private message draft is ready too.
+- **Guardrails against looking like a spammer.** Drafts say plainly that you built the
+  product. Subreddits that ban promotion get replies that do not mention it. Pacing warnings
+  tell you when to help without a mention for a while. With a connected account, the app later
+  checks that your reply is still visible.
+- **Learns from you.** Mark a lead as good or bad with a short note, and the next scans
+  follow it as a rule.
+- **Your own AI key, low cost.** OpenAI, Anthropic, or any OpenAI-compatible endpoint such as
+  Ollama, LM Studio or OpenRouter. Presets show an estimated monthly cost, and budget caps
+  stop a scan cleanly.
+- **Private by design.** Runs on your machine with a local SQLite file. Keys and the Reddit
+  session are encrypted. No telemetry and no analytics.
+- **Fits your workflow.** Keyboard shortcuts in the inbox, a webhook for Slack or Discord, a
+  command line, Docker, and a mentions tab for posts that name your product.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/home.png" alt="Home: leads waiting for a reply, scans, AI spend and scanner status." /></td>
+    <td width="50%"><img src="docs/images/run-reasons.png" alt="A scan's funnel, with the reason behind each careful check." /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Home: what is waiting and what the scanner is doing</sub></td>
+    <td align="center"><sub>Every scan shows each post and the reason for its verdict</sub></td>
+  </tr>
+</table>
+
+## How it works
+
+```mermaid
+flowchart LR
+  A["New posts from<br/>your subreddits"] --> B["Free filters"]
+  B --> C["Quick screen<br/>small model, many posts per call"]
+  C --> D["Careful check<br/>stronger model, one post at a time"]
+  D --> E["Rules and score"]
+  E --> F["Inbox"]
+  F --> G["Draft and review"]
+  G --> H["You post it yourself"]
 ```
-new posts
-  -> filters (free: age, removed posts, bots, spam links, language, your blocklist)
-  -> triage (cheap model, ten posts per call, title and start of the body)
-  -> qualify (strong model, one post per call, full text)
-  -> veto and score (rules that can only lower a result, freshness, risk flags)
-  -> inbox (score 60 and up)
-  -> draft and review (score 75 and up, or on request)
-```
 
-## What it does not do
+1. **It learns your product.** Give it your website. It reads a few pages, drafts a profile
+   (what the product does, who it is for, what it does _not_ do) and asks a few questions to
+   sharpen it.
+2. **It suggests subreddits.** You confirm three to ten communities where your customers ask
+   for help.
+3. **It reads new posts on a schedule.** Every hour by default, slowly and one request at a
+   time.
+4. **It judges every post.** Free filters drop removed posts, bots, spam, old posts and other
+   languages. A small model screens the rest. A stronger model checks the survivors one at a
+   time, then fixed rules can only lower the result. Posts that score 60 or more reach the
+   inbox.
+5. **It prepares replies for the strongest leads.** Posts that score 75 or more, or any lead
+   you ask for, get a draft and a review. You copy it, open the thread and post it yourself.
 
-- **It does not post, comment, vote or send messages.** A connected Reddit account is only used
-  to read subreddit listings. You post every reply yourself.
-- **It does not monitor all of Reddit by keyword.** It reads the short list of subreddits
-  you chose.
-- **It does not hide who is speaking.** Drafts are written in your own voice and say that you
-  built the product whenever they mention it.
+### What it does not do
 
-That is the point: a tool that helps you show up where you are useful, without turning you
-into a spammer.
+- **It does not post, comment, vote or send messages.** A connected Reddit account is only
+  used to read. Every reply is posted by you.
+- **It does not watch all of Reddit.** It reads only the short list of subreddits you chose.
+- **It does not hide who is speaking.** Whenever a draft mentions your product, it says you
+  built it.
 
 ## Quick start
 
-You need pnpm and Node.js on a long-term support line: 22.12 or later, 24 (recommended, and
-what `.nvmrc` selects) or 26. Node 20 and the odd-numbered releases are not supported; the
-test runner refuses them. On Node 26 the SQLite driver is compiled during `pnpm install`,
-which needs a C++ toolchain (Xcode command line tools on macOS, `python3`, `make` and `g++`
-on Linux).
+**Try the demo first.** It needs no key and no network: a sample product, synthetic Reddit
+posts and a simulated AI provider.
 
 ```sh
 pnpm install
 pnpm demo
 ```
 
-`pnpm demo` builds a demo database with a sample product and a few days of history, then
-starts the dashboard at http://127.0.0.1:3005 with a simulated AI provider and synthetic
-Reddit posts. No key and no network are needed.
+Open http://127.0.0.1:3005.
 
-When you are ready for the real thing:
+**Then set it up for real:**
 
 ```sh
-cp .env.example .env   # optional; every setting can also be made in the dashboard
+cp .env.example .env   # optional: every setting can also be made in the dashboard
 pnpm build
-pnpm start             # dashboard and worker
+pnpm start             # the dashboard and the background worker
 ```
 
-Open http://127.0.0.1:3005 and follow the onboarding: paste one OpenAI or Anthropic key and pick
-a preset, then connect a Reddit account, describe your product, confirm the suggested
-subreddits and run a first scan. Nothing forces you through it: leave at any step, and Home and
-the sidebar show what is left. The Reddit account is optional; leads need the other steps. For
-development, `pnpm dev` runs both processes with reloading.
+Open http://127.0.0.1:3005 and follow the onboarding: add an OpenAI or Anthropic key and pick
+a preset, connect a Reddit account, describe your product, confirm the suggested subreddits
+and run a first scan. It takes about five minutes. You can leave at any step; Home and the
+sidebar show what is left. The Reddit account is optional, the other steps are needed for
+leads.
 
-### With Docker
+<details>
+<summary><strong>Requirements</strong></summary>
+
+- [pnpm](https://pnpm.io) and Node.js on a long-term support line: 22.12 or later, 24
+  (recommended, and what `.nvmrc` selects) or 26. Node 20 and odd-numbered releases are not
+  supported.
+- On Node 26 the SQLite driver is compiled during `pnpm install`, which needs a C++ toolchain
+  (Xcode command line tools on macOS; `python3`, `make` and `g++` on Linux).
+
+</details>
+
+<details>
+<summary><strong>With Docker</strong></summary>
 
 ```sh
 docker compose up --build
 ```
 
-The dashboard is published on 127.0.0.1:3005 only. Data lives in a named volume. Put keys
-and options in `.env` (see `.env.example`); set `APP_PASSWORD` before exposing the dashboard
-beyond your machine.
+The dashboard is published on 127.0.0.1:3005 only, and data lives in a named volume. Put keys
+and options in `.env` (see `.env.example`). Set `APP_PASSWORD` before you expose the
+dashboard beyond your own machine. In Docker, connect Reddit by pasting the session cookie;
+the sign-in window needs a desktop.
 
-### From the command line
+</details>
+
+<details>
+<summary><strong>From the command line</strong></summary>
 
 ```sh
 pnpm scan --once              # one scan now, prints the new leads
-pnpm scan --once --dry-run    # fetch and classify, save nothing but the run
+pnpm scan --once --dry-run    # fetch and judge, save nothing but the run
 pnpm scan --once --json       # the full report as JSON
+pnpm cli check-source         # one test request with the configured Reddit source
+pnpm eval --yes-spend         # measure precision and recall on labelled sample posts
 ```
+
+</details>
+
+For development, `pnpm dev` runs the dashboard and the worker with reloading.
+
+## What it costs
+
+Octosift is free. You pay your AI provider for what it uses, and reading Reddit costs
+nothing. Choose a preset, **Economy**, **Balanced** (recommended) or **Best quality**, and the
+app shows an estimate for your own subreddits before you spend anything.
+
+<p align="center">
+  <img src="docs/images/presets.png" width="720" alt="The three presets, each with its models and an estimated monthly cost." />
+</p>
+
+Costs stay low because each stage only sees what the stage before it let through. An
+illustrative scan of five subreddits that finds 40 new posts, with a small model at
+$0.15/$0.60 and a strong model at $3/$15 per million input/output tokens:
+
+| Stage                  | Calls | Input tokens | Output tokens |            Cost |
+| ---------------------- | ----: | -----------: | ------------: | --------------: |
+| Free filters           |     0 |            0 |             0 |          $0.000 |
+| Quick screen (small)   |     4 |       14,000 |         1,600 |          $0.003 |
+| Careful check (strong) |     8 |       14,400 |         2,000 |          $0.073 |
+| Draft (strong)         |     3 |        5,100 |           900 |          $0.029 |
+| Review (small)         |     3 |        4,800 |           360 |          $0.001 |
+| **Total**              |       |              |               | **about $0.11** |
+
+Your numbers will differ. Every scan's real cost is shown on the Runs screen, from a price
+table you can edit. Budget caps (by default $0.50 per scan and $3 per 24 hours) stop a scan
+cleanly and leave the remaining posts for the next one.
+
+<details>
+<summary><strong>A worked example, and how to spend less</strong></summary>
+
+Cost follows the number of new posts, because each post is judged once. Take ten subreddits
+that together get about 40 new posts an hour, scanned hourly with the models above: about
+$0.11 a scan, $2.60 a day, $80 a month. The default caps hold it near there.
+
+- **Keep a small model for the quick screen.** It reads every post that passes the free
+  filters. With the strong model in its place, the example would cost about $125 a month.
+- **Watch fewer or quieter subreddits.** Five subreddits with 20 new posts an hour together
+  cost about $40 a month.
+- **Choose a cheaper model for the careful check and drafting.** The strong model is most of
+  the bill. Run `pnpm eval --yes-spend` before and after switching to see what it does to
+  precision.
+- **Scanning less often barely helps.** A post costs the same in whichever scan reads it.
+
+Under Settings → AI → Advanced you can pick a model per stage, or point a stage at a local
+model through any OpenAI-compatible endpoint.
+
+</details>
 
 ## How it reads Reddit
 
-In late 2026 Reddit ended support for its public RSS feeds and began closing its public data
-API to new apps. Octosift therefore reads Reddit in one of two ways and falls back between
-them:
+In late 2026 Reddit announced the end of its public RSS feeds and closed its public data API
+to new apps. Octosift reads Reddit in one of two ways and falls back between them:
 
-1. **A Reddit account you connect** (the default). Subreddit listings are read with that
-   account's session: one request at a time, at least eight seconds apart and at most 120 an
-   hour. Use a separate account, not your main one; the app only reads, but automated reading
-   can still get an account limited. Connect it during onboarding or in Settings, by signing
-   in through a browser window the app opens (the app never sees your password), or by pasting
-   the session cookie when the app runs in Docker. The cookie is stored encrypted and only ever
-   sent to www.reddit.com.
-2. **Public RSS feeds** (logged out, best effort). Reddit is retiring them, so they may return
-   nothing or stop working at any time. Without a connected account they are the only way the
-   app can read.
+1. **A Reddit account you connect** (recommended). You sign in on Reddit's own page in a
+   browser window the app opens, so the app never sees your password; in Docker you paste the
+   session cookie instead. The session is stored encrypted and only ever sent to
+   www.reddit.com.
+2. **Public RSS feeds** (logged out, best effort). Reddit is retiring them, so they may stop
+   working at any time.
 
-Demo mode reads synthetic posts instead and needs neither.
+Either way, reading is deliberately slow and narrow:
 
-The source you prefer is tried first. If it stops working during a scan, for example when a
-session expires, the rest of the scan uses the other one, and a banner says what happened.
-`pnpm cli check-source` makes one request with the configured source, so you can test a
-session before relying on it.
+- only what it needs: new posts in the subreddits you chose, and the threads and checks
+  described here;
+- one request at a time, at least eight seconds apart;
+- **at most 120 requests an hour, a fixed limit you cannot raise in settings;**
+- a pause instead of retries when Reddit pushes back.
 
-A connected account also serves two checks, at the same slow pace. An hour and a day after
-you mark a lead as replied with your comment's link, the app reads that comment's own page
-and tells you whether others can still see it. Once a day it reads the connected account's
-public profile and warns if Reddit shows it as suspended or not found (usually a shadowban).
-Reply from a different account than the connected one: Reddit shows authors their own removed
-comments, so a check on them cannot tell.
-
-Whatever the source, reading is slow on purpose: one request at a time, rate limits followed,
-and a pause instead of retries when Reddit pushes back. Busy subreddits are read more often,
-down to every fifteen minutes.
-
-## Cost
-
-You bring your own AI provider, OpenAI or Anthropic, and choose a preset: **Economy**,
-**Balanced** (the default) or **Best quality**. Each preset picks the provider's recommended
-model for every stage and shows an estimated monthly cost for your subreddits. Under Settings →
-AI → Advanced you can pick a model per stage instead, or point a stage at any OpenAI-compatible
-endpoint such as Ollama, LM Studio or OpenRouter for local or other models. Spending stays low
-because each stage only sees what the previous one let through:
-
-- free filters remove removed posts, bots, spam, old posts and other languages;
-- a cheap model screens the rest ten at a time, from the title and the first 600 characters;
-- only the posts it keeps reach the strong model, one at a time;
-- only strong leads get a draft and a review.
-
-An illustrative scan of five subreddits that finds 40 new posts, with a small model at
-$0.15/$0.60 and a strong model at $3/$15 per million input/output tokens:
-
-| Stage            | Calls | Input tokens | Output tokens |            Cost |
-| ---------------- | ----: | -----------: | ------------: | --------------: |
-| Filters          |     0 |            0 |             0 |          $0.000 |
-| Triage (small)   |     4 |       14,000 |         1,600 |          $0.003 |
-| Qualify (strong) |     8 |       14,400 |         2,000 |          $0.073 |
-| Draft (strong)   |     3 |        5,100 |           900 |          $0.029 |
-| Review (small)   |     3 |        4,800 |           360 |          $0.001 |
-| **Total**        |       |              |               | **about $0.11** |
-
-Your numbers will differ: every run's actual cost is shown on the Runs screen, from a price
-table you can edit in Settings. Budget caps stop a scan cleanly (default $0.50 per scan and
-$3 per 24 hours) and leave the remaining posts for the next scan.
-
-### A worked example: ten subreddits every hour
-
-Reading Reddit costs nothing: a connected account and the public feeds are both free. What you
-pay for is AI, to your own provider, and it follows the number of new posts, because each post
-is judged once.
-
-Take ten subreddits that together get about 40 new posts an hour, scanned every hour with the
-models in the table above. Each scan costs about $0.11, so a day costs about 24 × $0.11, roughly
-$2.60, and a month about $80. The default caps hold it near there.
-
-To spend less:
-
-- **Keep a small model for triage.** Triage reads every post that passes the free filters. With
-  the strong model in its place, triage would cost about $0.066 a scan instead of $0.003, and
-  the example about $125 a month.
-- **Watch fewer subreddits, or quieter ones.** Cost scales with new posts: five subreddits with
-  20 new posts an hour together cost about $40 a month.
-- **Scan fewer times a day.** This saves Reddit requests and keeps the account's reading
-  lighter, but it barely changes the AI cost: a post costs the same in whichever scan reads it.
-  It only saves AI when busy subreddits post more between scans than one scan reads, and then
-  the posts it skips are ones you never see.
-- **Choose a cheaper model for qualifying and drafting.** The strong model makes up most of the
-  cost. Run `pnpm eval --yes-spend` before and after switching, to see what it does to
-  precision.
+A connected account also runs two checks at the same pace. An hour and a day after you mark a
+lead as replied, the app checks that your comment is still visible to others. Once a day it
+checks the account's public profile and warns if Reddit shows it as suspended or missing.
+[More about sources and checks](docs/sources.md).
 
 ## Responsible use
 
+Octosift is built to help you show up where you are useful, not to flood communities.
+
+**Toward communities**
+
 - **Follow each subreddit's rules.** Paste a subreddit's rules on the Subreddits screen and
-  they are summarised into what replies may do there. Mark subreddits that do not allow
-  promotion; drafts for them never mention your product.
-- **Say who you are.** Every draft that mentions the product says plainly that you built it.
-  Keep it that way when you edit.
-- **Help first.** A good reply is useful even if the sentence about your product is removed.
-  The pacing warnings tell you when your recent replies lean too much towards promotion.
+  they become guidance for its drafts. Mark subreddits that do not allow promotion; their
+  drafts never mention your product.
+- **Say who you are.** Every draft that mentions your product says that you built it. Keep it
+  that way when you edit.
+- **Help first.** A good reply is useful even with the product sentence removed. The pacing
+  warnings ask for about three helpful replies for each one that mentions the product.
 - **Never invent experience.** Drafts are told not to claim results, customers or comparisons
   that are not in your profile. Check before you post.
 
+**Toward Reddit**
+
+- **Use a separate account to read.** Reddit can limit accounts that read automatically. Read
+  with a spare account and reply from your own.
+- **Keep the limits.** The pacing above is part of the design. Please do not fork it into a
+  bulk scraper.
+- **You are responsible for your use.** Using a Reddit account with this app is subject to
+  [Reddit's User Agreement](https://redditinc.com/policies/user-agreement) and each
+  community's rules. The software comes with no warranty (see the [license](LICENSE)).
+
+## Privacy and security
+
+Everything stays on the machine that runs Octosift: a SQLite file, plus an encryption key
+that never leaves it. API keys and the Reddit session are encrypted with AES-256-GCM. The
+dashboard listens on 127.0.0.1 by default, and `APP_PASSWORD` protects it when you expose it.
+The app talks only to Reddit (to read), the AI provider you configure, and the optional
+integrations you turn on. Reddit posts are treated as untrusted input in every prompt.
+
+Details: [docs/privacy.md](docs/privacy.md). To report a vulnerability, see
+[SECURITY.md](SECURITY.md).
+
 ## Configuration
 
-Settings live in the dashboard and are stored in a local SQLite file. Environment variables
-(see `.env.example`) cover deployment options and can supply provider keys.
+Most settings live in the dashboard and are stored in the local database. Environment
+variables (see `.env.example`) cover deployment and can supply keys.
 
 | Variable                                                           | Default                      | Purpose                                                              |
 | ------------------------------------------------------------------ | ---------------------------- | -------------------------------------------------------------------- |
 | `DATABASE_PATH`                                                    | `data/app.sqlite`            | Where the database lives                                             |
-| `APP_SECRET`                                                       | random key in `data/.secret` | Encrypts saved API keys                                              |
+| `APP_SECRET`                                                       | random key in `data/.secret` | Encrypts saved API keys and the Reddit session                       |
 | `APP_PASSWORD`                                                     | none                         | Requires a password to open the dashboard                            |
 | `HOST`, `PORT`                                                     | `127.0.0.1`, `3005`          | Where the dashboard listens                                          |
 | `PUBLIC_URL`                                                       | `http://127.0.0.1:3005`      | Used for links in notifications                                      |
 | `LOG_LEVEL`                                                        | `info`                       | `debug`, `info`, `warn` or `error`                                   |
 | `DEMO_MODE`                                                        | off                          | Synthetic data and a simulated AI provider                           |
 | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_COMPATIBLE_API_KEY` | none                         | Provider keys; they take precedence over keys saved in the dashboard |
+| `REDDIT_SESSION_COOKIE`                                            | none                         | The Cookie header of a connected Reddit account, instead of Settings |
 | `REDDIT_PROXY_URL`                                                 | none                         | Proxy for Reddit reads                                               |
 | `WEBHOOK_URL`                                                      | none                         | Webhook for strong leads (Slack-style or Discord-style)              |
 | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`                          | none                         | Optional: finds Reddit threads that rank on Google for your keywords |
-| `REDDIT_SESSION_COOKIE`                                            | none                         | The Cookie header of a connected Reddit account, instead of Settings |
 
-In the dashboard you also set the model for each stage, prices, budget caps, the scan
-interval, score thresholds, filters, your Reddit username (to skip your own posts), the
-User-Agent and whether images in posts are described for the models (off by default).
+The dashboard also holds the model for each stage, prices, budget caps, the scan interval,
+score thresholds, filters, your Reddit username (so your own posts are skipped) and whether
+images in posts are described for the models (off by default).
 
-**Evergreen threads (optional).** With DataForSEO credentials (in Settings or the environment),
-an Evergreen tab lists the Reddit threads that rank on Google for your buyer keywords, checked
-once a week or on demand. Old threads that rank keep being read, so a helpful reply there pays
-off for months. A check costs about $0.004 per keyword and the exact cost of each one is shown.
+**Evergreen threads (optional).** With DataForSEO credentials, an Evergreen tab lists Reddit
+threads that rank on Google for your buyer keywords, checked weekly or on demand. A helpful
+reply in a thread that ranks keeps paying off for months. A check costs about $0.004 per
+keyword, and the exact cost of each one is shown.
 
 ## FAQ
 
 **Does it work for my kind of product?** Nothing in the code assumes an industry or an
-audience. Everything specific comes from your product profile and settings. The test suite
-runs the whole pipeline against three unrelated sample products: an invoicing tool for
-freelancers, a consumer plant-care app and a developer command-line tool.
+audience; everything specific comes from your product profile. The test suite runs the whole
+pipeline against three unrelated sample products: an invoicing tool for freelancers, a
+consumer plant-care app and a developer command-line tool.
 
-**Can I use a local model?** Yes. Choose "OpenAI-compatible" and point it at Ollama or
-LM Studio. Smaller local models are fine for triage; qualify and drafting benefit from
-stronger models.
+**How do I know it finds the right posts?** Every verdict has a reason you can read on the
+Runs screen, and your good and bad marks become rules. `pnpm eval --yes-spend` measures the
+precision and recall of your chosen models on a labelled set of sample posts. It explains what
+it will send before it starts and stops at a cap (one dollar by default).
 
-**Where is my data?** In the SQLite file on your machine. Keys are encrypted. Nothing is
-sent anywhere except Reddit (reads only), your AI provider and the optional webhook. See
-[docs/privacy.md](docs/privacy.md).
+**Can I use a local model?** Yes. Choose "OpenAI-compatible" and point it at Ollama or LM
+Studio. Small local models are fine for the quick screen; the careful check and drafting
+benefit from stronger ones.
 
-**How do I know it is finding the right posts?** Every verdict has a reason, visible on the
-Runs screen. Mark leads as good or bad with a note in the inbox and the notes become rules
-the next scans follow. `pnpm eval --yes-spend` measures precision and recall of your chosen
-models on a labelled set of sample posts. It costs a little, explains what it will send
-before it starts, and stops at a cap (one dollar by default).
+**Why is the first scan slow?** Reads are spaced out on purpose: several seconds apart with an
+account, about a minute apart logged out. The AI stages are quick.
 
-**Why is the first scan slow?** Reads are spaced out on purpose, several seconds apart with an
-account and about a minute apart logged out. The AI stages are quick.
+**Will it post for me one day?** No. Posting by hand is the point: it keeps you in control of
+what goes out under your name.
 
-<!-- TODO(owner): decide whether to compare with other kinds of tools here (keyword alert bots, paid lead tools) and whether to mention a hosted version. -->
+<!-- TODO(owner): decide whether to mention a hosted version here. -->
 
 ## Roadmap
 
@@ -263,17 +352,24 @@ account and about a minute apart logged out. The AI stages are quick.
 
 - [Architecture](docs/architecture.md)
 - [The pipeline and its prompts](docs/pipeline.md)
-- [Adding a new source](docs/adding-a-source.md)
-- [Privacy: what is stored and where](docs/privacy.md)
 - [Data sources and the checks made with a connected account](docs/sources.md)
 - [How logged-out Reddit reads behave](docs/reddit-reads.md)
+- [Privacy: what is stored and where](docs/privacy.md)
+- [Adding a new source](docs/adding-a-source.md)
 - [Decisions](docs/decisions.md)
 
-## Development
+## Contributing
+
+Bug reports, ideas and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) explains
+how to set up, test and send a change.
 
 ```sh
 pnpm check       # lint, typecheck, unit tests and the leak check
-pnpm test:e2e    # Playwright smoke tests (demo mode, needs a Chromium download)
+pnpm test:e2e    # Playwright smoke tests in demo mode
 ```
 
-<!-- TODO(owner): choose a licence and add the licence section and file. -->
+## License
+
+Octosift is licensed under the [GNU Affero General Public License v3.0](LICENSE). You may
+use, change and self-host it freely. If you run a modified version as a service for other
+people, you must offer them its source code under the same license.
