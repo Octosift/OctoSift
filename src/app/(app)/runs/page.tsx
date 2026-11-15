@@ -64,8 +64,7 @@ export default async function RunsPage({
           {subscription ? <SubscriptionCard report={subscription} /> : null}
           {runs.length === 0 ? (
             <EmptyState title="No scans yet">
-              The worker scans on a schedule once subreddits are set up. You can also press Scan
-              now.
+              Scans run on a schedule once you have added subreddits. You can also press Scan now.
             </EmptyState>
           ) : (
             <Card className="relative overflow-x-auto">
@@ -194,8 +193,8 @@ function SubscriptionCard({ report }: { report: SubscriptionReport }) {
           <p className="text-sm font-medium">Subscription scans, API equivalent</p>
           <p className="text-xs text-muted-foreground">
             {report.scans} {report.scans === 1 ? 'scan' : 'scans'} and {report.postsRead} posts over
-            the last {days} {days === 1 ? 'day' : 'days'}, priced at the API rates of the same
-            models. Averages.
+            the last {days} {days === 1 ? 'day' : 'days'}, priced at what the same models would cost
+            with an API key. Figures are averages.
           </p>
         </div>
         <dl className="grid grid-cols-3 gap-3">

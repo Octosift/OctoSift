@@ -15,13 +15,13 @@ export function DataSection() {
     <Card id="data">
       <CardHeader
         title="Your data"
-        description="Everything is stored in a SQLite file on this machine."
+        description="Everything is stored in one database file (SQLite) on the computer running the app."
       />
       <div className="flex flex-col gap-4 px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm">
-            Download products, posts, leads, drafts, runs and settings as JSON. Keys are not
-            included.
+            Download products, posts, leads, drafts, runs and settings as a JSON file. API keys,
+            passwords and the Reddit cookie are left out.
           </p>
           <Button asChild>
             <a href="/api/export" download>

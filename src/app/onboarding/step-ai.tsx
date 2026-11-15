@@ -53,8 +53,8 @@ export function StepAi({
           Connect an AI provider
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Paste one API key. The preset picks a model for each step; you can change them later in
-          Settings.
+          The app uses your AI provider account to judge posts and write drafts. Paste one API key;
+          the preset picks the models, which you can change later in Settings.
         </p>
       </div>
       {demo ? (

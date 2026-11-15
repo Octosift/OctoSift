@@ -48,8 +48,8 @@ export function RulesSummaryLine({
           className={stale ? 'text-xs text-warning-foreground' : 'text-xs text-muted-foreground'}
         >
           {stale
-            ? `Summarised ${formatAgo(updatedAt, now)}; rules may have changed`
-            : `Summarised ${formatAgo(updatedAt, now)}`}
+            ? `Summarized ${formatAgo(updatedAt, now)}; rules may have changed`
+            : `Summarized ${formatAgo(updatedAt, now)}`}
         </span>
       ) : null}
     </div>
@@ -88,7 +88,7 @@ export function RulesDialog({
         open={open}
         onOpenChange={setOpen}
         title={`Rules of r/${name}`}
-        description="Copy the rules from the subreddit's sidebar or rules page and paste them here. They are summarised once and applied to every lead from this subreddit."
+        description="Copy the rules from the subreddit's sidebar or rules page and paste them here. They are summarized once, and the AI follows them when it judges posts and drafts replies for this subreddit."
         className="max-w-lg"
       >
         <form
@@ -144,7 +144,7 @@ export function RulesDialog({
               Cancel
             </Button>
             <Button type="submit" variant="primary" disabled={pending || value.trim() === ''}>
-              {pending ? 'Summarising…' : 'Summarise and save'}
+              {pending ? 'Summarizing…' : 'Summarize and save'}
             </Button>
           </div>
         </form>

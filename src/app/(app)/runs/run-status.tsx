@@ -40,6 +40,6 @@ export function RunCost({
   incomplete: boolean;
 }) {
   if (apiEquivalentUsd === null) return <>{formatUsd(costUsd, incomplete)}</>;
-  const equivalent = `Subscription · API equivalent ≈ ${formatUsd(apiEquivalentUsd)}`;
+  const equivalent = `Subscription · ≈ ${formatUsd(apiEquivalentUsd)} at API prices`;
   return <>{costUsd > 0 ? `${formatUsd(costUsd, incomplete)} + ${equivalent}` : equivalent}</>;
 }

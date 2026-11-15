@@ -29,8 +29,8 @@ export function StepAccount({
           Connect a Reddit account
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          The subreddits you choose are read with a Reddit account you connect. Sign in through a
-          browser window the app opens, or paste the session cookie if the app runs in Docker.
+          Reading Reddit signed in is several times faster than reading logged out. Sign in through
+          a browser window the app opens, or paste the session cookie if the app runs in Docker.
         </p>
       </div>
       <Card className="px-4 py-4">

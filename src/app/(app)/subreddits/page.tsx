@@ -44,8 +44,8 @@ export default async function SubredditsPage({
         <AddSubredditForm productId={product.id} />
         {rows.length === 0 ? (
           <EmptyState title="No subreddits yet">
-            Add the communities where people ask about the problem {product.name} solves. Each one
-            is checked by the worker before the next scan.
+            Add the communities where people ask about the problem {product.name} solves. The app
+            checks that each one exists before the next scan.
           </EmptyState>
         ) : (
           <SubredditTable

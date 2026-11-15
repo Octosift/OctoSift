@@ -29,29 +29,29 @@ function describe(
   status: ScanStatus | null,
   waitedS: number,
 ): { text: string; tone: 'info' | 'warning'; pace?: boolean } {
-  if (status === null) return { text: 'Sending the scan to the worker…', tone: 'info' };
+  if (status === null) return { text: 'Getting the scan ready…', tone: 'info' };
   const { run, worker } = status;
   if (run === null) {
     if (worker === null) {
       return waitedS >= 6
         ? {
-            text: 'The worker is not running, so the scan cannot start. Start the app with pnpm dev, pnpm start or Docker; this page carries on by itself.',
+            text: 'The scanner is not running, so the scan cannot start. Start the app with pnpm dev, pnpm start or Docker, and this page carries on by itself.',
             tone: 'warning',
           }
-        : { text: 'Sending the scan to the worker…', tone: 'info' };
+        : { text: 'Getting the scan ready…', tone: 'info' };
     }
     if (worker.activity === 'checking') {
       const progress = worker.total
         ? ` (${String(worker.done ?? 0)} of ${String(worker.total)})`
         : '';
       return {
-        text: `The worker is finishing a subreddit check${progress}. Your scan starts right after.`,
+        text: `The scanner is finishing a subreddit check${progress}. Your scan starts right after.`,
         tone: 'info',
       };
     }
     if (worker.activity !== 'idle') {
       return {
-        text: 'The worker is finishing another scan. Yours starts right after.',
+        text: 'Another scan is still running. Yours starts right after.',
         tone: 'info',
       };
     }

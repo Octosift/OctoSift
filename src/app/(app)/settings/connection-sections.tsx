@@ -14,7 +14,10 @@ export function RedditSection({ data }: { data: SettingsData }) {
   );
   return (
     <Card id="reddit-reading">
-      <CardHeader title="Reading Reddit" description="Applies to every way of reading Reddit." />
+      <CardHeader
+        title="Reading Reddit"
+        description="Used with either data source. The User-Agent is the name the app gives Reddit with each request."
+      />
       <div className="grid gap-4 px-4 py-4 sm:grid-cols-2">
         <Field
           label="Your Reddit username"
@@ -49,8 +52,8 @@ export function RedditSection({ data }: { data: SettingsData }) {
             description={data.secrets.reddit_proxy_url}
           />
           <p className="mt-1 text-xs text-muted-foreground">
-            If Reddit keeps pausing reads from your network, a proxy gives requests another exit
-            address. Each request opens a fresh connection so a rotating proxy can change it.
+            Only needed if Reddit keeps pausing reads from your network. A proxy sends requests from
+            a different address, and a rotating proxy uses a new one for each request.
           </p>
         </div>
       </div>
@@ -72,7 +75,7 @@ export function NotificationsSection({ data }: { data: SettingsData }) {
     <Card id="notifications">
       <CardHeader
         title="Notifications"
-        description="Optional. Strong leads (from the notify score) are posted to a webhook."
+        description="Optional. Posts your strongest leads to a Slack or Discord channel as they arrive, using a webhook URL you create in that app."
       />
       <div className="grid gap-4 px-4 py-4 sm:grid-cols-[1fr_12rem]">
         <SecretField
@@ -110,7 +113,7 @@ export function EvergreenSection({ data }: { data: SettingsData }) {
     <Card id="evergreen">
       <CardHeader
         title="Evergreen threads"
-        description="Optional. Finds Reddit threads that rank on Google for your buyers' searches; they are worth answering even when months old."
+        description="Optional. Finds Reddit threads that show up on Google when your buyers search. These keep getting new readers, so they are worth answering even months later."
       />
       <div className="flex flex-col gap-4 px-4 py-4">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -128,11 +131,11 @@ export function EvergreenSection({ data }: { data: SettingsData }) {
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          Uses DataForSEO&apos;s live Google results for the United States: about $0.004 per
-          keyword, so 20 keywords cost about $0.08 a check. Each product is checked once a week, or
-          when you press Check now on its Evergreen tab, and the exact cost of every check is shown
-          there. The API password is generated in your DataForSEO dashboard and is not your account
-          password.
+          DataForSEO is a paid service that gives the app live Google results for the United States.
+          It costs about $0.004 per search phrase, so 20 phrases cost about $0.08 a check. Each
+          product is checked once a week, or when you press Check now on its Evergreen tab, where
+          the cost of every check is shown. Use the API password from your DataForSEO dashboard, not
+          your account password.
         </p>
       </div>
     </Card>

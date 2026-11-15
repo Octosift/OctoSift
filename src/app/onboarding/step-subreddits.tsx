@@ -139,8 +139,8 @@ export function StepSubreddits({ productId, saved }: { productId: string; saved:
         <Banner role="status">
           <LoaderCircle className="mt-0.5 size-4 shrink-0 animate-spin" aria-hidden />
           <span>
-            Asking your AI model for subreddits that fit your product… {waitedS} s. This is one call
-            and usually takes under a minute. You can add your own below meanwhile.
+            Asking your AI model for subreddits that fit your product… {waitedS} s. This usually
+            takes under a minute. You can add your own below meanwhile.
           </span>
         </Banner>
       ) : null}

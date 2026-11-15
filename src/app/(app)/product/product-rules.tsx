@@ -45,7 +45,7 @@ export function RulesForm({
   );
   return (
     <Card id="rules">
-      <CardHeader title="Thresholds and veto phrases" />
+      <CardHeader title="Thresholds and excluded phrases" />
       <div className="flex flex-col gap-4 px-4 py-4">
         <label className="flex items-center gap-2 text-sm">
           <Checkbox
@@ -58,9 +58,9 @@ export function RulesForm({
           Use thresholds for this product instead of the ones in Settings
         </label>
         <div className="grid gap-4 sm:grid-cols-3">
-          {number('show', 'Show in inbox from')}
-          {number('draft', 'Draft replies from')}
-          {number('notify', 'Notify from')}
+          {number('show', 'Show in inbox from score')}
+          {number('draft', 'Draft replies from score')}
+          {number('notify', 'Notify from score')}
         </div>
         {form.errors.thresholds ? (
           <p role="alert" className="text-xs text-danger-foreground">
@@ -68,9 +68,9 @@ export function RulesForm({
           </p>
         ) : null}
         <Field
-          label="Veto phrases"
+          label="Excluded phrases"
           htmlFor="veto-phrases"
-          hint="One per line. A post containing any of them is never a lead, whatever its score."
+          hint="One per line. A post that contains any of them is never a lead for this product, whatever its score."
           error={form.errors.vetoPhrases}
         >
           <Textarea

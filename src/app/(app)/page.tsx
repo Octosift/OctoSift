@@ -118,9 +118,9 @@ function Stats({ data }: { data: HomeData }) {
     stats.apiEquivalentThisWeekUsd !== null
       ? {
           value: 'Subscription',
-          note: `≈ ${formatUsd(stats.apiEquivalentThisWeekUsd)} on the API`,
+          note: `≈ ${formatUsd(stats.apiEquivalentThisWeekUsd)} at API prices`,
         }
-      : { value: formatUsd(stats.spentThisWeekUsd), note: 'From the price table' };
+      : { value: formatUsd(stats.spentThisWeekUsd), note: 'Based on your model prices' };
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
       <Stat
@@ -196,7 +196,7 @@ function ScannerCard({ data }: { data: HomeData }) {
     worker === null
       ? {
           icon: <CircleAlert className="size-4 text-warning-foreground" aria-hidden />,
-          text: 'The worker is not running',
+          text: 'The scanner is not running',
           note: 'Start the app with pnpm dev, pnpm start or Docker to scan.',
         }
       : worker.activity === 'reading'

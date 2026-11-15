@@ -23,7 +23,7 @@ function StatusLine({ account, now, demo }: { account: Account; now: number; dem
     return (
       <span className="flex flex-wrap items-center gap-2">
         <Badge tone="brand">Demo source</Badge>
-        <span className="text-xs text-muted-foreground">synthetic posts, no account needed</span>
+        <span className="text-xs text-muted-foreground">sample posts, no account needed</span>
       </span>
     );
   }
@@ -202,10 +202,10 @@ export function RedditConnect({
         </div>
         <p className="text-xs text-muted-foreground">
           Use a separate Reddit account for this, not your main one. The app only reads public
-          subreddit listings, slowly (at most {account.perHour} requests an hour), and never posts,
-          votes or sends messages. Automated reading can still get an account limited, which is why
-          a separate account is safer. The session cookie is stored encrypted and only ever sent to
-          www.reddit.com.
+          subreddits, slowly (at most {account.perHour} requests an hour), and never posts, votes or
+          sends messages. Reddit can still limit an account for automated reading, which is why a
+          separate one is safer. The cookie that keeps you signed in is stored encrypted and only
+          ever sent to www.reddit.com.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -266,8 +266,7 @@ export function RedditConnect({
         </div>
         {demo ? (
           <p className="text-xs text-muted-foreground">
-            Demo mode reads synthetic posts from the demo source, so connecting an account is turned
-            off here.
+            Demo mode uses sample posts, so connecting an account is turned off here.
           </p>
         ) : null}
         {account.inContainer ? (
@@ -303,7 +302,7 @@ export function RedditAccountCard({
     <Card id="reddit">
       <CardHeader
         title="Reddit account"
-        description="The default way of reading Reddit: listings read with an account you connect."
+        description="The app reads your subreddits signed in to this account. That is several times faster than reading logged out."
       />
       <div className="px-4 py-4">
         <RedditConnect account={account} now={now} demo={demo} />

@@ -23,9 +23,9 @@ export const metadata: Metadata = { title: 'Run' };
 
 const STAGES = {
   prefilter: 'Filters',
-  triage: 'Triage',
-  qualify: 'Qualify',
-  veto: 'Veto and score',
+  triage: 'Quick screen',
+  qualify: 'Careful check',
+  veto: 'Rules and score',
 } as const;
 type Stage = keyof typeof STAGES;
 
@@ -102,7 +102,10 @@ export default async function RunPage({
             <Banner tone="warning">Reddit paused reads during this scan.</Banner>
           ) : null}
           <Card>
-            <CardHeader title="Funnel" description="Select a stage to see its posts and reasons." />
+            <CardHeader
+              title="Funnel"
+              description="Select a step to see which posts it kept or dropped, and why."
+            />
             <div className="px-4 py-4">
               <Funnel
                 counts={counts}
@@ -128,7 +131,7 @@ export default async function RunPage({
         </div>
         <Card className="min-w-0">
           <nav
-            aria-label="Stages"
+            aria-label="Steps"
             className="no-scrollbar flex gap-5 overflow-x-auto border-b border-border px-4"
           >
             {(Object.keys(STAGES) as Stage[]).map((key) => (
@@ -155,8 +158,8 @@ export default async function RunPage({
             </p>
           ) : null}
           {entries.length === 0 ? (
-            <EmptyState title="Nothing at this stage">
-              No posts reached this stage in this scan.
+            <EmptyState title="Nothing at this step">
+              No posts reached this step in this scan.
             </EmptyState>
           ) : (
             <ul className="divide-y divide-border">
@@ -189,7 +192,7 @@ export default async function RunPage({
           )}
           {entries.length > MAX_ENTRIES ? (
             <p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">
-              Showing the first {MAX_ENTRIES} of {entries.length} posts at this stage.
+              Showing the first {MAX_ENTRIES} of {entries.length} posts at this step.
             </p>
           ) : null}
         </Card>

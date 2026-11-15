@@ -60,7 +60,7 @@ export function BudgetSection({ data }: { data: SettingsData }) {
           'perRun',
           'Budget per scan (USD)',
           'budget.perRunUsd',
-          'A scan stops cleanly here.',
+          'A scan stops when it reaches this. The remaining posts wait for the next scan.',
           '0.05',
         )}
         {number(
@@ -71,9 +71,24 @@ export function BudgetSection({ data }: { data: SettingsData }) {
           '0.5',
         )}
         {number('interval', 'Scan every (minutes)', 'schedule.intervalMinutes', 'At least 15.')}
-        {number('show', 'Show in inbox from score', 'thresholds', 'Default 60.')}
-        {number('draft', 'Draft replies from score', 'thresholds', 'Default 75.')}
-        {number('notify', 'Notify from score', 'thresholds', 'Default 85.')}
+        {number(
+          'show',
+          'Show in inbox from score',
+          'thresholds',
+          'Posts scoring this or more (out of 100) appear in the inbox. Default 60.',
+        )}
+        {number(
+          'draft',
+          'Draft replies from score',
+          'thresholds',
+          'Leads scoring this or more get a reply drafted for you. Default 75.',
+        )}
+        {number(
+          'notify',
+          'Notify from score',
+          'thresholds',
+          'Leads scoring this or more are sent to Slack or Discord, if set up. Default 85.',
+        )}
       </div>
       <SaveBar
         pending={form.pending}
@@ -115,7 +130,7 @@ export function PricesSection({ data }: { data: SettingsData }) {
     <Card id="prices">
       <CardHeader
         title="Model prices"
-        description="Used to show the cost of each scan and enforce the budget. Choosing a preset fills in its models; models without a price are counted as unknown."
+        description="Used to show what each scan costs and to stop scans at your budget. Choosing a preset fills this in, and a model with no known price does not count toward the budget."
       />
       <div className="px-4 py-4">
         <Field
@@ -185,7 +200,7 @@ export function FiltersSection({ data }: { data: SettingsData }) {
         <Field
           label="Languages"
           htmlFor="languages"
-          hint="Two-letter codes, separated by commas, for example en, de."
+          hint="Posts in other languages are skipped. Use two-letter codes separated by commas, for example en, de."
           error={form.errorFor('prefilter.languages')}
         >
           <Input

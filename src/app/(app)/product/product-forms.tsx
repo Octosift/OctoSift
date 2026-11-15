@@ -58,7 +58,7 @@ export function ProfileForm({
     <Card id="profile">
       <CardHeader
         title="Profile"
-        description="Every stage works from this text. The short version used by triage is rebuilt when you save."
+        description="The AI reads this every time it judges a post or writes a reply, so keep it accurate."
       />
       <div className="flex flex-col gap-4 px-4 pt-4">
         <Field label="Website" htmlFor="profile-url" error={form.errors.url}>
@@ -163,7 +163,7 @@ export function RepliesForm({
         <Field
           label="Most promotional reply allowed"
           htmlFor="reply-mode"
-          hint="Each lead still gets the gentlest mode that fits it; this is the upper limit."
+          hint="This is the limit. Each reply still mentions the product only as much as the post calls for."
         >
           <Select
             id="reply-mode"

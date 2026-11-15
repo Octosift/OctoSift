@@ -59,7 +59,7 @@ export function RulesEditor({ rules }: { rules: FeedbackRule[] }) {
     <Card id="feedback">
       <CardHeader
         title="What you told us about past leads"
-        description="The latest notes, without repeats, are added to every qualify call together with your five latest good and bad leads."
+        description="The AI follows your latest notes when it judges new posts, and uses your five latest good and bad leads as examples."
       />
       {rules.length === 0 ? (
         <p className="px-4 py-4 text-sm text-muted-foreground">
