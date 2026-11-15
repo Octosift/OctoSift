@@ -26,6 +26,7 @@ export function buildReviewPrompt(input: ReviewInput): PromptParts {
     ].join('\n'),
     '',
     'Return APPROVE, REVISE with specific fixes, or REJECT with the reason.',
+    'Write each reason and each fix as one short sentence the founder can read at a glance.',
     '',
     `SUBREDDIT RULES\n${input.rulesSummary ?? 'Unknown. Be strict about promotion.'}`,
     '',

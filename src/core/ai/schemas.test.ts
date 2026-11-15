@@ -14,6 +14,19 @@ describe('clip', () => {
     expect(clipped).toHaveLength(10);
     expect(clipped.endsWith('…')).toBe(true);
   });
+
+  it('ends on a whole sentence when one ends late enough', () => {
+    const text = 'The reply answers the question well. However, the mention reads like an advert.';
+    expect(clip(text, 55)).toBe('The reply answers the question well.');
+  });
+
+  it('otherwise ends on a whole word', () => {
+    const text =
+      'The unsolicited mention makes the comment promotional, especially with the subreddit';
+    const clipped = clip(text, 70);
+    expect(clipped).toBe('The unsolicited mention makes the comment promotional, especially…');
+    expect(clipped.length).toBeLessThanOrEqual(70);
+  });
 });
 
 describe('normalizeTriage', () => {

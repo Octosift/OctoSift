@@ -10,9 +10,24 @@
  */
 import { z } from 'zod';
 
+/**
+ * Shortens text to max characters. It ends on a whole sentence when one ends
+ * late enough, otherwise on a whole word, so a cut never lands mid-word.
+ */
 export function clip(text: string, max: number): string {
   const trimmed = text.trim();
-  return trimmed.length <= max ? trimmed : `${trimmed.slice(0, max - 1).trimEnd()}…`;
+  if (trimmed.length <= max) return trimmed;
+  const head = trimmed.slice(0, max - 1);
+  const floor = Math.floor(max * 0.6);
+  const sentenceEnd = Math.max(
+    head.lastIndexOf('. '),
+    head.lastIndexOf('! '),
+    head.lastIndexOf('? '),
+  );
+  if (sentenceEnd >= floor) return head.slice(0, sentenceEnd + 1);
+  const wordEnd = head.lastIndexOf(' ');
+  const cut = wordEnd >= floor ? head.slice(0, wordEnd) : head;
+  return `${cut.replace(/[\s,;:]+$/, '')}…`;
 }
 
 function clipList(items: string[], maxItems: number, maxChars = 200): string[] {
@@ -167,8 +182,8 @@ export interface ReviewOutput {
 export function normalizeReview(raw: z.output<typeof reviewWire>): ReviewOutput {
   return {
     decision: raw.decision,
-    reasons: clipList(raw.reasons, 6),
-    fixes: clipList(raw.fixes, 6),
+    reasons: clipList(raw.reasons, 6, 400),
+    fixes: clipList(raw.fixes, 6, 400),
   };
 }
 
