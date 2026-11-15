@@ -1,0 +1,64 @@
+name: Bug report
+description: Something does not work the way it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please remove keys, cookies, Reddit usernames and post text you
+        do not want to make public before you submit. Security problems go through the
+        process in SECURITY.md, not here.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Does it also happen in demo mode (`pnpm demo`)?
+      placeholder: |
+        1. Open the inbox
+        2. Click Regenerate
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: setup
+    attributes:
+      label: How do you run it?
+      options:
+        - pnpm start
+        - pnpm dev
+        - Docker
+        - Demo mode
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Reddit source
+      options:
+        - Connected account
+        - Logged out (RSS)
+        - Demo
+        - Not relevant
+  - type: input
+    id: provider
+    attributes:
+      label: AI provider and preset
+      placeholder: OpenAI, Balanced
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit, and Node.js version
+      placeholder: 0.1.0 (abc1234), Node 24.11
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant lines from the terminal. Check that they contain no secrets.
+      render: text
