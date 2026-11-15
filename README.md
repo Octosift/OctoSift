@@ -74,8 +74,9 @@ pnpm start             # dashboard and worker
 
 Open http://127.0.0.1:3005 and follow the onboarding: paste one OpenAI or Anthropic key and pick
 a preset, then connect a Reddit account, describe your product, confirm the suggested
-subreddits and run a first scan. Only the AI step is required; you can skip the rest and come
-back later. For development, `pnpm dev` runs both processes with reloading.
+subreddits and run a first scan. Nothing forces you through it: leave at any step, and Home and
+the sidebar show what is left. The Reddit account is optional; leads need the other steps. For
+development, `pnpm dev` runs both processes with reloading.
 
 ### With Docker
 
