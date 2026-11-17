@@ -340,8 +340,6 @@ account, about a minute apart logged out. The AI stages are quick.
 **Will it post for me one day?** No. Posting by hand is the point: it keeps you in control of
 what goes out under your name.
 
-<!-- TODO(owner): decide whether to mention a hosted version here. -->
-
 ## Roadmap
 
 - A browser extension for one-click copy on Reddit itself.
