@@ -59,14 +59,13 @@ Octosift does the reading for you. It picks out the posts where you can genuinel
 you why, and prepares a reply that is useful even without the sentence about your product.
 Then you decide what to post.
 
-|                                            | Reading by hand | Keyword alerts |     **Octosift**     |
-| ------------------------------------------ | :-------------: | :------------: | :------------------: |
-| Finds people asking, not just mentions     |       ✅        |       ❌       |          ✅          |
-| Reads every new post for you               |       ❌        |       ✅       |          ✅          |
-| Explains why each post is a lead           |        —        |       ❌       |          ✅          |
-| Reply drafts, reviewed before you see them |       ❌        |       ❌       |          ✅          |
-| Runs on your machine with your own key     |       ✅        |       —        |          ✅          |
-| Posts for you                              |       ❌        |       ❌       | **Never, by design** |
+|                                            | Reading by hand | Keyword alerts | **Octosift** |
+| ------------------------------------------ | :-------------: | :------------: | :----------: |
+| Finds people asking, not just mentions     |       ✅        |       ❌       |      ✅      |
+| Reads every new post for you               |       ❌        |       ✅       |      ✅      |
+| Explains why each post is a lead           |        —        |       ❌       |      ✅      |
+| Reply drafts, reviewed before you see them |       ❌        |       ❌       |      ✅      |
+| Runs on your machine with your own key     |       ✅        |       —        |      ✅      |
 
 ## See it in action
 
@@ -116,7 +115,7 @@ Then you decide what to post.
   </tr>
   <tr>
     <td valign="top">
-      <h3>💸 Your own AI key, low cost</h3>
+      <h3>💸 Your own AI key, costs you control</h3>
       <p>OpenAI, Anthropic, or any OpenAI-compatible endpoint such as Ollama, LM Studio or
       OpenRouter. Presets show an estimated monthly cost before you spend anything, and budget
       caps stop a scan cleanly.</p>
@@ -241,9 +240,9 @@ For development, `pnpm dev` runs the dashboard and the worker with reloading.
 
 ## What it costs
 
-Octosift is free. You pay your AI provider for what it uses, and reading Reddit costs
-nothing. Choose a preset, **Economy**, **Balanced** (recommended) or **Best quality**, and the
-app shows an estimate for your own subreddits before you spend anything.
+The running cost is your AI provider's usage, and it depends on the models you choose.
+Reading Reddit costs nothing. Choose a preset, **Economy**, **Balanced** (recommended) or
+**Best quality**, and the app shows an estimate for your own subreddits before you spend anything.
 
 <p align="center">
   <img src="docs/images/presets.png" width="720" alt="The three presets, each with its models and an estimated monthly cost." />
@@ -419,14 +418,6 @@ benefit from stronger ones.
 
 Reads are spaced out on purpose: several seconds apart with an
 account, about a minute apart logged out. The AI stages are quick.
-
-</details>
-
-<details>
-<summary><strong>Will it post for me one day?</strong></summary>
-
-No. Posting by hand is the point: it keeps you in control of
-what goes out under your name.
 
 </details>
 
