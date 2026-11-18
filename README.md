@@ -1,82 +1,142 @@
-<p align="center">
-  <img src="src/app/icon.svg" width="72" height="72" alt="" />
+<div align="center">
+
+<img src="src/app/icon.svg" width="84" height="84" alt="Octosift logo" />
+
+# Octosift
+
+### Find the people on Reddit who need what you built, and reply to them yourself.
+
+Octosift watches the subreddits you choose, explains which posts are real leads, and drafts
+honest, reviewed replies in your voice. You post every one by hand.
+**Open source, self-hosted, bring your own AI key.**
+
+<p>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-0f766e?style=flat-square" alt="License: AGPL-3.0" /></a>
+  <img src="https://img.shields.io/badge/node-22%20%7C%2024%20%7C%2026-0f766e?style=flat-square" alt="Node.js 22, 24 or 26" />
+  <img src="https://img.shields.io/badge/self--hosted-yes-0f766e?style=flat-square" alt="Self-hosted" />
+  <img src="https://img.shields.io/badge/telemetry-none-0f766e?style=flat-square" alt="No telemetry" />
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-0f766e?style=flat-square" alt="PRs welcome" /></a>
 </p>
 
-<h1 align="center">Octosift</h1>
-
-<p align="center">
-  <strong>Find the people on Reddit who need what you built, and reply to them yourself.</strong>
+<p>
+  <a href="#quick-start"><strong>Quick start</strong></a> ·
+  <a href="#features"><strong>Features</strong></a> ·
+  <a href="#how-it-works"><strong>How it works</strong></a> ·
+  <a href="#what-it-costs"><strong>Cost</strong></a> ·
+  <a href="#responsible-use"><strong>Responsible use</strong></a> ·
+  <a href="docs/architecture.md"><strong>Docs</strong></a>
 </p>
 
-<p align="center">
-  Open source and self-hosted. Octosift reads the subreddits you choose, explains which posts
-  are real leads, and drafts honest replies in your voice. You post every one of them by hand.
-</p>
+</div>
 
-<p align="center">
-  <a href="#quick-start">Quick start</a> ·
-  <a href="#how-it-works">How it works</a> ·
-  <a href="#what-it-costs">Cost</a> ·
-  <a href="#responsible-use">Responsible use</a> ·
-  <a href="docs/architecture.md">Docs</a> ·
-  <a href="CONTRIBUTING.md">Contributing</a>
-</p>
-
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-0f766e" alt="License: AGPL-3.0" /></a>
-  <img src="https://img.shields.io/badge/node-22%20%7C%2024%20%7C%2026-0f766e" alt="Node.js 22, 24 or 26" />
-  <img src="https://img.shields.io/badge/self--hosted-yes-0f766e" alt="Self-hosted" />
-  <img src="https://img.shields.io/badge/telemetry-none-0f766e" alt="No telemetry" />
-</p>
+<br />
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/images/inbox-dark.png" />
-  <img src="docs/images/inbox.png" alt="The inbox: a list of scored leads on the left; on the right, the post, why it is a lead, how to help, and a reviewed reply draft ready to copy." />
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png" />
+  <img src="docs/images/hero.png" alt="The Octosift inbox: scored leads on the left; on the right, the post, why it is a lead, how to help, and a reviewed reply draft ready to copy." />
 </picture>
 
-## Why
+<div align="center">
+
+**Try it in under a minute.** The demo needs no key, no account and no network.
+
+</div>
+
+```sh
+# in a clone of this repository
+pnpm install
+pnpm demo        # then open http://127.0.0.1:3005
+```
+
+## Why Octosift
 
 The people who need your product rarely search for it. They ask a community: _"What do you
 all use for this?"_ Those posts are the best leads you will ever get, and they are buried in
 thousands of others. Keyword alerts flood you with noise, and replies that read like ads get
 removed, downvoted or banned.
 
-Octosift does the reading for you. It watches a short list of communities, picks out the
-posts where you can genuinely help, tells you why, and prepares a reply that is useful even
-without the sentence about your product. Then you decide what to post.
+Octosift does the reading for you. It picks out the posts where you can genuinely help, tells
+you why, and prepares a reply that is useful even without the sentence about your product.
+Then you decide what to post.
+
+|                                            | Reading by hand | Keyword alerts |     **Octosift**     |
+| ------------------------------------------ | :-------------: | :------------: | :------------------: |
+| Finds people asking, not just mentions     |       ✅        |       ❌       |          ✅          |
+| Reads every new post for you               |       ❌        |       ✅       |          ✅          |
+| Explains why each post is a lead           |        —        |       ❌       |          ✅          |
+| Reply drafts, reviewed before you see them |       ❌        |       ❌       |          ✅          |
+| Runs on your machine with your own key     |       ✅        |       —        |          ✅          |
+| Posts for you                              |       ❌        |       ❌       | **Never, by design** |
+
+## See it in action
+
+<p align="center">
+  <img src="docs/images/demo.gif" width="100%" alt="A short tour: Home, moving through the inbox with the keyboard, asking for a shorter draft, and opening a scan to see the reason behind each verdict." />
+</p>
 
 ## Features
 
-- **Leads you can check.** Every post gets a verdict, a score and a reason. Open any scan to
-  see each post it read and why it was kept or dropped.
-- **Replies in your voice, reviewed before you see them.** A second model checks each draft
-  the way a moderator would: it answers the question, invents nothing, says you built the
-  product and does not read like an ad. Pick the angle and length, or ask for a rewrite in
-  plain words. When an author invites messages, a private message draft is ready too.
-- **Guardrails against looking like a spammer.** Drafts say plainly that you built the
-  product. Subreddits that ban promotion get replies that do not mention it. Pacing warnings
-  tell you when to help without a mention for a while. With a connected account, the app later
-  checks that your reply is still visible.
-- **Learns from you.** Mark a lead as good or bad with a short note, and the next scans
-  follow it as a rule.
-- **Your own AI key, low cost.** OpenAI, Anthropic, or any OpenAI-compatible endpoint such as
-  Ollama, LM Studio or OpenRouter. Presets show an estimated monthly cost, and budget caps
-  stop a scan cleanly.
-- **Private by design.** Runs on your machine with a local SQLite file. Keys and the Reddit
-  session are encrypted. No telemetry and no analytics.
-- **Fits your workflow.** Keyboard shortcuts in the inbox, a webhook for Slack or Discord, a
-  command line, Docker, and a mentions tab for posts that name your product.
-
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/home.png" alt="Home: leads waiting for a reply, scans, AI spend and scanner status." /></td>
-    <td width="50%"><img src="docs/images/run-reasons.png" alt="A scan's funnel, with the reason behind each careful check." /></td>
+    <td width="42%" valign="top">
+      <h3>🎯 Leads you can check</h3>
+      <p>Every post gets a verdict, a score and a plain reason. Open any scan to see each post it
+      read, which stage kept or dropped it, and why. Mark a lead good or bad with a short note,
+      and the next scans follow it as a rule.</p>
+    </td>
+    <td width="58%"><img src="docs/images/run-reasons.png" alt="A scan's funnel, with the reason behind each careful check." /></td>
   </tr>
   <tr>
-    <td align="center"><sub>Home: what is waiting and what the scanner is doing</sub></td>
-    <td align="center"><sub>Every scan shows each post and the reason for its verdict</sub></td>
+    <td valign="top">
+      <h3>✍️ Replies in your voice, reviewed first</h3>
+      <p>A second model checks each draft the way a moderator would: it answers the question,
+      invents nothing, says you built the product and does not read like an ad. Pick the angle
+      and length, or ask for a rewrite in plain words. When an author invites messages, a private
+      message draft is ready too.</p>
+    </td>
+    <td><img src="docs/images/inbox.png" alt="The inbox with a reviewed reply draft." /></td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>🛡️ Guardrails against looking like a spammer</h3>
+      <p>Drafts disclose that you built the product. Subreddits that ban promotion get replies
+      that do not mention it. Pacing warnings tell you when to help without a mention for a while,
+      and a connected account later checks that your reply is still visible.</p>
+    </td>
+    <td><img src="docs/images/subreddits.png" alt="Watched subreddits with their read status, hit rate and promotion rule." /></td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>🧠 It learns your product from your website</h3>
+      <p>Paste a URL. Octosift reads a few pages and drafts a profile: what the product does, who
+      it is for, the phrases people with the problem actually write, and what it does
+      <em>not</em> do. Edit anything; every judgement and draft follows it.</p>
+    </td>
+    <td><img src="docs/images/product.png" alt="The product profile drafted from the website." /></td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>💸 Your own AI key, low cost</h3>
+      <p>OpenAI, Anthropic, or any OpenAI-compatible endpoint such as Ollama, LM Studio or
+      OpenRouter. Presets show an estimated monthly cost before you spend anything, and budget
+      caps stop a scan cleanly.</p>
+    </td>
+    <td><img src="docs/images/presets.png" alt="The three presets with an estimated monthly cost." /></td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <h3>🔒 Private and calm</h3>
+      <p>Runs on your machine with a local SQLite file. Keys and the Reddit session are encrypted.
+      No telemetry, no analytics. Home shows what is waiting and what the scanner is doing, and
+      everything else stays out of your way.</p>
+    </td>
+    <td><img src="docs/images/home.png" alt="Home: leads waiting for a reply, AI spend and scanner status." /></td>
   </tr>
 </table>
+
+**Also included:** keyboard shortcuts for the whole inbox (`j` `k` `c` `s` `x` `?`), a webhook
+for Slack or Discord, a mentions tab for posts that name your product, an optional Evergreen tab
+for threads that rank on Google, a command line, Docker and a dark mode.
 
 ## How it works
 
@@ -291,6 +351,9 @@ Details: [docs/privacy.md](docs/privacy.md). To report a vulnerability, see
 
 ## Configuration
 
+<details>
+<summary><strong>Show all</strong></summary>
+
 Most settings live in the dashboard and are stored in the local database. Environment
 variables (see `.env.example`) cover deployment and can supply keys.
 
@@ -318,27 +381,54 @@ threads that rank on Google for your buyer keywords, checked weekly or on demand
 reply in a thread that ranks keeps paying off for months. A check costs about $0.004 per
 keyword, and the exact cost of each one is shown.
 
+</details>
+
 ## FAQ
 
-**Does it work for my kind of product?** Nothing in the code assumes an industry or an
+<details>
+<summary><strong>Does it work for my kind of product?</strong></summary>
+
+Nothing in the code assumes an industry or an
 audience; everything specific comes from your product profile. The test suite runs the whole
 pipeline against three unrelated sample products: an invoicing tool for freelancers, a
 consumer plant-care app and a developer command-line tool.
 
-**How do I know it finds the right posts?** Every verdict has a reason you can read on the
+</details>
+
+<details>
+<summary><strong>How do I know it finds the right posts?</strong></summary>
+
+Every verdict has a reason you can read on the
 Runs screen, and your good and bad marks become rules. `pnpm eval --yes-spend` measures the
 precision and recall of your chosen models on a labelled set of sample posts. It explains what
 it will send before it starts and stops at a cap (one dollar by default).
 
-**Can I use a local model?** Yes. Choose "OpenAI-compatible" and point it at Ollama or LM
+</details>
+
+<details>
+<summary><strong>Can I use a local model?</strong></summary>
+
+Yes. Choose "OpenAI-compatible" and point it at Ollama or LM
 Studio. Small local models are fine for the quick screen; the careful check and drafting
 benefit from stronger ones.
 
-**Why is the first scan slow?** Reads are spaced out on purpose: several seconds apart with an
+</details>
+
+<details>
+<summary><strong>Why is the first scan slow?</strong></summary>
+
+Reads are spaced out on purpose: several seconds apart with an
 account, about a minute apart logged out. The AI stages are quick.
 
-**Will it post for me one day?** No. Posting by hand is the point: it keeps you in control of
+</details>
+
+<details>
+<summary><strong>Will it post for me one day?</strong></summary>
+
+No. Posting by hand is the point: it keeps you in control of
 what goes out under your name.
+
+</details>
 
 ## Roadmap
 
@@ -365,6 +455,10 @@ how to set up, test and send a change.
 pnpm check       # lint, typecheck, unit tests and the leak check
 pnpm test:e2e    # Playwright smoke tests in demo mode
 ```
+
+## Star the project
+
+If Octosift helps you find even one customer, a ⭐ helps other founders find it too.
 
 ## License
 
