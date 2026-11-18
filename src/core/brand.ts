@@ -4,5 +4,5 @@
  */
 export const BRAND = Object.freeze({
   name: 'Octosift',
-  tagline: 'Find people on Reddit who need what you built, and reply by hand.',
+  tagline: 'Find people on Reddit who need what you built, and reply with something useful.',
 });

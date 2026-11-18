@@ -210,8 +210,7 @@ export function RedditConnect({
             reply from stays safe.
           </Why>
           <Why icon={<Eye aria-hidden />} title="What it does">
-            Only reads, at most {account.perHour} times an hour. It never posts, votes or sends
-            messages; you post your replies yourself.
+            Only reads, at most {account.perHour} times an hour.
           </Why>
           <Why icon={<Lock aria-hidden />} title="Privacy">
             The sign-in cookie is encrypted on this computer and only ever sent to reddit.com.

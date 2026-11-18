@@ -2,7 +2,7 @@
   "name": "octosift",
   "version": "0.1.0",
   "private": true,
-  "description": "Find Reddit posts from people who need your product and prepare replies you post by hand.",
+  "description": "Find Reddit posts from people who need your product and prepare reviewed replies.",
   "license": "AGPL-3.0-only",
   "type": "module",
   "engines": {
