@@ -4,6 +4,12 @@
   "private": true,
   "description": "Find Reddit posts from people who need your product and prepare reviewed replies.",
   "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Octosift/octosift.git"
+  },
+  "homepage": "https://github.com/Octosift/octosift#readme",
+  "bugs": "https://github.com/Octosift/octosift/issues",
   "type": "module",
   "engines": {
     "node": "^22.12.0 || ^24.0.0 || ^26.0.0"

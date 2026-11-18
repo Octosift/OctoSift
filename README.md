@@ -11,6 +11,7 @@ honest, reviewed replies in your voice, ready to post.
 **Open source, self-hosted, bring your own AI key.**
 
 <p>
+  <a href="https://github.com/Octosift/octosift/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Octosift/octosift/ci.yml?branch=main&style=flat-square&label=CI" alt="CI status" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-0f766e?style=flat-square" alt="License: AGPL-3.0" /></a>
   <img src="https://img.shields.io/badge/node-22%20%7C%2024%20%7C%2026-0f766e?style=flat-square" alt="Node.js 22, 24 or 26" />
   <img src="https://img.shields.io/badge/self--hosted-yes-0f766e?style=flat-square" alt="Self-hosted" />
@@ -43,7 +44,7 @@ honest, reviewed replies in your voice, ready to post.
 </div>
 
 ```sh
-# in a clone of this repository
+git clone https://github.com/Octosift/octosift.git && cd octosift
 pnpm install
 pnpm demo        # then open http://127.0.0.1:3005
 ```
