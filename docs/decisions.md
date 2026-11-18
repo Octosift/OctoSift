@@ -40,12 +40,12 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
   the remaining budget drops below one. See `reddit-reads.md`.
 - **Reddit is read by one process at a time.** The worker and the CLI scan (which
   takes the same scan lock) are the only readers, so one in-process limiter is enough.
-- **No Reddit app credentials.** Reddit closed self-service API access in late 2025 and
-  stopped accepting new access requests in late 2026, so new users cannot get credentials for
-  an app-only source. Subreddit rules are pasted by the user instead and summarised once; the
+- **No Reddit app credentials.** Reddit stopped accepting new public API requests after
+  October 31, 2026 and ends the public Data API in March 2027 (announced September 30, 2026),
+  so new users cannot get credentials for an app-only source. Subreddit rules are pasted by the user instead and summarised once; the
   summary sets the promotion policy only while the user has not chosen one.
-- **Two sources, tried in order.** Reddit ended RSS support in late 2026 and is closing its
-  public data API, so RSS is kept only as a best-effort fallback. The default is a Reddit
+- **Two sources, tried in order.** Reddit retired its public RSS feeds on November 13, 2026
+  and is closing its public Data API, so RSS is kept only as a best-effort fallback. The default is a Reddit
   account the user connects. The preferred source goes first and, with failover on, a source
   whose account stops working hands the rest of the scan to the other one. See `sources.md`.
 - **No paid data source.** The open-source app does not ship one: it would add a vendor, a key

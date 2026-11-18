@@ -44,8 +44,8 @@ reconnecting unless Reddit refuses it (401 or 403) or redirects to the sign-in p
 
 ## Public RSS feeds
 
-The logged-out Atom feeds, `/r/<subreddit>/new/.rss`. Reddit ended support for them in late
-2026; they still answered when this was written but may return nothing or stop at any time, so
+The logged-out Atom feeds, `/r/<subreddit>/new/.rss`. Reddit retired them on November 13, 2026
+(announced September 30, 2026); they still answered when this was written but may return nothing or stop at any time, so
 they are a best-effort fallback. See [how logged-out reads behave](reddit-reads.md).
 
 ## Adding a source

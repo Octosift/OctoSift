@@ -9,4 +9,4 @@
 - [ ] New behaviour has tests
 - [ ] Screenshots attached for visible changes
 
-<!-- The app never posts, votes or messages on Reddit, and keeps its request limits. See CONTRIBUTING.md. -->
+<!-- Posting, voting and messaging are out of scope, and the request limits stay as they are. See CONTRIBUTING.md. -->

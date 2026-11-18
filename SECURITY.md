@@ -38,8 +38,7 @@ These are the design guarantees a report would most likely break:
   every prompt, so text in them cannot give the models instructions.
 - **Careful fetching.** Reading your product's website refuses private and local network
   addresses, limits redirects and stops after a fixed size.
-- **Read only on Reddit.** The connected account is used to read, never to post, vote or send
-  messages.
+- **Read only on Reddit.** The connected account is only used to read.
 
 ## Out of scope
 

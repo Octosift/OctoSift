@@ -170,7 +170,7 @@ async function tour(browser: Browser) {
     '-i',
     resolve(videos, video),
     '-vf',
-    'fps=12,scale=1200:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle',
+    'fps=8,scale=880:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=48:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle',
     gif,
   ]);
   rmSync(videos, { recursive: true, force: true });

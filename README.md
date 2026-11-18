@@ -4,10 +4,10 @@
 
 # Octosift
 
-### Find the people on Reddit who need what you built, and reply to them yourself.
+### Find the people on Reddit who need what you built, and reply with something useful.
 
 Octosift watches the subreddits you choose, explains which posts are real leads, and drafts
-honest, reviewed replies in your voice. You post every one by hand.
+honest, reviewed replies in your voice, ready to post.
 **Open source, self-hosted, bring your own AI key.**
 
 <p>
@@ -147,7 +147,7 @@ flowchart LR
   D --> E["Rules and score"]
   E --> F["Inbox"]
   F --> G["Draft and review"]
-  G --> H["You post it yourself"]
+  G --> H["Ready to post"]
 ```
 
 1. **It learns your product.** Give it your website. It reads a few pages, drafts a profile
@@ -162,12 +162,10 @@ flowchart LR
    time, then fixed rules can only lower the result. Posts that score 60 or more reach the
    inbox.
 5. **It prepares replies for the strongest leads.** Posts that score 75 or more, or any lead
-   you ask for, get a draft and a review. You copy it, open the thread and post it yourself.
+   you ask for, get a draft and a review. One key copies it and opens the thread.
 
 ### What it does not do
 
-- **It does not post, comment, vote or send messages.** A connected Reddit account is only
-  used to read. Every reply is posted by you.
 - **It does not watch all of Reddit.** It reads only the short list of subreddits you chose.
 - **It does not hide who is speaking.** Whenever a draft mentions your product, it says you
   built it.
@@ -240,9 +238,12 @@ For development, `pnpm dev` runs the dashboard and the worker with reloading.
 
 ## What it costs
 
-The running cost is your AI provider's usage, and it depends on the models you choose.
-Reading Reddit costs nothing. Choose a preset, **Economy**, **Balanced** (recommended) or
-**Best quality**, and the app shows an estimate for your own subreddits before you spend anything.
+**Expect roughly $5 to $80 a month in AI usage**, depending on the models you choose and how
+busy your subreddits are; reading Reddit costs nothing. These figures are worked estimates,
+not measurements: the low end is a cheap preset on quiet subreddits, the high end is the
+example below (20 to 40 new posts an hour with a strong model for checking and drafting).
+Choose a preset, **Economy**, **Balanced** (recommended) or **Best quality**, and the app
+estimates the cost for your own subreddits before you spend anything.
 
 <p align="center">
   <img src="docs/images/presets.png" width="720" alt="The three presets, each with its models and an estimated monthly cost." />
@@ -288,15 +289,19 @@ model through any OpenAI-compatible endpoint.
 
 ## How it reads Reddit
 
-In late 2026 Reddit announced the end of its public RSS feeds and closed its public data API
-to new apps. Octosift reads Reddit in one of two ways and falls back between them:
+On September 30, 2026 Reddit announced that its public RSS feeds would be retired on
+November 13, 2026, that it would stop accepting new public API requests after October 31,
+2026, and that the public Data API ends in March 2027
+([TechRepublic](https://www.techrepublic.com/article/news-reddit-rss-public-api-shutdown/),
+[PPC Land](https://ppc.land/reddit-to-halt-public-data-api-access-in-march-2027-as-14-000-apps-register/)).
+Octosift reads Reddit in one of two ways and falls back between them:
 
 1. **A Reddit account you connect** (recommended). You sign in on Reddit's own page in a
    browser window the app opens, so the app never sees your password; in Docker you paste the
    session cookie instead. The session is stored encrypted and only ever sent to
    www.reddit.com.
-2. **Public RSS feeds** (logged out, best effort). Reddit is retiring them, so they may stop
-   working at any time.
+2. **Public RSS feeds** (logged out, best effort). Reddit has retired them; they still answered
+   in our last check but may stop at any time.
 
 Either way, reading is deliberately slow and narrow:
 
@@ -423,7 +428,6 @@ account, about a minute apart logged out. The AI stages are quick.
 
 ## Roadmap
 
-- A browser extension for one-click copy on Reddit itself.
 - More sources besides Reddit.
 - An MCP server, so assistants can query your leads.
 

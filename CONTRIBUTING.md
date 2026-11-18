@@ -57,8 +57,8 @@ CI runs the same checks on every pull request.
   the user's AI provider and integrations the user turns on.
 - **Synthetic data only.** Never commit real Reddit posts, usernames, keys or cookies. The leak
   check catches the common cases, and reviewers check the rest.
-- **The app never posts.** Changes that post, vote or send messages on a user's behalf, or that
-  raise the Reddit request limits, will not be accepted. See
+- **Posting is out of scope here.** Changes that post, vote or send messages on a user's
+  behalf, or that raise the Reddit request limits, will not be accepted. See
   [Responsible use](README.md#responsible-use).
 - **Plain words in the interface.** Write labels and messages the way you would explain them
   to a founder who is not technical.
