@@ -445,7 +445,8 @@ account, about a minute apart logged out. The AI stages are quick.
 ## Contributing
 
 Bug reports, ideas and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) explains
-how to set up, test and send a change.
+how to set up, test and send a change. Everyone taking part follows the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ```sh
 pnpm check       # lint, typecheck, unit tests and the leak check
@@ -461,3 +462,6 @@ If Octosift helps you find even one customer, a ⭐ helps other founders find it
 Octosift is licensed under the [GNU Affero General Public License v3.0](LICENSE). You may
 use, change and self-host it freely. If you run a modified version as a service for other
 people, you must offer them its source code under the same license.
+
+The license covers the code, not the name. A modified version or a hosted service offered to
+others needs its own name and logo; [TRADEMARKS.md](TRADEMARKS.md) explains what is fine.

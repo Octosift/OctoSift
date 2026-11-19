@@ -1,6 +1,7 @@
 # Contributing
 
 Thank you for helping. Bug reports, ideas, documentation fixes and code are all welcome.
+Everyone taking part in the project follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Before you start
 
@@ -62,6 +63,9 @@ CI runs the same checks on every pull request.
   [Responsible use](README.md#responsible-use).
 - **Plain words in the interface.** Write labels and messages the way you would explain them
   to a founder who is not technical.
+- **AI help is fine, unreviewed AI output is not.** You may use AI tools, but you must have
+  read, understood and tested every line you send, and be able to explain it in review. Pull
+  requests and issues that look generated without that care are closed without review.
 
 ## Pull requests
 
@@ -74,4 +78,5 @@ CI runs the same checks on every pull request.
 ## License
 
 By contributing, you agree that your contribution is licensed under the project's
-[GNU Affero General Public License v3.0](LICENSE).
+[GNU Affero General Public License v3.0](LICENSE). The license does not cover the Octosift
+name and logo; see [TRADEMARKS.md](TRADEMARKS.md).
