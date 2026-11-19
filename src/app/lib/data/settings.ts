@@ -3,6 +3,8 @@ import { CONFIG } from '@/core/config';
 import { sessionStatus } from '@/core/reddit/account';
 import type { SecretDescription, SecretName } from '@/core/secrets/store';
 import { readState } from '@/core/state';
+import { BRAND } from '@/core/brand';
+import { lastUpdateCheck } from '@/core/updates/check';
 import { runsInContainer } from '../reddit-sign-in';
 import { loadAiSettings } from './ai';
 import { getRuntime } from '../runtime';
@@ -52,6 +54,13 @@ export function loadSettings() {
       notifyFormat: settings.get('notify.format'),
       source: settings.get('reddit.source'),
       failover: settings.get('reddit.failover'),
+      updatesCheck: settings.get('updates.check'),
+    },
+    updates: {
+      version: BRAND.version,
+      /** UPDATE_CHECK=0 in the environment overrides the setting. */
+      envDisabled: !env.UPDATE_CHECK,
+      lastCheck: lastUpdateCheck(db),
     },
   };
 }

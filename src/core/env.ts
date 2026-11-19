@@ -25,6 +25,13 @@ const envSchema = z.object({
   EXPERIMENTAL_CLI_PROVIDERS: flag,
   /** The Codex CLI, when it is not on PATH or in the ChatGPT app. */
   CODEX_BIN: z.string().optional(),
+  /** On unless set to 0, false or no: the daily check for a new release on GitHub. */
+  UPDATE_CHECK: z
+    .enum(['1', '0', 'true', 'false', 'yes', 'no'])
+    .optional()
+    .transform(
+      (value) => value === undefined || value === '1' || value === 'true' || value === 'yes',
+    ),
 });
 
 export type AppEnv = z.output<typeof envSchema>;

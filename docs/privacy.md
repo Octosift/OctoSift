@@ -30,6 +30,8 @@ Everything stays on the machine that runs Octosift.
 - **Reply and account checks**, if a Reddit account is connected: whether each reply you linked
   could still be seen an hour and a day after you posted it, and the result of the last daily
   check of the connected account's public profile.
+- **The update check**: the latest release's version, link and announcement, when it was
+  checked, and which notices you closed.
 
 Saved keys are never sent back to the browser: the dashboard only ever receives a mask such as
 `sk-…a1b2`. Logs and error messages pass through a redactor that removes stored secrets and
@@ -51,6 +53,10 @@ anything shaped like a key.
 - **DataForSEO**, if you set it up: your keywords, once a week or when you press Check now.
 - **Your webhook**, if you set one: the title, subreddit, score and reason of strong leads, with
   a link to the lead in your dashboard.
+- **GitHub**, unless you turn it off: once a day, a request for the latest release of Octosift,
+  with the app's name and version as its User-Agent. Nothing about you, your products or your
+  leads is sent, and the project has no server that could see who checked. Turn it off in
+  Settings → Data & updates or with `UPDATE_CHECK=0`; demo mode never checks.
 
 There is no telemetry and no analytics. The npm scripts and the Docker image turn off Next.js
 telemetry.

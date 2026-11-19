@@ -11,8 +11,23 @@ describe('parseEnv', () => {
         PUBLIC_URL: 'http://127.0.0.1:3005',
         DEMO_MODE: false,
         EXPERIMENTAL_CLI_PROVIDERS: false,
+        UPDATE_CHECK: true,
       },
     });
+  });
+
+  it('keeps the update check on unless it is turned off explicitly', () => {
+    const check = (value?: string) => {
+      const result = parseEnv(value === undefined ? {} : { UPDATE_CHECK: value });
+      return result.ok ? result.env.UPDATE_CHECK : 'invalid';
+    };
+    expect(check()).toBe(true);
+    expect(check('')).toBe(true);
+    expect(check('1')).toBe(true);
+    expect(check('0')).toBe(false);
+    expect(check('false')).toBe(false);
+    expect(check('no')).toBe(false);
+    expect(check('maybe')).toBe('invalid');
   });
 
   it('treats empty values as unset and reads flags', () => {

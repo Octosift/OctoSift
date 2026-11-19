@@ -275,6 +275,16 @@ export const CONFIG = deepFreeze({
     timeoutMs: 10_000,
   },
 
+  updates: {
+    /** One request a day to GitHub's public API, well under its anonymous limit. */
+    checkIntervalMs: 24 * 60 * 60 * 1000,
+    /** After a failed check, try again sooner than a day. */
+    retryAfterErrorMs: 6 * 60 * 60 * 1000,
+    timeoutMs: 10_000,
+    /** Longest announcement shown on Home; longer text is cut at a word. */
+    maxAnnouncementChars: 280,
+  },
+
   rules: {
     summaryCacheS: 30 * DAY_S,
   },

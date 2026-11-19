@@ -141,6 +141,8 @@ export const SETTINGS = {
     [],
   ),
   'notify.format': setting(z.enum(['slack', 'discord']), 'slack'),
+  /** Asks GitHub once a day whether a newer release exists. */
+  'updates.check': setting(z.boolean(), true),
   'onboarding.completed': setting(z.boolean(), false),
 } as const;
 

@@ -7,6 +7,8 @@ import { leads, runs } from '@/core/db/schema';
 import { sessionStatus } from '@/core/reddit/account';
 import { AI_STAGES } from '@/core/settings/registry';
 import { readWorkerStatus } from '@/core/worker-status';
+import { BRAND } from '@/core/brand';
+import { updateView } from '@/core/updates/check';
 import { stepHref, type StepId } from '../../onboarding/steps';
 import { getRuntime, nowSeconds } from '../runtime';
 
@@ -135,6 +137,8 @@ export function loadHome() {
     demo: env.DEMO_MODE,
     worker: readWorkerStatus(db, runtime.clock.nowMs()),
     leads: listLeads(db, { tab: 'todo' }, { limit: 5, offset: 0, now }).rows,
+    version: BRAND.version,
+    notices: updateView(db, { enabled: runtime.updatesEnabled(), currentVersion: BRAND.version }),
   };
 }
 

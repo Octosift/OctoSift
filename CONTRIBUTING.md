@@ -55,7 +55,8 @@ CI runs the same checks on every pull request.
 - **Network access stays in a few modules.** A lint rule forbids `fetch` everywhere except the
   modules listed in `eslint.config.js`. If you need a new one, explain why in the pull request.
 - **No telemetry, analytics or new outside services.** The app talks only to Reddit (to read),
-  the user's AI provider and integrations the user turns on.
+  the user's AI provider, integrations the user turns on and GitHub's public API for the daily
+  release check.
 - **Synthetic data only.** Never commit real Reddit posts, usernames, keys or cookies. The leak
   check catches the common cases, and reviewers check the rest.
 - **Posting is out of scope here.** Changes that post, vote or send messages on a user's

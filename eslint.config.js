@@ -20,6 +20,8 @@ const networkModules = [
   'src/core/notify/webhook.ts',
   'src/core/serp/dataforseo.ts',
   'src/core/reddit/session-client.ts',
+  // GitHub's public API, once a day, for the latest release.
+  'src/core/updates/github.ts',
   // Same-origin only: the inbox polls this app's own server for draft progress.
   'src/app/lib/draft-progress-client.ts',
 ];

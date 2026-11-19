@@ -237,6 +237,25 @@ pnpm eval --yes-spend         # measure precision and recall on labelled sample 
 
 For development, `pnpm dev` runs the dashboard and the worker with reloading.
 
+## Updating
+
+Octosift checks GitHub once a day for a new release and shows it on Home, with a link to its
+notes. The request carries only the app's name and version. Turn it off in Settings → Data &
+updates, or with `UPDATE_CHECK=0`.
+
+To update a copy you cloned:
+
+```sh
+git pull
+pnpm install
+pnpm build
+pnpm start      # migrates the database, then starts the dashboard and the worker
+```
+
+With Docker, run `git pull` and then `docker compose up --build`. Your data is kept: the
+database is migrated when the app starts. Read the release notes first; they say when a
+release needs anything more.
+
 ## What it costs
 
 **Expect roughly $5 to $80 a month in AI usage**, depending on the models you choose and how
@@ -348,8 +367,10 @@ Octosift is built to help you show up where you are useful, not to flood communi
 Everything stays on the machine that runs Octosift: a SQLite file, plus an encryption key
 that never leaves it. API keys and the Reddit session are encrypted with AES-256-GCM. The
 dashboard listens on 127.0.0.1 by default, and `APP_PASSWORD` protects it when you expose it.
-The app talks only to Reddit (to read), the AI provider you configure, and the optional
-integrations you turn on. Reddit posts are treated as untrusted input in every prompt.
+The app talks only to Reddit (to read), the AI provider you configure, the optional
+integrations you turn on, and GitHub once a day to see whether a new release is out (only the
+app's name and version are sent; you can turn it off). Reddit posts are treated as untrusted
+input in every prompt.
 
 Details: [docs/privacy.md](docs/privacy.md). To report a vulnerability, see
 [SECURITY.md](SECURITY.md).
@@ -376,6 +397,7 @@ variables (see `.env.example`) cover deployment and can supply keys.
 | `REDDIT_PROXY_URL`                                                 | none                         | Proxy for Reddit reads                                               |
 | `WEBHOOK_URL`                                                      | none                         | Webhook for strong leads (Slack-style or Discord-style)              |
 | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`                          | none                         | Optional: finds Reddit threads that rank on Google for your keywords |
+| `UPDATE_CHECK`                                                     | on                           | `0` turns off the daily check on GitHub for a new release            |
 
 The dashboard also holds the model for each stage, prices, budget caps, the scan interval,
 score thresholds, filters, your Reddit username (so your own posts are skipped) and whether

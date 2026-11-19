@@ -181,3 +181,20 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
   long random password is still the main defence.
 - **Next.js is pinned to the project folder** (Turbopack root) and does not write its agent
   instruction file into the repository.
+
+## Updates
+
+- **A daily release check, on by default, to GitHub only.** A self-hosted app that never
+  learns about new versions keeps running old bugs, and an opt-in check is one almost nobody
+  turns on. The worker asks GitHub's public API for the latest release once a day, sending
+  only a User-Agent with the app's name and version. There is no server of ours in between,
+  so the project learns nothing about who runs it; this is not telemetry, and it can be turned
+  off in Settings or with `UPDATE_CHECK=0`. Demo mode never checks.
+- **Releases, not commits.** Commits on `main` are not all ready to run, so only published
+  releases count. Drafts and pre-releases are never offered.
+- **Announcements come from the release notes.** The first paragraph under an `Announcement`
+  heading in the latest release's notes is shown on Home, so what users see is also public on
+  the release page. It is rendered as plain text with at most one https link, and each
+  announcement and each update notice can be closed for good.
+- **No self-updating.** The app links to the release notes and the update steps instead of
+  replacing its own code.

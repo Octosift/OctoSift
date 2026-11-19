@@ -7,6 +7,7 @@ import { cn } from '../components/ui/utils';
 import { loadHome, type HomeData, type SetupItem } from '../lib/data/home';
 import { formatAge, formatAgo, formatUsd } from '../lib/format';
 import { INTENT_LABELS } from '../lib/text';
+import { UpdateNotices } from './update-notices';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Home' };
@@ -287,6 +288,7 @@ export default function HomePage() {
         }
       />
       <div className="flex max-w-6xl flex-col gap-6 px-6 pb-12">
+        <UpdateNotices view={data.notices} current={data.version} />
         {!data.setupDone ? <SetupCard items={data.setup} /> : null}
         {data.product ? (
           <>

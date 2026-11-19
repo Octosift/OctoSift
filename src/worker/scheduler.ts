@@ -39,6 +39,8 @@ export interface SchedulerDeps {
   serp?: () => SerpFetcher | null;
   /** Runs the reply and account visibility checks that are due. */
   checkVisibility?: () => Promise<void>;
+  /** Asks GitHub for the latest release when the daily check is due. */
+  checkUpdates?: () => Promise<void>;
   /** Identifies this process in the scan lock. */
   owner: string;
   /** Calls `beat` periodically until the returned function is called. */
@@ -225,6 +227,7 @@ export function createScheduler(deps: SchedulerDeps) {
         if (checkSchedule) {
           await checkEvergreen();
           await deps.checkVisibility?.();
+          await deps.checkUpdates?.();
         }
       } catch (error) {
         log.error('Worker iteration failed', { error });

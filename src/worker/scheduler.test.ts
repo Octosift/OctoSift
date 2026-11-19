@@ -113,6 +113,35 @@ describe('scheduler', () => {
     expect(harness.db.select().from(runs).all()).toHaveLength(1);
   });
 
+  it('asks for the update check with the scheduled work, and survives its failure', async () => {
+    const harness = createScanHarness('acme-invoices');
+    const controller = new AbortController();
+    let updateChecks = 0;
+    let iterations = 0;
+    const scheduler = createScheduler({
+      db: harness.db,
+      settings: harness.settings,
+      clock: harness.clock,
+      log: silentLogger(),
+      scanDeps: () => harness.deps,
+      checkUpdates: () => {
+        updateChecks += 1;
+        return Promise.reject(new Error('GitHub is down'));
+      },
+      owner: 'worker-test',
+      startHeartbeat: () => () => undefined,
+      sleep: (ms) => {
+        iterations += 1;
+        // The schedule is checked once a minute; jump past it each time.
+        harness.clock.advance(60_000);
+        if (iterations === 2) controller.abort();
+        return harness.clock.sleep(ms);
+      },
+    });
+    await scheduler.run(controller.signal);
+    expect(updateChecks).toBe(2);
+  });
+
   it('runs the weekly evergreen check when DataForSEO is configured', async () => {
     const harness = createScanHarness('acme-invoices');
     const asked: string[] = [];

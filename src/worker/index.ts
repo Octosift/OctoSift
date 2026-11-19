@@ -37,6 +37,7 @@ const scheduler = createScheduler({
   scanDeps: () => runtime.scanDeps(),
   serp: () => runtime.serp(),
   checkVisibility: () => runtime.checkVisibility(),
+  checkUpdates: () => runtime.checkUpdates(),
   owner: `worker-${hostname()}-${process.pid}`,
 });
 

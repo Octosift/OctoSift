@@ -53,10 +53,12 @@ demo mode and tests replace parts of it.
 - Input is validated with Zod where it enters: environment variables, settings, server
   action arguments, feed entries, AI output and stored JSON.
 - Only `reddit/client.ts`, `reddit/session-client.ts`, `ai/provider.ts`, `profile/crawl.ts`,
-  `notify/webhook.ts` and `serp/dataforseo.ts` call `fetch`; a lint rule enforces it. The
+  `notify/webhook.ts`, `serp/dataforseo.ts` and `updates/github.ts` call `fetch`; a lint rule
+  enforces it. The
   experimental Codex CLI provider (`ai/codex.ts`) runs the CLI as a child process instead. The crawler, the webhook and
   DataForSEO reach the network by design (your product site, your webhook and, when you set it
-  up, Google results), in addition to Reddit and the AI provider.
+  up, Google results), in addition to Reddit and the AI provider. The update check asks
+  GitHub's public API for the latest release once a day.
 - Expected failures are values (`{ ok: false, kind, message }`), not exceptions. A scan
   never throws: problems end up in the run's status and error.
 - Logging goes through one logger that redacts stored secrets and anything shaped like a key.

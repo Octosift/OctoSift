@@ -60,6 +60,26 @@ const STATE = {
     done: z.number().nullable(),
     total: z.number().nullable(),
   }),
+  /** The last check for a new release on GitHub, and when the next one is due. */
+  'state.updateCheck': z.object({
+    checkedAt: z.number(),
+    nextAt: z.number(),
+    /** The latest published release, kept from the last successful check. */
+    latest: z
+      .object({
+        version: z.string(),
+        url: z.string(),
+        publishedAt: z.string().nullable(),
+        announcement: z.object({ text: z.string(), url: z.string().nullable() }).nullable(),
+      })
+      .nullable(),
+    error: z.string().nullable(),
+  }),
+  /** The update notice and announcement the user closed, so they stay closed. */
+  'state.updateDismissed': z.object({
+    version: z.string().nullable(),
+    announcement: z.string().nullable(),
+  }),
   'state.scanRequest': z.object({ requestedAt: z.number(), productId: z.string().nullable() }),
   'state.validationRequest': z.object({ requestedAt: z.number(), names: z.array(z.string()) }),
   'state.validationProgress': z.object({

@@ -10,6 +10,7 @@ import { DataSection } from './data-section';
 import { DataSourceSection } from './data-source';
 import { RedditAccountCard } from './reddit-account';
 import { BudgetSection, FiltersSection, PricesSection } from './sections';
+import { UpdatesSection } from './updates-section';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Settings' };
@@ -65,7 +66,17 @@ export default function SettingsPage() {
             content: panel(<NotificationsSection data={data} />),
           },
           { id: 'evergreen', label: 'Evergreen', content: panel(<EvergreenSection data={data} />) },
-          { id: 'data', label: 'Data', content: panel(<DataSection />) },
+          {
+            id: 'data',
+            label: 'Data & updates',
+            anchors: ['updates'],
+            content: panel(
+              <>
+                <DataSection />
+                <UpdatesSection data={data} now={nowSeconds()} />
+              </>,
+            ),
+          },
         ]}
       />
     </>

@@ -29,6 +29,7 @@ const env = (path: string) => ({
   PUBLIC_URL: 'http://127.0.0.1:3000',
   DEMO_MODE: false,
   EXPERIMENTAL_CLI_PROVIDERS: false,
+  UPDATE_CHECK: true,
 });
 
 describe('createRuntime', () => {
@@ -117,5 +118,35 @@ describe('createRuntime', () => {
     const result = await runtime.ai().text({ task: 'test', system: 's', prompt: 'p' });
     runtime.close();
     expect(result).toMatchObject({ ok: true, value: 'OK' });
+  });
+
+  it('checks for updates unless the setting, the environment or demo mode says no', async () => {
+    let requests = 0;
+    const fetchLatestRelease = () => {
+      requests += 1;
+      return Promise.resolve({ ok: true as const, release: null });
+    };
+    const make = (overrides: { DEMO_MODE?: boolean; UPDATE_CHECK?: boolean } = {}) =>
+      createRuntime({
+        env: { ...env(databasePath()), ...overrides },
+        rawEnv: {},
+        overrides: { fetchLatestRelease },
+      });
+
+    const runtime = make();
+    expect(runtime.updatesEnabled()).toBe(true);
+    await runtime.checkUpdates();
+    expect(requests).toBe(1);
+    runtime.settings.set('updates.check', false);
+    expect(runtime.updatesEnabled()).toBe(false);
+    runtime.close();
+
+    for (const off of [{ UPDATE_CHECK: false }, { DEMO_MODE: true }]) {
+      const disabled = make(off);
+      expect(disabled.updatesEnabled()).toBe(false);
+      await disabled.checkUpdates();
+      disabled.close();
+    }
+    expect(requests).toBe(1);
   });
 });

@@ -38,8 +38,10 @@ release only, so please update before reporting.
 These are the design guarantees a report would most likely break:
 
 - **Local first.** Everything is stored in a SQLite file on your machine. There is no
-  telemetry, analytics or phone-home. The app talks only to Reddit (to read), the AI provider
-  you configure and the optional integrations you turn on.
+  telemetry and no analytics. The app talks only to Reddit (to read), the AI provider you
+  configure, the optional integrations you turn on, and GitHub's public API once a day to see
+  whether a new release is out. That request carries only the app's name and version, and can
+  be turned off.
 - **Encrypted secrets.** API keys and the Reddit session are encrypted with AES-256-GCM. The
   key comes from `APP_SECRET`, or from a random key file created with owner-only permissions.
   Secrets are never shown again in the dashboard and never included in exports.

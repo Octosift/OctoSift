@@ -38,6 +38,9 @@ import { createSecretStore, type SecretStore } from './secrets/store';
 import { createDataForSeoFetcher, type SerpFetcher } from './serp/dataforseo';
 import { createSettingsStore, type SettingsStore } from './settings/store';
 import { clearState, readState, writeState } from './state';
+import { BRAND } from './brand';
+import { runUpdateCheck } from './updates/check';
+import { fetchLatestRelease, type ReleaseResult } from './updates/github';
 
 export interface Runtime {
   env: AppEnv;
@@ -62,6 +65,13 @@ export interface Runtime {
    * connected account, all through its session.
    */
   checkVisibility(): Promise<void>;
+  /**
+   * Whether the daily release check may run: on unless the user turned it off
+   * in Settings or with UPDATE_CHECK=0, and never in demo mode.
+   */
+  updatesEnabled(): boolean;
+  /** Asks GitHub for the latest release when a check is due. */
+  checkUpdates(): Promise<void>;
   scanDeps(): ScanDeps;
   close(): void;
 }
@@ -80,6 +90,7 @@ export interface RuntimeOptions {
     resolveModel?: (stage: AiStage) => ModelResolution;
     serp?: SerpFetcher;
     extendScanDeps?: (deps: ScanDeps) => ScanDeps;
+    fetchLatestRelease?: () => Promise<ReleaseResult>;
   };
 }
 
@@ -219,6 +230,7 @@ export function createRuntime(options: RuntimeOptions): Runtime {
   const resolveModel =
     options.overrides?.resolveModel ??
     createModelResolver(settings, secrets, { cliProviders: env.EXPERIMENTAL_CLI_PROVIDERS });
+  const updatesEnabled = () => !env.DEMO_MODE && env.UPDATE_CHECK && settings.get('updates.check');
 
   return {
     env,
@@ -259,6 +271,17 @@ export function createRuntime(options: RuntimeOptions): Runtime {
       // A refusal during the reply checks leaves the session needing reconnection.
       if (!hasRedditAccount()) return;
       await runAccountCheck({ db, reddit, username, now: nowSeconds(clock), log });
+    },
+    updatesEnabled,
+    checkUpdates: async () => {
+      await runUpdateCheck({
+        db,
+        clock,
+        log,
+        enabled: updatesEnabled(),
+        currentVersion: BRAND.version,
+        fetchLatest: options.overrides?.fetchLatestRelease ?? (() => fetchLatestRelease()),
+      });
     },
     serp: () => {
       if (options.overrides?.serp) return options.overrides.serp;
