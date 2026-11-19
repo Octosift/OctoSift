@@ -25,7 +25,12 @@ honest, reviewed replies in your voice, ready to post.
   <a href="#how-it-works"><strong>How it works</strong></a> ·
   <a href="#what-it-costs"><strong>Cost</strong></a> ·
   <a href="#responsible-use"><strong>Responsible use</strong></a> ·
-  <a href="docs/architecture.md"><strong>Docs</strong></a>
+  <a href="docs/architecture.md"><strong>Docs</strong></a> ·
+  <a href="#community"><strong>Community</strong></a>
+</p>
+
+<p>
+  <a href="https://t.me/+EoZ4XW1xmy05MTQx"><img src="https://img.shields.io/badge/Join%20the%20community%20on%20Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Join the Octosift community on Telegram" /></a>
 </p>
 
 </div>
@@ -463,6 +468,14 @@ account, about a minute apart logged out. The AI stages are quick.
 - [Privacy: what is stored and where](docs/privacy.md)
 - [Adding a new source](docs/adding-a-source.md)
 - [Decisions](docs/decisions.md)
+
+## Community
+
+Come say hi in the [Octosift Telegram group](https://t.me/+EoZ4XW1xmy05MTQx). Ask setup
+questions, share what is working for you on Reddit, and hear about new releases first. Bugs and
+feature requests belong in [GitHub issues](https://github.com/Octosift/OctoSift/issues), so
+everyone can find them later. Security problems go through [SECURITY.md](SECURITY.md), never
+the group.
 
 ## Contributing
 
