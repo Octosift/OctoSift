@@ -13,7 +13,7 @@ Everyone taking part in the project follows the [Code of Conduct](CODE_OF_CONDUC
 
 ## Set up
 
-You need pnpm and Node.js 24 (22.12+ and 26 also work; `.nvmrc` selects 24).
+You need pnpm and Node.js 24 (22.14+ and 26 also work; `.nvmrc` selects 24).
 
 ```sh
 pnpm install

@@ -19,6 +19,12 @@ test.afterAll(async () => {
   await page.context().close();
 });
 
+/** Opens the inbox and waits until its keyboard shortcuts are attached. */
+async function openInbox() {
+  await page.goto('/inbox');
+  await expect(page.locator('html[data-inbox-shortcuts="on"]')).toBeAttached();
+}
+
 test('onboarding in demo mode ends in an inbox with leads', async () => {
   // Nothing forces setup: Home lists the steps and the next one starts it.
   await page.goto('/onboarding?step=2');
@@ -48,7 +54,7 @@ test('onboarding in demo mode ends in an inbox with leads', async () => {
 });
 
 test('the keyboard moves through the inbox', async () => {
-  await page.goto('/inbox');
+  await openInbox();
   const rows = page.getByRole('list', { name: 'Leads' }).getByRole('link');
   const first = await rows.nth(0).getAttribute('data-lead-id');
   const second = await rows.nth(1).getAttribute('data-lead-id');
@@ -68,7 +74,7 @@ test('the keyboard moves through the inbox', async () => {
 });
 
 test('copy and open copies the draft, opens the thread and marks the lead replied', async () => {
-  await page.goto('/inbox');
+  await openInbox();
   const draft = await page.getByRole('textbox', { name: 'Reply draft' }).inputValue();
   expect(draft.length).toBeGreaterThan(50);
   const todoBefore = Number(

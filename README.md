@@ -200,7 +200,7 @@ leads.
 <details>
 <summary><strong>Requirements</strong></summary>
 
-- [pnpm](https://pnpm.io) and Node.js on a long-term support line: 22.12 or later, 24
+- [pnpm](https://pnpm.io) and Node.js on a long-term support line: 22.14 or later, 24
   (recommended, and what `.nvmrc` selects) or 26. Node 20 and odd-numbered releases are not
   supported.
 - On Node 26 the SQLite driver is compiled during `pnpm install`, which needs a C++ toolchain

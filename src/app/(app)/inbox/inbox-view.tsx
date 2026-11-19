@@ -107,8 +107,12 @@ export function InboxView({ data }: { data: InboxData }) {
       action();
     }
     window.addEventListener('keydown', onKey);
+    // Tells end-to-end tests the shortcuts work: the server-rendered page looks ready before
+    // this effect has run, and a key pressed earlier would be lost on a slow machine.
+    document.documentElement.dataset.inboxShortcuts = 'on';
     return () => {
       window.removeEventListener('keydown', onKey);
+      delete document.documentElement.dataset.inboxShortcuts;
     };
   });
 

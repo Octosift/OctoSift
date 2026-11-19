@@ -4,8 +4,10 @@ Short notes on choices that are not obvious from the code. Newest at the bottom.
 
 ## Tooling
 
-- **Node.js 22.12+, 24 or 26.** The test runner accepts only these long-term support lines
-  (22 from 22.12), and the SQLite driver and AI SDK need 22 or later. 24 is the default in
+- **Node.js 22.14+, 24 or 26.** The test runner accepts only these long-term support lines
+  (22 from 22.12), and the SQLite driver and AI SDK need 22 or later. On Linux, Node 22.12
+  and 22.13 crash with a segmentation fault in processes that open the SQLite database (seen
+  in the test workers); 22.14 does not, so it is the minimum. 24 is the default in
   `.nvmrc` and the Docker image. Node 26 has no prebuilt SQLite binary yet, so it compiles
   during install. CI runs the checks on all three.
 
