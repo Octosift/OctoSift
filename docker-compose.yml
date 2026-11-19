@@ -3,7 +3,7 @@
 # before exposing it any further.
 x-app: &app
   build: .
-  image: local/reddit-leads:latest
+  image: local/octosift:latest
   env_file:
     - path: .env
       required: false
