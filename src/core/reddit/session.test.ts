@@ -206,6 +206,32 @@ describe('session client', () => {
     },
   );
 
+  it.each([
+    [
+      'a 403 block page',
+      () =>
+        new Response(fixture('network-blocked.html'), {
+          status: 403,
+          headers: { 'content-type': 'text/html' },
+        }),
+    ],
+    [
+      'a block page',
+      () =>
+        new Response(fixture('network-blocked.html'), {
+          headers: { 'content-type': 'text/html' },
+        }),
+    ],
+  ])('reports %s as a blocked network and leaves the session alone', async (_, respond) => {
+    const { client, requests, invalid } = setup({ '/r/a_demo.json': respond });
+    const first = await client.getJson('/r/a_demo.json');
+    expect(first).toMatchObject({ ok: false, kind: 'blocked' });
+    expect(first.ok ? '' : first.message).toContain('Reconnecting will not help');
+    expect(await client.getJson('/r/a_demo.json')).toMatchObject({ ok: false, kind: 'blocked' });
+    expect(requests).toHaveLength(2);
+    expect(invalid).toEqual([]);
+  });
+
   it('makes no request without a connected account', async () => {
     const { client, requests } = setup({}, null);
     expect(await client.getJson('/r/a_demo.json')).toMatchObject({ ok: false, kind: 'auth' });

@@ -81,7 +81,11 @@ export async function runAccountCheck(deps: {
     status = parseAbout(answer.json);
   } else if (answer.kind === 'gone' && answer.status === 404) {
     status = 'missing';
-  } else if (answer.kind === 'auth' || answer.kind === 'rate_limited') {
+  } else if (
+    answer.kind === 'auth' ||
+    answer.kind === 'rate_limited' ||
+    answer.kind === 'blocked'
+  ) {
     // Reconnecting, or the hourly allowance, decides when to try again.
     return null;
   }

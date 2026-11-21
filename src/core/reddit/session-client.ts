@@ -7,7 +7,9 @@
  * to the login page or (for listing reads) a body that is not JSON means the
  * session no longer works: the client reports it once and makes no further
  * requests. A 403 that names a private or banned subreddit is about that
- * subreddit, not the session.
+ * subreddit, not the session. A page that says Reddit blocked the network is
+ * about the address the app runs from, not the session: reconnecting would not
+ * help, so it is reported as `blocked` and leaves the session alone.
  */
 import type { Clock } from '../clock';
 import { CONFIG } from '../config';
@@ -15,7 +17,7 @@ import type { LimitedResult, RateLimiter } from './ratelimit';
 
 export const SESSION_ORIGIN = 'https://www.reddit.com';
 
-export type SessionFailureKind = 'auth' | 'gone' | 'rate_limited' | 'network';
+export type SessionFailureKind = 'auth' | 'gone' | 'rate_limited' | 'network' | 'blocked';
 
 export type SessionResponse =
   | { ok: true; json: unknown }
@@ -57,15 +59,23 @@ function invalid(message: string): SessionResponse {
 /** Reasons Reddit gives in a 403 for a subreddit the account may not see. */
 const COMMUNITY_REFUSALS = new Set(['private', 'banned', 'quarantined', 'gold_only', 'gated']);
 
+const BLOCKED_MESSAGE =
+  'Reddit is blocking requests from this network. Reconnecting will not help: run the app from another network or choose another data source in Settings.';
+
+function hasBlockMarker(body: string): boolean {
+  const lower = body.toLowerCase();
+  return CONFIG.reddit.blockMarkers.some((marker) => lower.includes(marker));
+}
+
 /** The subreddit-level reason of a 403, or null when the refusal is about the session. */
-async function communityRefusal(response: Response): Promise<string | null> {
+function communityRefusal(text: string): string | null {
   try {
-    const body = JSON.parse(await response.text()) as unknown;
+    const body = JSON.parse(text) as unknown;
     const reason =
       typeof body === 'object' && body !== null && 'reason' in body ? body.reason : null;
     return typeof reason === 'string' && COMMUNITY_REFUSALS.has(reason) ? reason : null;
   } catch {
-    // Not JSON: an HTML block page, which is about the session.
+    // Not JSON: a web page, which is about the session or the network.
     return null;
   }
 }
@@ -112,7 +122,11 @@ export function createSessionClient(options: SessionClientOptions): SessionClien
       return { ok: false, kind: 'gone', status, message: `Redirected (HTTP ${String(status)})` };
     }
     if (status === 403) {
-      const reason = await communityRefusal(response);
+      const text = await response.text();
+      if (hasBlockMarker(text)) {
+        return { ok: false, kind: 'blocked', status, message: BLOCKED_MESSAGE };
+      }
+      const reason = communityRefusal(text);
       if (reason) {
         return { ok: false, kind: 'gone', status, message: `The subreddit is ${reason}` };
       }
@@ -151,6 +165,9 @@ export function createSessionClient(options: SessionClientOptions): SessionClien
       return { ok: true, json: JSON.parse(text) as unknown };
     } catch {
       // An HTML block or sign-in page instead of JSON.
+      if (hasBlockMarker(text)) {
+        return { ok: false, kind: 'blocked', status, message: BLOCKED_MESSAGE };
+      }
       const message = 'Reddit sent a web page instead of data';
       return webPageMeansSignedOut
         ? markBroken(message)

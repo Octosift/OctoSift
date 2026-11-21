@@ -174,7 +174,11 @@ export async function runDueReplyChecks(deps: {
     let result: ReplyCheckResult | null = null;
     if (answer.ok) {
       result = judgeThread(answer.json, link.commentId, deps.account);
-    } else if (answer.kind === 'auth' || answer.kind === 'rate_limited') {
+    } else if (
+      answer.kind === 'auth' ||
+      answer.kind === 'rate_limited' ||
+      answer.kind === 'blocked'
+    ) {
       // The session needs reconnecting, or its hourly allowance is used up: try later.
       log.warn('Reply checks paused', { reason: answer.message });
       break;
